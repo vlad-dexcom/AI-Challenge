@@ -19,7 +19,9 @@ data class ChatUiState(
     val isLoading: Boolean = false,
     val errorMessage: String? = null,
     val selectedModel: String = GeminiApiClient.DEFAULT_MODEL,
-    val availableModels: List<String> = GeminiApiClient.AVAILABLE_MODELS
+    val availableModels: List<String> = GeminiApiClient.AVAILABLE_MODELS,
+    val restrictedModeEnabled: Boolean = false,
+    val enabledLimitations: Set<Limitation> = Limitation.entries.toSet()
 )
 
 class ChatViewModel(private val apiKey: String) : ViewModel() {
@@ -37,10 +39,28 @@ class ChatViewModel(private val apiKey: String) : ViewModel() {
         _uiState.value = _uiState.value.copy(selectedModel = model)
     }
 
+    fun onRestrictedModeToggled(enabled: Boolean) {
+        _uiState.value = _uiState.value.copy(restrictedModeEnabled = enabled)
+    }
+
+    fun onLimitationToggled(limitation: Limitation, enabled: Boolean) {
+        val current = _uiState.value.enabledLimitations
+        val updated = if (enabled) current + limitation else current - limitation
+        _uiState.value = _uiState.value.copy(enabledLimitations = updated)
+    }
+
     fun sendMessage() {
         val prompt = _uiState.value.input.trim()
         if (prompt.isEmpty() || _uiState.value.isLoading) return
         val model = _uiState.value.selectedModel
+        val restrictedModeEnabled = _uiState.value.restrictedModeEnabled
+        // The master switch gates everything: when it's off, no limitation is applied
+        // regardless of which chips are individually selected.
+        val activeLimitations = if (restrictedModeEnabled) {
+            _uiState.value.enabledLimitations
+        } else {
+            emptySet()
+        }
 
         _uiState.value = _uiState.value.copy(
             messages = _uiState.value.messages + ChatMessage(prompt, isFromUser = true),
@@ -54,7 +74,7 @@ class ChatViewModel(private val apiKey: String) : ViewModel() {
                 // Hard safety net: no matter what the underlying HTTP client does, the user
                 // should never be stuck on the loading indicator forever.
                 withTimeout(35_000) {
-                    geminiClient.sendMessage(prompt, model)
+                    geminiClient.sendMessage(prompt, model, restrictedModeEnabled, activeLimitations)
                         .onSuccess { answer ->
                             _uiState.value = _uiState.value.copy(
                                 messages = _uiState.value.messages + ChatMessage(answer, isFromUser = false),
