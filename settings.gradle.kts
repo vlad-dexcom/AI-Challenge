@@ -17,5 +17,5 @@ dependencyResolutionManagement {
     }
 }
 
-rootProject.name = "GeminiChat"
+rootProject.name = "PersonalTrainer"
 include(":app")
