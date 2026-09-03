@@ -3,8 +3,6 @@ package com.example.geminichat
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.ExperimentalLayoutApi
-import androidx.compose.foundation.layout.FlowRow
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
@@ -22,13 +20,11 @@ import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.DropdownMenu
 import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.ExperimentalMaterial3Api
-import androidx.compose.material3.FilterChip
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Scaffold
-import androidx.compose.material3.Switch
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.material3.TopAppBar
@@ -73,7 +69,7 @@ fun ChatScreen(viewModel: ChatViewModel) {
                         horizontalArrangement = Arrangement.SpaceBetween,
                         verticalAlignment = Alignment.CenterVertically
                     ) {
-                        Text("Personal Trainer")
+                        Text("Gemini Chat")
                         ModelSelector(
                             selectedModel = uiState.selectedModel,
                             availableModels = uiState.availableModels,
@@ -94,13 +90,6 @@ fun ChatScreen(viewModel: ChatViewModel) {
                 .padding(padding)
                 .imePadding()
         ) {
-            RestrictedModeBar(
-                enabled = uiState.restrictedModeEnabled,
-                onToggle = viewModel::onRestrictedModeToggled,
-                enabledLimitations = uiState.enabledLimitations,
-                onLimitationToggled = viewModel::onLimitationToggled
-            )
-
             LazyColumn(
                 modifier = Modifier
                     .weight(1f)
@@ -148,52 +137,6 @@ fun ChatScreen(viewModel: ChatViewModel) {
                 Spacer(modifier = Modifier.size(8.dp))
                 IconButton(onClick = { viewModel.sendMessage() }) {
                     Icon(Icons.AutoMirrored.Filled.Send, contentDescription = "Send")
-                }
-            }
-        }
-    }
-}
-
-@OptIn(ExperimentalLayoutApi::class)
-@Composable
-private fun RestrictedModeBar(
-    enabled: Boolean,
-    onToggle: (Boolean) -> Unit,
-    enabledLimitations: Set<Limitation>,
-    onLimitationToggled: (Limitation, Boolean) -> Unit
-) {
-    Column(
-        modifier = Modifier
-            .fillMaxWidth()
-            .padding(horizontal = 12.dp, vertical = 4.dp)
-    ) {
-        Row(
-            modifier = Modifier.fillMaxWidth(),
-            horizontalArrangement = Arrangement.SpaceBetween,
-            verticalAlignment = Alignment.CenterVertically
-        ) {
-            Text(
-                text = "Apply limitations",
-                style = MaterialTheme.typography.labelLarge
-            )
-            Switch(checked = enabled, onCheckedChange = onToggle)
-        }
-        if (enabled) {
-            // Each chip is individually selectable, so the user can pick exactly which
-            // limitations apply (or flip the switch above to turn everything off at once).
-            // Wraps onto additional lines instead of scrolling so every chip stays visible.
-            FlowRow(
-                modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.spacedBy(6.dp),
-                verticalArrangement = Arrangement.spacedBy(6.dp)
-            ) {
-                Limitation.entries.forEach { limitation ->
-                    val selected = limitation in enabledLimitations
-                    FilterChip(
-                        selected = selected,
-                        onClick = { onLimitationToggled(limitation, !selected) },
-                        label = { Text(limitation.label) }
-                    )
                 }
             }
         }
