@@ -49,7 +49,7 @@ user's message to the Gemini API and displays the reply.
   of each other; structured JSON `response_format` is always requested whenever restricted mode
   is on, regardless of which `Limitation`s are selected. Parses the `model_output` step's text;
   currently returns the raw JSON string as-is when restricted mode is on (see TODO in
-  `parseResponse`) rather than extracting the `answer` field, for end-to-end verification.
+  `parseResponse`) rather than extracting the `message` field, for end-to-end verification.
 - `ChatViewModel.kt` — holds chat messages/input/loading/model state plus the restricted-mode
   master switch and the set of individually enabled `Limitation`s; calls the API client with
   only the limitations that are both switched on and individually selected.
@@ -82,5 +82,4 @@ user's message to the Gemini API and displays the reply.
   than internal reasoning tokens.
 - A short output cap can still truncate long answers into invalid JSON (API reports
   `status: "incomplete"`); this is treated as a soft signal, not an error, and the app
-  regex-extracts the partial `answer` text so the user still sees readable (if cut short)
-  content instead of a raw JSON blob or a generic error.
+  currently returns the raw (possibly truncated) JSON string rather than a generic error.

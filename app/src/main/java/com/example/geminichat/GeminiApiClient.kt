@@ -309,7 +309,7 @@ class GeminiApiClient(
      * Kept for when the app starts parsing/consuming the structured JSON output instead.
      */
     @Suppress("unused")
-    private fun extractAnswerFallback(rawAnswer: String): String? {
+    private fun extractMessageFallback(rawAnswer: String): String? {
         val match = Regex("\"message\"\\s*:\\s*\"((?:\\\\.|[^\"\\\\])*)\"?").find(rawAnswer)
             ?: return null
         return match.groupValues[1]
