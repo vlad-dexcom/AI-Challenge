@@ -72,8 +72,10 @@ class ChatViewModel(private val apiKey: String) : ViewModel() {
         viewModelScope.launch {
             try {
                 // Hard safety net: no matter what the underlying HTTP client does, the user
-                // should never be stuck on the loading indicator forever.
-                withTimeout(35_000) {
+                // should never be stuck on the loading indicator forever. Kept comfortably
+                // above GeminiApiClient's own request timeout (120s) so that timeout — which
+                // produces a clearer, more specific error message — has a chance to fire first.
+                withTimeout(125_000) {
                     geminiClient.sendMessage(prompt, model, restrictedModeEnabled, activeLimitations)
                         .onSuccess { answer ->
                             _uiState.value = _uiState.value.copy(
