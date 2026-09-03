@@ -10,11 +10,11 @@ import androidx.lifecycle.viewmodel.CreationExtras
 
 class MainActivity : ComponentActivity() {
 
-    private val viewModel: ChatViewModel by viewModels {
+    private val viewModel: ComparisonViewModel by viewModels {
         object : ViewModelProvider.Factory {
             override fun <T : ViewModel> create(modelClass: Class<T>, extras: CreationExtras): T {
                 @Suppress("UNCHECKED_CAST")
-                return ChatViewModel(apiKey = BuildConfig.GEMINI_API_KEY) as T
+                return ComparisonViewModel(apiKey = BuildConfig.GEMINI_API_KEY) as T
             }
         }
     }
@@ -22,7 +22,7 @@ class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContent {
-            ChatScreen(viewModel = viewModel)
+            ComparisonScreen(viewModel = viewModel)
         }
     }
 }
