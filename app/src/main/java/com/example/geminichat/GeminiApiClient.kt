@@ -46,10 +46,17 @@ class GeminiApiClient(
             "gemini-3.5-flash",
             "gemini-3.6-flash",
             "gemini-3.7-flash",
-            "gemini-2.5-pro",
+            "gemini-2.5-flash",
             "gemini-3-pro",
         )
         const val DEFAULT_MODEL = "gemini-3.5-flash"
+
+        /**
+         * Temperature presets selectable in the UI:
+         * 0.0 = deterministic/precise, 0.7 = balanced, 1.2 = maximally creative/varied.
+         */
+        val TEMPERATURE_PRESETS = listOf(0.0, 0.7, 1.2, 2.0)
+        const val DEFAULT_TEMPERATURE = 0.7
     }
 
     private val json = Json { ignoreUnknownKeys = true }
@@ -61,15 +68,15 @@ class GeminiApiClient(
             json(json)
         }
         install(HttpTimeout) {
-            requestTimeoutMillis = 30_000
+            requestTimeoutMillis = 120_000
             connectTimeoutMillis = 15_000
-            socketTimeoutMillis = 30_000
+            socketTimeoutMillis = 120_000
         }
     }
 
     private val endpoint = "https://generativelanguage.googleapis.com/v1beta/interactions"
 
-    suspend fun sendMessage(prompt: String, model: String): Result<String> {
+    suspend fun sendMessage(prompt: String, model: String, temperature: Double): Result<String> {
         if (apiKey.isBlank()) {
             return Result.failure(
                 Exception("No Gemini API key configured. Set GEMINI_API_KEY in local.properties.")
@@ -81,7 +88,13 @@ class GeminiApiClient(
                 url(endpoint)
                 header("x-goog-api-key", apiKey)
                 contentType(ContentType.Application.Json)
-                setBody(InteractionRequest(model = model, input = prompt))
+                setBody(
+                    InteractionRequest(
+                        model = model,
+                        input = prompt,
+                        generationConfig = GenerationConfig(temperature = temperature)
+                    )
+                )
             }
 
             parseResponse(httpResponse)

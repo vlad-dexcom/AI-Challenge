@@ -70,12 +70,20 @@ fun ChatScreen(viewModel: ChatViewModel) {
                         verticalAlignment = Alignment.CenterVertically
                     ) {
                         Text("Gemini Chat")
-                        ModelSelector(
-                            selectedModel = uiState.selectedModel,
-                            availableModels = uiState.availableModels,
-                            enabled = !uiState.isLoading,
-                            onModelSelected = viewModel::onModelSelected
-                        )
+                        Row(verticalAlignment = Alignment.CenterVertically) {
+                            ModelSelector(
+                                selectedModel = uiState.selectedModel,
+                                availableModels = uiState.availableModels,
+                                enabled = !uiState.isLoading,
+                                onModelSelected = viewModel::onModelSelected
+                            )
+                            TemperatureSelector(
+                                selectedTemperature = uiState.selectedTemperature,
+                                availableTemperatures = uiState.availableTemperatures,
+                                enabled = !uiState.isLoading,
+                                onTemperatureSelected = viewModel::onTemperatureSelected
+                            )
+                        }
                     }
                 }
             )
@@ -166,6 +174,37 @@ private fun ModelSelector(
                     text = { Text(model) },
                     onClick = {
                         onModelSelected(model)
+                        expanded = false
+                    }
+                )
+            }
+        }
+    }
+}
+
+@Composable
+private fun TemperatureSelector(
+    selectedTemperature: Double,
+    availableTemperatures: List<Double>,
+    enabled: Boolean,
+    onTemperatureSelected: (Double) -> Unit
+) {
+    var expanded by remember { mutableStateOf(false) }
+
+    Box {
+        TextButton(onClick = { if (enabled) expanded = true }, enabled = enabled) {
+            Text("T=$selectedTemperature")
+            Icon(Icons.Filled.ArrowDropDown, contentDescription = "Select temperature")
+        }
+        DropdownMenu(
+            expanded = expanded,
+            onDismissRequest = { expanded = false }
+        ) {
+            availableTemperatures.forEach { temperature ->
+                DropdownMenuItem(
+                    text = { Text("T=$temperature") },
+                    onClick = {
+                        onTemperatureSelected(temperature)
                         expanded = false
                     }
                 )

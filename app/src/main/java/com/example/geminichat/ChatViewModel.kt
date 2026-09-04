@@ -19,7 +19,9 @@ data class ChatUiState(
     val isLoading: Boolean = false,
     val errorMessage: String? = null,
     val selectedModel: String = GeminiApiClient.DEFAULT_MODEL,
-    val availableModels: List<String> = GeminiApiClient.AVAILABLE_MODELS
+    val availableModels: List<String> = GeminiApiClient.AVAILABLE_MODELS,
+    val selectedTemperature: Double = GeminiApiClient.DEFAULT_TEMPERATURE,
+    val availableTemperatures: List<Double> = GeminiApiClient.TEMPERATURE_PRESETS
 )
 
 class ChatViewModel(private val apiKey: String) : ViewModel() {
@@ -37,10 +39,15 @@ class ChatViewModel(private val apiKey: String) : ViewModel() {
         _uiState.value = _uiState.value.copy(selectedModel = model)
     }
 
+    fun onTemperatureSelected(temperature: Double) {
+        _uiState.value = _uiState.value.copy(selectedTemperature = temperature)
+    }
+
     fun sendMessage() {
         val prompt = _uiState.value.input.trim()
         if (prompt.isEmpty() || _uiState.value.isLoading) return
         val model = _uiState.value.selectedModel
+        val temperature = _uiState.value.selectedTemperature
 
         _uiState.value = _uiState.value.copy(
             messages = _uiState.value.messages + ChatMessage(prompt, isFromUser = true),
@@ -54,10 +61,11 @@ class ChatViewModel(private val apiKey: String) : ViewModel() {
                 // Hard safety net: no matter what the underlying HTTP client does, the user
                 // should never be stuck on the loading indicator forever.
                 withTimeout(35_000) {
-                    geminiClient.sendMessage(prompt, model)
+                    geminiClient.sendMessage(prompt, model, temperature)
                         .onSuccess { answer ->
+                            val labeled = "$answer\n\n---\n_${model} · T=${temperature}_"
                             _uiState.value = _uiState.value.copy(
-                                messages = _uiState.value.messages + ChatMessage(answer, isFromUser = false),
+                                messages = _uiState.value.messages + ChatMessage(labeled, isFromUser = false),
                                 isLoading = false
                             )
                         }

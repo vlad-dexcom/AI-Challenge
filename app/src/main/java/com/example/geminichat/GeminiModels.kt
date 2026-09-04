@@ -1,5 +1,6 @@
 package com.example.geminichat
 
+import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
 
 /**
@@ -13,7 +14,17 @@ import kotlinx.serialization.Serializable
 @Serializable
 data class InteractionRequest(
     val model: String,
-    val input: String
+    val input: String,
+    @SerialName("generation_config") val generationConfig: GenerationConfig? = null
+)
+
+/**
+ * Sampling controls for the interaction. `temperature` is the only knob this app exposes:
+ * it scales the randomness of token selection (0 = deterministic, higher = more random/creative).
+ */
+@Serializable
+data class GenerationConfig(
+    val temperature: Double
 )
 
 @Serializable
