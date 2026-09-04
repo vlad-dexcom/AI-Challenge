@@ -1,5 +1,6 @@
 package com.example.geminichat
 
+import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
 
 /**
@@ -21,7 +22,22 @@ data class InteractionResponse(
     val id: String? = null,
     val status: String? = null,
     val steps: List<InteractionStep>? = null,
-    val error: GeminiError? = null
+    val error: GeminiError? = null,
+    val usage: Usage? = null
+)
+
+/**
+ * Token accounting reported by the Interactions API. `totalThoughtTokens` covers the model's
+ * internal reasoning and is billed as output, so cost estimates must include it alongside
+ * [totalOutputTokens].
+ */
+@Serializable
+data class Usage(
+    @SerialName("total_tokens") val totalTokens: Int? = null,
+    @SerialName("total_input_tokens") val totalInputTokens: Int? = null,
+    @SerialName("total_output_tokens") val totalOutputTokens: Int? = null,
+    @SerialName("total_thought_tokens") val totalThoughtTokens: Int? = null,
+    @SerialName("total_cached_tokens") val totalCachedTokens: Int? = null
 )
 
 @Serializable

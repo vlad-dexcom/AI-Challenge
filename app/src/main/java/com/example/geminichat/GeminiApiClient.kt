@@ -37,20 +37,15 @@ import java.nio.channels.UnresolvedAddressException
 class GeminiApiClient(
     private val apiKey: String
 ) {
-    companion object {
-        /**
-         * Curated list of Gemini models selectable in the UI. Useful when a specific model
-         * is temporarily overloaded or rate-limited — the user can just switch models.
-         */
-        val AVAILABLE_MODELS = listOf(
-            "gemini-3.5-flash",
-            "gemini-3.6-flash",
-            "gemini-3.7-flash",
-            "gemini-2.5-pro",
-            "gemini-3-pro",
-        )
-        const val DEFAULT_MODEL = "gemini-3.5-flash"
-    }
+    /**
+     * Result of a single model call: the answer text, token usage (if reported), and
+     * client-measured round-trip latency in milliseconds.
+     */
+    data class ModelRunResult(
+        val answer: String,
+        val usage: Usage?,
+        val latencyMs: Long
+    )
 
     private val json = Json { ignoreUnknownKeys = true }
 
@@ -69,13 +64,14 @@ class GeminiApiClient(
 
     private val endpoint = "https://generativelanguage.googleapis.com/v1beta/interactions"
 
-    suspend fun sendMessage(prompt: String, model: String): Result<String> {
+    suspend fun sendMessage(prompt: String, model: String): Result<ModelRunResult> {
         if (apiKey.isBlank()) {
             return Result.failure(
                 Exception("No Gemini API key configured. Set GEMINI_API_KEY in local.properties.")
             )
         }
 
+        val startNanos = System.nanoTime()
         return try {
             val httpResponse: HttpResponse = client.post {
                 url(endpoint)
@@ -84,7 +80,8 @@ class GeminiApiClient(
                 setBody(InteractionRequest(model = model, input = prompt))
             }
 
-            parseResponse(httpResponse)
+            val latencyMs = (System.nanoTime() - startNanos) / 1_000_000
+            parseResponse(httpResponse, latencyMs)
         } catch (e: HttpRequestTimeoutException) {
             Result.failure(Exception("Request timed out. Please try again."))
         } catch (e: UnresolvedAddressException) {
@@ -100,7 +97,7 @@ class GeminiApiClient(
         }
     }
 
-    private suspend fun parseResponse(httpResponse: HttpResponse): Result<String> {
+    private suspend fun parseResponse(httpResponse: HttpResponse, latencyMs: Long): Result<ModelRunResult> {
         val bodyText = try {
             httpResponse.bodyAsText()
         } catch (e: Exception) {
@@ -147,7 +144,7 @@ class GeminiApiClient(
         return if (answer.isNullOrBlank()) {
             Result.failure(Exception("Gemini returned an empty response."))
         } else {
-            Result.success(answer)
+            Result.success(ModelRunResult(answer = answer, usage = response.usage, latencyMs = latencyMs))
         }
     }
 
