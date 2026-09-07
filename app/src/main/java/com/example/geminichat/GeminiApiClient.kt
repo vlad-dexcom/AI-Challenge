@@ -16,6 +16,8 @@ import io.ktor.http.HttpStatusCode
 import io.ktor.http.contentType
 import io.ktor.http.isSuccess
 import io.ktor.serialization.kotlinx.json.json
+import com.example.geminichat.agent.LlmClient
+import com.example.geminichat.agent.LlmRequestSpec
 import kotlinx.serialization.SerializationException
 import kotlinx.serialization.json.Json
 import java.io.IOException
@@ -33,10 +35,13 @@ import java.nio.channels.UnresolvedAddressException
  * malformed/empty payload, non-"completed" interaction status) is turned into a
  * [Result.failure] with a user-friendly message so the caller can always show
  * *something* to the user instead of failing silently or crashing.
+ *
+ * Implements [LlmClient] so it can be plugged into an [com.example.geminichat.agent.Agent]
+ * without the agent layer knowing anything about Gemini, Ktor, or REST.
  */
 class GeminiApiClient(
     private val apiKey: String
-) {
+) : LlmClient {
     companion object {
         /**
          * Curated list of Gemini models selectable in the UI. Useful when a specific model
@@ -69,11 +74,17 @@ class GeminiApiClient(
 
     private val endpoint = "https://generativelanguage.googleapis.com/v1beta/interactions"
 
-    suspend fun sendMessage(prompt: String, model: String): Result<String> {
+    override suspend fun complete(spec: LlmRequestSpec): Result<String> {
         if (apiKey.isBlank()) {
             return Result.failure(
                 Exception("No Gemini API key configured. Set GEMINI_API_KEY in local.properties.")
             )
+        }
+
+        val generationConfig = if (spec.maxOutputTokens != null || spec.temperature != null) {
+            GenerationConfig(maxOutputTokens = spec.maxOutputTokens, temperature = spec.temperature)
+        } else {
+            null
         }
 
         return try {
@@ -81,7 +92,14 @@ class GeminiApiClient(
                 url(endpoint)
                 header("x-goog-api-key", apiKey)
                 contentType(ContentType.Application.Json)
-                setBody(InteractionRequest(model = model, input = prompt))
+                setBody(
+                    InteractionRequest(
+                        model = spec.model,
+                        input = spec.input,
+                        systemInstruction = spec.systemInstruction,
+                        generationConfig = generationConfig
+                    )
+                )
             }
 
             parseResponse(httpResponse)

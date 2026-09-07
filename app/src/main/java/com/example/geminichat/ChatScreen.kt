@@ -41,12 +41,14 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
+import com.example.geminichat.agent.AgentConfig
 import dev.jeziellago.compose.markdowntext.MarkdownText
 
 /**
- * The single screen of the app: a scrollable message list plus a text input row
- * that sends the user's message to the Gemini API and appends the reply. The model
- * selector lives in the top bar next to the title.
+ * The single screen of the app: a scrollable message list plus a text input row that sends
+ * the user's message to the current [com.example.geminichat.agent.Agent] and appends its
+ * reply. The top bar shows which agent is active (name + one-line description) and lets the
+ * user switch both the agent persona and the underlying model.
  */
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -62,23 +64,36 @@ fun ChatScreen(viewModel: ChatViewModel) {
 
     Scaffold(
         topBar = {
-            TopAppBar(
-                title = {
-                    Row(
-                        modifier = Modifier.fillMaxWidth(),
-                        horizontalArrangement = Arrangement.SpaceBetween,
-                        verticalAlignment = Alignment.CenterVertically
-                    ) {
-                        Text("Gemini Chat")
-                        ModelSelector(
-                            selectedModel = uiState.selectedModel,
-                            availableModels = uiState.availableModels,
-                            enabled = !uiState.isLoading,
-                            onModelSelected = viewModel::onModelSelected
-                        )
+            Column {
+                TopAppBar(
+                    title = {
+                        Row(
+                            modifier = Modifier.fillMaxWidth(),
+                            horizontalArrangement = Arrangement.SpaceBetween,
+                            verticalAlignment = Alignment.CenterVertically
+                        ) {
+                            AgentSelector(
+                                availableAgents = uiState.availableAgents,
+                                agentName = uiState.agentName,
+                                enabled = !uiState.isLoading,
+                                onAgentSelected = viewModel::onAgentSelected
+                            )
+                            ModelSelector(
+                                selectedModel = uiState.selectedModel,
+                                availableModels = uiState.availableModels,
+                                enabled = !uiState.isLoading,
+                                onModelSelected = viewModel::onModelSelected
+                            )
+                        }
                     }
-                }
-            )
+                )
+                Text(
+                    text = uiState.agentDescription,
+                    style = MaterialTheme.typography.bodySmall,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    modifier = Modifier.padding(horizontal = 16.dp, vertical = 4.dp)
+                )
+            }
         }
     ) { padding ->
         // imePadding() lets this column shrink above the keyboard instead of letting
@@ -138,6 +153,37 @@ fun ChatScreen(viewModel: ChatViewModel) {
                 IconButton(onClick = { viewModel.sendMessage() }) {
                     Icon(Icons.AutoMirrored.Filled.Send, contentDescription = "Send")
                 }
+            }
+        }
+    }
+}
+
+@Composable
+private fun AgentSelector(
+    availableAgents: List<AgentConfig>,
+    agentName: String,
+    enabled: Boolean,
+    onAgentSelected: (String) -> Unit
+) {
+    var expanded by remember { mutableStateOf(false) }
+
+    Box {
+        TextButton(onClick = { if (enabled) expanded = true }, enabled = enabled) {
+            Text(agentName)
+            Icon(Icons.Filled.ArrowDropDown, contentDescription = "Select agent")
+        }
+        DropdownMenu(
+            expanded = expanded,
+            onDismissRequest = { expanded = false }
+        ) {
+            availableAgents.forEach { agentConfig ->
+                DropdownMenuItem(
+                    text = { Text(agentConfig.displayName) },
+                    onClick = {
+                        onAgentSelected(agentConfig.id)
+                        expanded = false
+                    }
+                )
             }
         }
     }
