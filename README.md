@@ -38,11 +38,14 @@ ChatScreen ──▶ ChatViewModel ──▶ Agent (LlmAgent + AgentConfig)
   network/Android dependency (see `app/src/test/.../agent/LlmAgentTest.kt`).
 - **`agent/AgentContracts.kt`** — `AgentRequest`/`AgentResponse`/`AgentMessage`.
 
-**Stateless by design, memory-ready by contract**: agents don't carry conversation history
-today (every `sendMessage()` is independent), but `AgentRequest.history: List<AgentMessage>`
-is already part of the contract and rendered (as a no-op passthrough) in
-`LlmAgent.renderPrompt`. Adding real multi-turn memory later means filling that list — no
-change to `Agent`, `LlmClient`, or any caller signature.
+**In-memory chat history, mixed into every request**: the agent is not stateless anymore —
+`ChatViewModel.sendMessage()` snapshots the whole visible conversation so far and passes it as
+`AgentRequest.history`; `LlmAgent.renderPrompt` folds it into the prompt as a
+"User: ...\n\<Agent\>: ..." transcript before the new user message. This history lives only in
+memory for the current app process/session (it resets on process death or app restart — no
+database/file persistence), is not capped in length (a very long chat grows the prompt
+accordingly), and is shared across agents (switching Personal Trainer ↔ General Assistant mid
+chat keeps prior turns in context for the new persona).
 
 **Tool-calling is a documented extension point, not implemented yet**: the natural place for
 a "LLM → tool call → tool result → second LLM call" loop is inside `LlmAgent.handle`, after the

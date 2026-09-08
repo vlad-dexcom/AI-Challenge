@@ -1,8 +1,7 @@
 package com.example.geminichat.agent
 
 /**
- * A single turn in a conversation, kept generic so it can be reused both for the (currently
- * empty) [AgentRequest.history] and for a future richer multi-turn message list.
+ * A single turn in a conversation, used to build [AgentRequest.history].
  */
 data class AgentMessage(
     val role: Role,
@@ -14,10 +13,11 @@ data class AgentMessage(
 /**
  * Input to [Agent.handle].
  *
- * [history] is unused today — the agent is stateless and every request is handled
- * independently — but it's part of the contract now so that adding conversation memory later
- * (e.g. rendering prior turns into the prompt, or switching to a multi-message API payload)
- * doesn't require changing the [Agent] interface or any caller signatures.
+ * [history] carries the prior turns of the current chat, which [LlmAgent] folds into the
+ * prompt (see [LlmAgent.renderPrompt]) so the model has conversational context. This history
+ * is kept in memory only for the lifetime of the app process/session — nothing is persisted
+ * across restarts, and the caller ([com.example.geminichat.ChatViewModel]) is responsible for
+ * deciding what to pass in (currently: the whole visible chat, unbounded).
  */
 data class AgentRequest(
     val userMessage: String,

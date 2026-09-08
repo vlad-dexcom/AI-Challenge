@@ -5,6 +5,7 @@ import androidx.lifecycle.viewModelScope
 import com.example.geminichat.agent.Agent
 import com.example.geminichat.agent.AgentCatalog
 import com.example.geminichat.agent.AgentConfig
+import com.example.geminichat.agent.AgentMessage
 import com.example.geminichat.agent.AgentRequest
 import com.example.geminichat.agent.LlmAgent
 import kotlinx.coroutines.TimeoutCancellationException
@@ -68,6 +69,16 @@ class ChatViewModel(private val apiKey: String) : ViewModel() {
         if (prompt.isEmpty() || _uiState.value.isLoading) return
         val model = _uiState.value.selectedModel
 
+        // Snapshot the conversation so far (before appending this new turn) as the history
+        // mixed into the agent's context — kept in memory only for the lifetime of this
+        // ViewModel/app process, not persisted across restarts.
+        val history = _uiState.value.messages.map { message ->
+            AgentMessage(
+                role = if (message.isFromUser) AgentMessage.Role.USER else AgentMessage.Role.AGENT,
+                text = message.text
+            )
+        }
+
         _uiState.value = _uiState.value.copy(
             messages = _uiState.value.messages + ChatMessage(prompt, isFromUser = true),
             input = "",
@@ -80,7 +91,7 @@ class ChatViewModel(private val apiKey: String) : ViewModel() {
                 // Hard safety net: no matter what the underlying HTTP client does, the user
                 // should never be stuck on the loading indicator forever.
                 withTimeout(125_000) {
-                    agent.handle(AgentRequest(userMessage = prompt, modelOverride = model))
+                    agent.handle(AgentRequest(userMessage = prompt, history = history, modelOverride = model))
                         .onSuccess { response ->
                             _uiState.value = _uiState.value.copy(
                                 messages = _uiState.value.messages + ChatMessage(response.text, isFromUser = false),

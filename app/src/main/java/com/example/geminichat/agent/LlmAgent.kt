@@ -10,8 +10,8 @@ package com.example.geminichat.agent
  * - Validating the incoming request (e.g. rejecting blank input) before spending an API call.
  * - Assembling the [LlmRequestSpec] from [config] (persona, model, generation params) and the
  *   [AgentRequest] (user message, optional model override).
- * - Rendering conversation history into the prompt — currently a no-op since agents are
- *   stateless, but the seam is here: see [renderPrompt].
+ * - Rendering conversation history into the prompt — the ViewModel passes the current chat's
+ *   prior turns as [AgentRequest.history]; see [renderPrompt] for how they're folded in.
  * - Turning the raw completion into a validated [AgentResponse], with timing metadata.
  * - Mapping [LlmClient] failures into a single [Result.failure] the UI can display as-is.
  *
@@ -64,14 +64,14 @@ class LlmAgent(
     }
 
     /**
-     * Renders the final prompt sent to the LLM. [AgentRequest.history] is intentionally
-     * ignored today (agents are stateless), but this is the single place to start folding
-     * prior turns in later — e.g. prefixing them as "User: ...\nAgent: ..." pairs, or
-     * switching [LlmRequestSpec] to carry a structured message list instead of one string.
+     * Renders the final prompt sent to the LLM. When [AgentRequest.history] is non-empty, it
+     * is prefixed as a "User: ...\n<Agent>: ..." transcript so the model has the full prior
+     * conversation as context; the caller (currently [com.example.geminichat.ChatViewModel])
+     * decides what history to pass in — this in-memory chat history lasts only for the
+     * current app session/process, it is not persisted across restarts.
      */
     private fun renderPrompt(request: AgentRequest, userMessage: String): String {
         if (request.history.isEmpty()) return userMessage
-        // Placeholder for future multi-turn support; not exercised while history is empty.
         val transcript = request.history.joinToString("\n") { message ->
             val speaker = if (message.role == AgentMessage.Role.USER) "User" else config.displayName
             "$speaker: ${message.text}"

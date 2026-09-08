@@ -100,4 +100,31 @@ class LlmAgentTest {
 
         assertTrue(result.isFailure)
     }
+
+    @Test
+    fun `handle folds history into the prompt when non-empty`() = runTest {
+        val client = FakeLlmClient(Result.success("ok"))
+        val agent = LlmAgent(config = testConfig, client = client)
+
+        val history = listOf(
+            AgentMessage(role = AgentMessage.Role.USER, text = "What's a good warm-up?"),
+            AgentMessage(role = AgentMessage.Role.AGENT, text = "Try 5 minutes of light cardio.")
+        )
+        agent.handle(AgentRequest(userMessage = "And after that?", history = history))
+
+        val renderedInput = client.lastSpec?.input.orEmpty()
+        assertTrue(renderedInput.contains("User: What's a good warm-up?"))
+        assertTrue(renderedInput.contains("${testConfig.displayName}: Try 5 minutes of light cardio."))
+        assertTrue(renderedInput.endsWith("User: And after that?"))
+    }
+
+    @Test
+    fun `handle sends only the user message when history is empty`() = runTest {
+        val client = FakeLlmClient(Result.success("ok"))
+        val agent = LlmAgent(config = testConfig, client = client)
+
+        agent.handle(AgentRequest(userMessage = "Hi there"))
+
+        assertEquals("Hi there", client.lastSpec?.input)
+    }
 }
