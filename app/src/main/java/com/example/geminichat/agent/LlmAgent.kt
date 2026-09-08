@@ -67,8 +67,9 @@ class LlmAgent(
      * Renders the final prompt sent to the LLM. When [AgentRequest.history] is non-empty, it
      * is prefixed as a "User: ...\n<Agent>: ..." transcript so the model has the full prior
      * conversation as context; the caller (currently [com.example.geminichat.ChatViewModel])
-     * decides what history to pass in — this in-memory chat history lasts only for the
-     * current app session/process, it is not persisted across restarts.
+     * decides what history to pass in — that history is now persisted/restored across app
+     * restarts via [com.example.geminichat.ChatHistoryStore], so it survives beyond a single
+     * app session/process.
      */
     private fun renderPrompt(request: AgentRequest, userMessage: String): String {
         if (request.history.isEmpty()) return userMessage
