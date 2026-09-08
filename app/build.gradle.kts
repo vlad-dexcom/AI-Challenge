@@ -81,4 +81,8 @@ dependencies {
 
     // Markdown rendering for chat messages (wraps Markwon via an AndroidView TextView).
     implementation("com.github.jeziellago:compose-markdown:0.7.2")
+
+    // Unit tests for the agent layer (plain JVM, no Android/network dependency needed).
+    testImplementation("junit:junit:4.13.2")
+    testImplementation("org.jetbrains.kotlinx:kotlinx-coroutines-test:1.8.1")
 }

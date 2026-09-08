@@ -1,5 +1,6 @@
 package com.example.geminichat
 
+import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
 
 /**
@@ -13,7 +14,21 @@ import kotlinx.serialization.Serializable
 @Serializable
 data class InteractionRequest(
     val model: String,
-    val input: String
+    val input: String,
+    // Only set when the caller (an Agent) provides a persona/generation config; a plain
+    // request without them behaves exactly like the original free-form chat.
+    @SerialName("system_instruction") val systemInstruction: String? = null,
+    @SerialName("generation_config") val generationConfig: GenerationConfig? = null
+)
+
+/**
+ * Configuration parameters for a model interaction.
+ * See https://ai.google.dev/api/interactions-api (GenerationConfig fields).
+ */
+@Serializable
+data class GenerationConfig(
+    @SerialName("max_output_tokens") val maxOutputTokens: Int? = null,
+    val temperature: Double? = null
 )
 
 @Serializable
