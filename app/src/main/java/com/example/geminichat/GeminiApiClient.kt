@@ -55,6 +55,19 @@ class GeminiApiClient(
             "gemini-3-pro",
         )
         const val DEFAULT_MODEL = "gemini-3.5-flash"
+
+        /**
+         * Approximate published context windows (in tokens) per model. These are used only as
+         * a local guard in [LlmAgent] to preemptively refuse an over-budget conversation before
+         * an API call is made — not billed/authoritative numbers from Google.
+         */
+        private val CONTEXT_WINDOW_TOKENS = mapOf(
+            "gemini-3.5-flash" to 1_000_000,
+            "gemini-3.6-flash" to 1_000_000,
+            "gemini-3.7-flash" to 1_000_000,
+            "gemini-2.5-pro" to 2_000_000,
+            "gemini-3-pro" to 2_000_000,
+        )
     }
 
     private val json = Json { ignoreUnknownKeys = true }
@@ -73,6 +86,9 @@ class GeminiApiClient(
     }
 
     private val endpoint = "https://generativelanguage.googleapis.com/v1beta/interactions"
+
+    override fun contextWindowTokens(model: String): Int =
+        CONTEXT_WINDOW_TOKENS[model] ?: LlmClient.DEFAULT_CONTEXT_WINDOW_TOKENS
 
     override suspend fun complete(spec: LlmRequestSpec): Result<String> {
         if (apiKey.isBlank()) {

@@ -55,6 +55,36 @@ The UI lets you switch both the **agent** (top-left dropdown, e.g. Personal Trai
 Assistant) and the **model** (top-right dropdown) independently; the agent's one-line
 description is shown under the top bar.
 
+## Token accounting (Day 8)
+
+Every `LlmAgent.handle` call now counts tokens and can refuse to send an over-budget request:
+
+- **`agent/TokenEstimator.kt`** — the Gemini Interactions API used here doesn't return token
+  usage, and no Gemini tokenizer runs on-device, so token counts are an **offline heuristic**:
+  `max(word/punctuation count, chars / 4)`. It's approximate (not a billed count), but stable
+  enough to show growth trends and to unit-test overflow deterministically.
+- **`agent/AgentContracts.kt`** — `AgentResponse.tokenUsage` (a `TokenUsage`) breaks a call
+  down into `requestTokens` (just the new message), `historyTokens` (prior turns folded into
+  the prompt), `systemInstructionTokens`, `promptTokens` (everything sent to the model), and
+  `completionTokens` (the reply); `totalTokens` is the sum.
+- **`agent/LlmClient.kt`** / **`GeminiApiClient.kt`** — `LlmClient.contextWindowTokens(model)`
+  lets `LlmAgent` ask the transport for a model's context window (Gemini's real per-model
+  windows in `GeminiApiClient`, a large default elsewhere) without depending on Gemini directly.
+- **Overflow guard** — before calling the client, `LlmAgent` reserves
+  `AgentConfig.maxOutputTokens` (or a default) for the reply and compares
+  `promptTokens + reserved` against the window. If it doesn't fit, `handle` returns
+  `Result.failure(ContextWindowExceededException(...))` **without ever calling the model** —
+  the failure is immediate and explains itself, instead of sending a request the API would
+  truncate, reject, or answer with a request cut short.
+- **UI** — `ChatScreen` shows a running "Tokens in dialog" total under the agent description,
+  and each agent reply shows its own `prompt N (history M) · reply K · total T` breakdown.
+- **Tests** (`app/src/test/.../agent/TokenBudgetTest.kt`) compare a **short dialog** (few
+  tokens, succeeds), a **long dialog** (prompt tokens grow turn over turn as history
+  accumulates — asserted to be monotonic and >4x by the 8th turn), and a **dialog that exceeds
+  the model's context window** (a fake small window makes a realistic multi-turn history fail
+  with `ContextWindowExceededException` and zero calls to the client), plus a sanity check that
+  a short dialog still succeeds against that same tiny window.
+
 ## Setup
 
 1. Get a Gemini API key from [Google AI Studio](https://aistudio.google.com/apikey).
@@ -80,7 +110,8 @@ description is shown under the top bar.
 ## Project layout
 
 - `agent/` — the agent abstraction: `Agent`, `AgentConfig`/`AgentCatalog`, `AgentRequest`/
-  `AgentResponse`/`AgentMessage`, `LlmClient`/`LlmRequestSpec`, and the `LlmAgent` implementation.
+  `AgentResponse`/`AgentMessage`, `LlmClient`/`LlmRequestSpec`, `TokenUsage`/`TokenEstimator`,
+  `ContextWindowExceededException`, and the `LlmAgent` implementation.
 - `GeminiModels.kt` — kotlinx.serialization request/response DTOs for the Gemini Interactions
   API, including `system_instruction` and `generation_config`.
 - `GeminiApiClient.kt` — Ktor `HttpClient` wrapper implementing `LlmClient`; POSTs the request

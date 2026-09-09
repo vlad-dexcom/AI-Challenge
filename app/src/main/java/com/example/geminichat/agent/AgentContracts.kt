@@ -31,5 +31,30 @@ data class AgentResponse(
     val text: String,
     val agentId: String,
     val model: String,
-    val elapsedMs: Long
+    val elapsedMs: Long,
+    val tokenUsage: TokenUsage
 )
+
+/**
+ * Token accounting for a single [Agent.handle] call, estimated via [TokenEstimator] (see its
+ * doc for why this is an approximation, not a billed count).
+ *
+ * - [requestTokens] — just the new user message.
+ * - [historyTokens] — the prior conversation folded into the prompt (see
+ *   [LlmAgent.renderPrompt]); zero for the first turn of a chat.
+ * - [systemInstructionTokens] — the agent's persona/system instruction, sent separately from
+ *   [LlmRequestSpec.input] but still counted against the model's context window.
+ * - [promptTokens] — everything actually sent to the model for this call
+ *   (`requestTokens + historyTokens + systemInstructionTokens`).
+ * - [completionTokens] — the model's reply.
+ * - [totalTokens] — `promptTokens + completionTokens`, i.e. this call's full token cost.
+ */
+data class TokenUsage(
+    val requestTokens: Int,
+    val historyTokens: Int,
+    val systemInstructionTokens: Int,
+    val promptTokens: Int,
+    val completionTokens: Int
+) {
+    val totalTokens: Int get() = promptTokens + completionTokens
+}

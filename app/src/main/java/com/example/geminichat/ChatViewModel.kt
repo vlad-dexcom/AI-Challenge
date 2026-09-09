@@ -8,6 +8,7 @@ import com.example.geminichat.agent.AgentConfig
 import com.example.geminichat.agent.AgentMessage
 import com.example.geminichat.agent.AgentRequest
 import com.example.geminichat.agent.LlmAgent
+import com.example.geminichat.agent.TokenUsage
 import kotlinx.coroutines.TimeoutCancellationException
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
@@ -16,7 +17,9 @@ import kotlinx.coroutines.withTimeout
 
 data class ChatMessage(
     val text: String,
-    val isFromUser: Boolean
+    val isFromUser: Boolean,
+    /** Token accounting for this turn; only set on agent replies (see [TokenUsage]). */
+    val tokenUsage: TokenUsage? = null
 )
 
 data class ChatUiState(
@@ -29,7 +32,12 @@ data class ChatUiState(
     val agentName: String = AgentCatalog.DEFAULT.displayName,
     val agentDescription: String = AgentCatalog.DEFAULT.description,
     val selectedAgentId: String = AgentCatalog.DEFAULT.id,
-    val availableAgents: List<AgentConfig> = AgentCatalog.ALL
+    val availableAgents: List<AgentConfig> = AgentCatalog.ALL,
+    /**
+     * Running total of every [TokenUsage.totalTokens] in this dialog so far — shown in the UI
+     * to make the token cost of a growing conversation visible as it happens (Day 8).
+     */
+    val dialogTokenTotal: Int = 0
 )
 
 /**
@@ -94,8 +102,13 @@ class ChatViewModel(private val apiKey: String) : ViewModel() {
                     agent.handle(AgentRequest(userMessage = prompt, history = history, modelOverride = model))
                         .onSuccess { response ->
                             _uiState.value = _uiState.value.copy(
-                                messages = _uiState.value.messages + ChatMessage(response.text, isFromUser = false),
-                                isLoading = false
+                                messages = _uiState.value.messages + ChatMessage(
+                                    text = response.text,
+                                    isFromUser = false,
+                                    tokenUsage = response.tokenUsage
+                                ),
+                                isLoading = false,
+                                dialogTokenTotal = _uiState.value.dialogTokenTotal + response.tokenUsage.totalTokens
                             )
                         }
                         .onFailure { error ->

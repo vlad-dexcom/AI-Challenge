@@ -93,6 +93,14 @@ fun ChatScreen(viewModel: ChatViewModel) {
                     color = MaterialTheme.colorScheme.onSurfaceVariant,
                     modifier = Modifier.padding(horizontal = 16.dp, vertical = 4.dp)
                 )
+                if (uiState.dialogTokenTotal > 0) {
+                    Text(
+                        text = "Tokens in dialog: ${uiState.dialogTokenTotal} (estimated)",
+                        style = MaterialTheme.typography.labelSmall,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant,
+                        modifier = Modifier.padding(horizontal = 16.dp, vertical = 2.dp)
+                    )
+                }
             }
         }
     ) { padding ->
@@ -242,14 +250,24 @@ private fun MessageBubble(message: ChatMessage) {
                     modifier = Modifier.padding(12.dp)
                 )
             } else {
-                MarkdownText(
-                    markdown = message.text,
-                    style = MaterialTheme.typography.bodyLarge.copy(
-                        color = MaterialTheme.colorScheme.onSecondaryContainer
-                    ),
-                    isTextSelectable = true,
-                    modifier = Modifier.padding(12.dp)
-                )
+                Column(modifier = Modifier.padding(12.dp)) {
+                    MarkdownText(
+                        markdown = message.text,
+                        style = MaterialTheme.typography.bodyLarge.copy(
+                            color = MaterialTheme.colorScheme.onSecondaryContainer
+                        ),
+                        isTextSelectable = true
+                    )
+                    message.tokenUsage?.let { usage ->
+                        Text(
+                            text = "prompt ${usage.promptTokens} (history ${usage.historyTokens}) · " +
+                                "reply ${usage.completionTokens} · total ${usage.totalTokens}",
+                            style = MaterialTheme.typography.labelSmall,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant,
+                            modifier = Modifier.padding(top = 4.dp)
+                        )
+                    }
+                }
             }
         }
     }
