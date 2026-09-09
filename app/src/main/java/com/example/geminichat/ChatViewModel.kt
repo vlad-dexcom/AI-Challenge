@@ -8,12 +8,15 @@ import com.example.geminichat.agent.AgentConfig
 import com.example.geminichat.agent.AgentMessage
 import com.example.geminichat.agent.AgentRequest
 import com.example.geminichat.agent.LlmAgent
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.TimeoutCancellationException
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withTimeout
+import kotlinx.serialization.Serializable
 
+@Serializable
 data class ChatMessage(
     val text: String,
     val isFromUser: Boolean
@@ -37,13 +40,29 @@ data class ChatUiState(
  * The agent owns its persona/system-instruction/generation config; this ViewModel only knows
  * "send the user's message to the current agent and show what comes back".
  */
-class ChatViewModel(private val apiKey: String) : ViewModel() {
+class ChatViewModel(
+    private val apiKey: String,
+    private val historyStore: ChatHistoryStore? = null
+) : ViewModel() {
 
     private val geminiClient = GeminiApiClient(apiKey = apiKey)
 
-    private var agent: Agent = LlmAgent(config = AgentCatalog.DEFAULT, client = geminiClient)
+    // Restore whatever was last saved so a fresh process picks the conversation back up —
+    // the ViewModel no longer starts every run from a blank slate.
+    private val restored = historyStore?.load() ?: ChatHistorySnapshot()
+    private val restoredAgentConfig = AgentCatalog.byId(restored.selectedAgentId)
 
-    private val _uiState = MutableStateFlow(ChatUiState())
+    private var agent: Agent = LlmAgent(config = restoredAgentConfig, client = geminiClient)
+
+    private val _uiState = MutableStateFlow(
+        ChatUiState(
+            messages = restored.messages,
+            selectedModel = restored.selectedModel,
+            agentName = restoredAgentConfig.displayName,
+            agentDescription = restoredAgentConfig.description,
+            selectedAgentId = restoredAgentConfig.id
+        )
+    )
     val uiState: StateFlow<ChatUiState> = _uiState
 
     fun onInputChange(newInput: String) {
@@ -52,6 +71,7 @@ class ChatViewModel(private val apiKey: String) : ViewModel() {
 
     fun onModelSelected(model: String) {
         _uiState.value = _uiState.value.copy(selectedModel = model)
+        persistHistory()
     }
 
     fun onAgentSelected(agentId: String) {
@@ -62,6 +82,22 @@ class ChatViewModel(private val apiKey: String) : ViewModel() {
             agentName = config.displayName,
             agentDescription = config.description
         )
+        persistHistory()
+    }
+
+    /** Writes the current transcript + selected agent/model so a restart can resume from it. */
+    private fun persistHistory() {
+        val store = historyStore ?: return
+        val state = _uiState.value
+        viewModelScope.launch(Dispatchers.IO) {
+            store.save(
+                ChatHistorySnapshot(
+                    messages = state.messages,
+                    selectedAgentId = state.selectedAgentId,
+                    selectedModel = state.selectedModel
+                )
+            )
+        }
     }
 
     fun sendMessage() {
@@ -70,8 +106,9 @@ class ChatViewModel(private val apiKey: String) : ViewModel() {
         val model = _uiState.value.selectedModel
 
         // Snapshot the conversation so far (before appending this new turn) as the history
-        // mixed into the agent's context — kept in memory only for the lifetime of this
-        // ViewModel/app process, not persisted across restarts.
+        // mixed into the agent's context. This is also what gets persisted (see
+        // [ChatHistoryStore]) and reloaded as [restored] on the next app start, so — unlike
+        // before — it now survives process death, not just the current ViewModel/app run.
         val history = _uiState.value.messages.map { message ->
             AgentMessage(
                 role = if (message.isFromUser) AgentMessage.Role.USER else AgentMessage.Role.AGENT,
@@ -85,6 +122,7 @@ class ChatViewModel(private val apiKey: String) : ViewModel() {
             isLoading = true,
             errorMessage = null
         )
+        persistHistory()
 
         viewModelScope.launch {
             try {
@@ -97,6 +135,7 @@ class ChatViewModel(private val apiKey: String) : ViewModel() {
                                 messages = _uiState.value.messages + ChatMessage(response.text, isFromUser = false),
                                 isLoading = false
                             )
+                            persistHistory()
                         }
                         .onFailure { error ->
                             _uiState.value = _uiState.value.copy(

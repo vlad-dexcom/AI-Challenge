@@ -14,10 +14,12 @@ data class AgentMessage(
  * Input to [Agent.handle].
  *
  * [history] carries the prior turns of the current chat, which [LlmAgent] folds into the
- * prompt (see [LlmAgent.renderPrompt]) so the model has conversational context. This history
- * is kept in memory only for the lifetime of the app process/session — nothing is persisted
- * across restarts, and the caller ([com.example.geminichat.ChatViewModel]) is responsible for
- * deciding what to pass in (currently: the whole visible chat, unbounded).
+ * prompt (see [LlmAgent.renderPrompt]) so the model has conversational context. This is just
+ * the in-memory transcript for a single request — the caller ([com.example.geminichat.ChatViewModel])
+ * decides what to pass in (currently: the whole visible chat, unbounded) and is also
+ * responsible for persisting/restoring it across app restarts via
+ * [com.example.geminichat.ChatHistoryStore], so a chat now resumes instead of starting empty
+ * on every launch.
  */
 data class AgentRequest(
     val userMessage: String,
