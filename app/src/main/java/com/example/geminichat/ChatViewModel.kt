@@ -8,6 +8,7 @@ import com.example.geminichat.agent.AgentConfig
 import com.example.geminichat.agent.AgentMessage
 import com.example.geminichat.agent.AgentRequest
 import com.example.geminichat.agent.LlmAgent
+import com.example.geminichat.agent.TokenUsage
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.TimeoutCancellationException
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -15,11 +16,20 @@ import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withTimeout
 import kotlinx.serialization.Serializable
+import kotlinx.serialization.Transient
 
 @Serializable
 data class ChatMessage(
     val text: String,
-    val isFromUser: Boolean
+    val isFromUser: Boolean,
+    /**
+     * Token accounting for this turn; only set (in-memory) on agent replies (see
+     * [TokenUsage]). Marked [Transient] because [TokenUsage] isn't `@Serializable` and this is
+     * ephemeral, recomputed-per-call data — it's simply dropped by [ChatHistoryStore] and
+     * comes back `null` for messages restored from a previous app run.
+     */
+    @Transient
+    val tokenUsage: TokenUsage? = null
 )
 
 data class ChatUiState(
@@ -32,7 +42,12 @@ data class ChatUiState(
     val agentName: String = AgentCatalog.DEFAULT.displayName,
     val agentDescription: String = AgentCatalog.DEFAULT.description,
     val selectedAgentId: String = AgentCatalog.DEFAULT.id,
-    val availableAgents: List<AgentConfig> = AgentCatalog.ALL
+    val availableAgents: List<AgentConfig> = AgentCatalog.ALL,
+    /**
+     * Running total of every [TokenUsage.totalTokens] in this dialog so far — shown in the UI
+     * to make the token cost of a growing conversation visible as it happens (Day 8).
+     */
+    val dialogTokenTotal: Int = 0
 )
 
 /**
@@ -42,10 +57,20 @@ data class ChatUiState(
  */
 class ChatViewModel(
     private val apiKey: String,
-    private val historyStore: ChatHistoryStore? = null
+    private val historyStore: ChatHistoryStore? = null,
+    /**
+     * Test/debug-only override forwarded to [GeminiApiClient]: set this to a small number
+     * (e.g. 200) to force every request through the "conversation is too long" overflow path
+     * (see [com.example.geminichat.agent.ContextWindowExceededException]) and see it surface in
+     * the running app. Leave `null` (the default) for real usage.
+     */
+    private val debugContextWindowOverrideTokens: Int? = null
 ) : ViewModel() {
 
-    private val geminiClient = GeminiApiClient(apiKey = apiKey)
+    private val geminiClient = GeminiApiClient(
+        apiKey = apiKey,
+        debugContextWindowOverrideTokens = debugContextWindowOverrideTokens
+    )
 
     // Restore whatever was last saved so a fresh process picks the conversation back up —
     // the ViewModel no longer starts every run from a blank slate.
@@ -132,8 +157,13 @@ class ChatViewModel(
                     agent.handle(AgentRequest(userMessage = prompt, history = history, modelOverride = model))
                         .onSuccess { response ->
                             _uiState.value = _uiState.value.copy(
-                                messages = _uiState.value.messages + ChatMessage(response.text, isFromUser = false),
-                                isLoading = false
+                                messages = _uiState.value.messages + ChatMessage(
+                                    text = response.text,
+                                    isFromUser = false,
+                                    tokenUsage = response.tokenUsage
+                                ),
+                                isLoading = false,
+                                dialogTokenTotal = _uiState.value.dialogTokenTotal + response.tokenUsage.totalTokens
                             )
                             persistHistory()
                         }

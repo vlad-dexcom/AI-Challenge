@@ -40,7 +40,16 @@ import java.nio.channels.UnresolvedAddressException
  * without the agent layer knowing anything about Gemini, Ktor, or REST.
  */
 class GeminiApiClient(
-    private val apiKey: String
+    private val apiKey: String,
+    /**
+     * Test/debug-only override: when non-null, [contextWindowTokens] returns this value for
+     * *every* model instead of the real published window. This exists purely so the
+     * [ContextWindowExceededException][com.example.geminichat.agent.ContextWindowExceededException]
+     * overflow path can be exercised against the real client/UI (not just the fake client in
+     * unit tests) by temporarily constructing a client with, e.g., `debugContextWindowOverrideTokens = 200`.
+     * Leave `null` (the default) for real usage — it never affects production behavior.
+     */
+    private val debugContextWindowOverrideTokens: Int? = null
 ) : LlmClient {
     companion object {
         /**
@@ -55,6 +64,19 @@ class GeminiApiClient(
             "gemini-3-pro",
         )
         const val DEFAULT_MODEL = "gemini-3.5-flash"
+
+        /**
+         * Approximate published context windows (in tokens) per model. These are used only as
+         * a local guard in [LlmAgent] to preemptively refuse an over-budget conversation before
+         * an API call is made — not billed/authoritative numbers from Google.
+         */
+        private val CONTEXT_WINDOW_TOKENS = mapOf(
+            "gemini-3.5-flash" to 1_000_000,
+            "gemini-3.6-flash" to 1_000_000,
+            "gemini-3.7-flash" to 1_000_000,
+            "gemini-2.5-pro" to 2_000_000,
+            "gemini-3-pro" to 2_000_000,
+        )
     }
 
     private val json = Json { ignoreUnknownKeys = true }
@@ -73,6 +95,9 @@ class GeminiApiClient(
     }
 
     private val endpoint = "https://generativelanguage.googleapis.com/v1beta/interactions"
+
+    override fun contextWindowTokens(model: String): Int =
+        debugContextWindowOverrideTokens ?: CONTEXT_WINDOW_TOKENS[model] ?: LlmClient.DEFAULT_CONTEXT_WINDOW_TOKENS
 
     override suspend fun complete(spec: LlmRequestSpec): Result<String> {
         if (apiKey.isBlank()) {

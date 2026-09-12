@@ -44,6 +44,21 @@ class LlmAgentTest {
         assertEquals("Here is your answer.", response.text)
         assertEquals(testConfig.id, response.agentId)
         assertEquals(testConfig.model, response.model)
+        // Token accounting: no history on this turn, so historyTokens is zero and
+        // promptTokens is just the request + system instruction; completionTokens reflects
+        // the (trimmed) answer text.
+        assertEquals(0, response.tokenUsage.historyTokens)
+        assertTrue(response.tokenUsage.requestTokens > 0)
+        assertTrue(response.tokenUsage.completionTokens > 0)
+        assertEquals(
+            response.tokenUsage.requestTokens + response.tokenUsage.historyTokens +
+                response.tokenUsage.systemInstructionTokens,
+            response.tokenUsage.promptTokens
+        )
+        assertEquals(
+            response.tokenUsage.promptTokens + response.tokenUsage.completionTokens,
+            response.tokenUsage.totalTokens
+        )
     }
 
     @Test
