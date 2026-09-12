@@ -109,10 +109,11 @@ class LlmAgent(
     /**
      * Renders [history] as a "User: ...\n<Agent>: ..." transcript so the model has the full
      * prior conversation as context (empty string when there is no history yet). The caller
-     * (currently [com.example.geminichat.ChatViewModel]) decides what history to pass in —
-     * this in-memory chat history lasts only for the current app session/process, it is not
-     * persisted across restarts. Kept separate from the final prompt assembly in [handle] so
-     * its token count can be estimated on its own (see [TokenUsage.historyTokens]).
+     * (currently [com.example.geminichat.ChatViewModel]) decides what history to pass in — it
+     * is now persisted/restored across app restarts via
+     * [com.example.geminichat.ChatHistoryStore], so it survives beyond a single app
+     * session/process. Kept separate from the final prompt assembly in [handle] so its token
+     * count can be estimated on its own (see [TokenUsage.historyTokens]).
      */
     private fun renderHistory(history: List<AgentMessage>): String {
         if (history.isEmpty()) return ""

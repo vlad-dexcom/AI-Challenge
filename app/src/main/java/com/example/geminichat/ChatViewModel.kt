@@ -9,16 +9,26 @@ import com.example.geminichat.agent.AgentMessage
 import com.example.geminichat.agent.AgentRequest
 import com.example.geminichat.agent.LlmAgent
 import com.example.geminichat.agent.TokenUsage
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.TimeoutCancellationException
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withTimeout
+import kotlinx.serialization.Serializable
+import kotlinx.serialization.Transient
 
+@Serializable
 data class ChatMessage(
     val text: String,
     val isFromUser: Boolean,
-    /** Token accounting for this turn; only set on agent replies (see [TokenUsage]). */
+    /**
+     * Token accounting for this turn; only set (in-memory) on agent replies (see
+     * [TokenUsage]). Marked [Transient] because [TokenUsage] isn't `@Serializable` and this is
+     * ephemeral, recomputed-per-call data — it's simply dropped by [ChatHistoryStore] and
+     * comes back `null` for messages restored from a previous app run.
+     */
+    @Transient
     val tokenUsage: TokenUsage? = null
 )
 
@@ -47,6 +57,7 @@ data class ChatUiState(
  */
 class ChatViewModel(
     private val apiKey: String,
+    private val historyStore: ChatHistoryStore? = null,
     /**
      * Test/debug-only override forwarded to [GeminiApiClient]: set this to a small number
      * (e.g. 200) to force every request through the "conversation is too long" overflow path
@@ -61,9 +72,22 @@ class ChatViewModel(
         debugContextWindowOverrideTokens = debugContextWindowOverrideTokens
     )
 
-    private var agent: Agent = LlmAgent(config = AgentCatalog.DEFAULT, client = geminiClient)
+    // Restore whatever was last saved so a fresh process picks the conversation back up —
+    // the ViewModel no longer starts every run from a blank slate.
+    private val restored = historyStore?.load() ?: ChatHistorySnapshot()
+    private val restoredAgentConfig = AgentCatalog.byId(restored.selectedAgentId)
 
-    private val _uiState = MutableStateFlow(ChatUiState())
+    private var agent: Agent = LlmAgent(config = restoredAgentConfig, client = geminiClient)
+
+    private val _uiState = MutableStateFlow(
+        ChatUiState(
+            messages = restored.messages,
+            selectedModel = restored.selectedModel,
+            agentName = restoredAgentConfig.displayName,
+            agentDescription = restoredAgentConfig.description,
+            selectedAgentId = restoredAgentConfig.id
+        )
+    )
     val uiState: StateFlow<ChatUiState> = _uiState
 
     fun onInputChange(newInput: String) {
@@ -72,6 +96,7 @@ class ChatViewModel(
 
     fun onModelSelected(model: String) {
         _uiState.value = _uiState.value.copy(selectedModel = model)
+        persistHistory()
     }
 
     fun onAgentSelected(agentId: String) {
@@ -82,6 +107,22 @@ class ChatViewModel(
             agentName = config.displayName,
             agentDescription = config.description
         )
+        persistHistory()
+    }
+
+    /** Writes the current transcript + selected agent/model so a restart can resume from it. */
+    private fun persistHistory() {
+        val store = historyStore ?: return
+        val state = _uiState.value
+        viewModelScope.launch(Dispatchers.IO) {
+            store.save(
+                ChatHistorySnapshot(
+                    messages = state.messages,
+                    selectedAgentId = state.selectedAgentId,
+                    selectedModel = state.selectedModel
+                )
+            )
+        }
     }
 
     fun sendMessage() {
@@ -90,8 +131,9 @@ class ChatViewModel(
         val model = _uiState.value.selectedModel
 
         // Snapshot the conversation so far (before appending this new turn) as the history
-        // mixed into the agent's context — kept in memory only for the lifetime of this
-        // ViewModel/app process, not persisted across restarts.
+        // mixed into the agent's context. This is also what gets persisted (see
+        // [ChatHistoryStore]) and reloaded as [restored] on the next app start, so — unlike
+        // before — it now survives process death, not just the current ViewModel/app run.
         val history = _uiState.value.messages.map { message ->
             AgentMessage(
                 role = if (message.isFromUser) AgentMessage.Role.USER else AgentMessage.Role.AGENT,
@@ -105,6 +147,7 @@ class ChatViewModel(
             isLoading = true,
             errorMessage = null
         )
+        persistHistory()
 
         viewModelScope.launch {
             try {
@@ -122,6 +165,7 @@ class ChatViewModel(
                                 isLoading = false,
                                 dialogTokenTotal = _uiState.value.dialogTokenTotal + response.tokenUsage.totalTokens
                             )
+                            persistHistory()
                         }
                         .onFailure { error ->
                             _uiState.value = _uiState.value.copy(

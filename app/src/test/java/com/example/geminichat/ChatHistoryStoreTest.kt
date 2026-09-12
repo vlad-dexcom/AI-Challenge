@@ -1,0 +1,66 @@
+package com.example.geminichat
+
+import java.io.File
+import org.junit.After
+import org.junit.Assert.assertEquals
+import org.junit.Assert.assertFalse
+import org.junit.Assert.assertTrue
+import org.junit.Before
+import org.junit.Test
+
+/**
+ * Verifies the "Day 7" requirement directly: history saved by one [ChatHistoryStore] instance
+ * (simulating the app before a restart) is exactly what a fresh instance reading the same file
+ * (simulating the app after a restart) loads back — no messages lost, agent/model resumed.
+ */
+class ChatHistoryStoreTest {
+
+    private lateinit var file: File
+
+    @Before
+    fun setUp() {
+        file = File.createTempFile("chat_history_test", ".json")
+        file.delete()
+    }
+
+    @After
+    fun tearDown() {
+        file.delete()
+    }
+
+    @Test
+    fun `load returns empty snapshot when no file exists yet`() {
+        val store = ChatHistoryStore(file)
+
+        val snapshot = store.load()
+
+        assertTrue(snapshot.messages.isEmpty())
+    }
+
+    @Test
+    fun `save then load with a new store instance restores the full conversation`() {
+        val original = ChatHistorySnapshot(
+            messages = listOf(
+                ChatMessage("How do I warm up before squats?", isFromUser = true),
+                ChatMessage("Start with 5 minutes of light cardio, then bodyweight squats.", isFromUser = false)
+            ),
+            selectedAgentId = "personal-trainer",
+            selectedModel = "gemini-1.5-flash"
+        )
+        ChatHistoryStore(file).save(original)
+
+        // A brand new instance stands in for "the agent/app restarted".
+        val restored = ChatHistoryStore(file).load()
+
+        assertEquals(original, restored)
+    }
+
+    @Test
+    fun `load returns empty snapshot when file contains invalid json`() {
+        file.writeText("not valid json")
+
+        val snapshot = ChatHistoryStore(file).load()
+
+        assertFalse(snapshot.messages.isNotEmpty())
+    }
+}
