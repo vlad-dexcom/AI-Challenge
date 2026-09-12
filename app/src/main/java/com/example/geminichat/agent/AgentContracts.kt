@@ -25,7 +25,14 @@ data class AgentRequest(
     val userMessage: String,
     val history: List<AgentMessage> = emptyList(),
     /** Optional override of the [AgentConfig.model] the agent would otherwise use. */
-    val modelOverride: String? = null
+    val modelOverride: String? = null,
+    /**
+     * Optional condensed stand-in for older turns that have been folded out of [history] by
+     * [com.example.geminichat.agent.HistoryCompressor] (Day 9). When set, [LlmAgent] prepends
+     * it to the prompt ahead of [history] instead of requiring the full, ever-growing
+     * transcript to be replayed every turn.
+     */
+    val summary: String? = null
 )
 
 /** Successful output of [Agent.handle]. */
@@ -42,12 +49,16 @@ data class AgentResponse(
  * doc for why this is an approximation, not a billed count).
  *
  * - [requestTokens] — just the new user message.
- * - [historyTokens] — the prior conversation folded into the prompt (see
- *   [LlmAgent.renderHistory]); zero for the first turn of a chat.
+ * - [historyTokens] — the raw conversation turns folded into the prompt (see
+ *   [LlmAgent.renderHistory]); zero for the first turn of a chat, and — once Day 9's
+ *   compression kicks in — only the *recent*, uncompressed tail rather than the whole history.
+ * - [summaryTokens] — the condensed stand-in for older turns (see [AgentRequest.summary] /
+ *   [com.example.geminichat.agent.HistoryCompressor]); zero when no compression has happened
+ *   yet or compression is disabled.
  * - [systemInstructionTokens] — the agent's persona/system instruction, sent separately from
  *   [LlmRequestSpec.input] but still counted against the model's context window.
  * - [promptTokens] — everything actually sent to the model for this call
- *   (`requestTokens + historyTokens + systemInstructionTokens`).
+ *   (`requestTokens + historyTokens + summaryTokens + systemInstructionTokens`).
  * - [completionTokens] — the model's reply.
  * - [totalTokens] — `promptTokens + completionTokens`, i.e. this call's full token cost.
  */
@@ -56,7 +67,8 @@ data class TokenUsage(
     val historyTokens: Int,
     val systemInstructionTokens: Int,
     val promptTokens: Int,
-    val completionTokens: Int
+    val completionTokens: Int,
+    val summaryTokens: Int = 0
 ) {
     val totalTokens: Int get() = promptTokens + completionTokens
 }

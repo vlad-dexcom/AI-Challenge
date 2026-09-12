@@ -44,7 +44,16 @@ class LlmAgent(
 
         val model = request.modelOverride ?: config.model
         val historyText = renderHistory(request.history)
-        val input = if (historyText.isEmpty()) userMessage else "$historyText\nUser: $userMessage"
+        // A Day 9 summary (see [AgentRequest.summary]) stands in for older turns that
+        // [com.example.geminichat.agent.HistoryCompressor] has folded out of [historyText] —
+        // it's rendered ahead of the recent history so the model still has that context
+        // without replaying the full, ever-growing transcript.
+        val summaryText = request.summary?.trim().orEmpty()
+        val contextText = listOf(
+            summaryText.takeIf { it.isNotEmpty() }?.let { "Summary of earlier conversation:\n$it" },
+            historyText.takeIf { it.isNotEmpty() }
+        ).filterNotNull().joinToString("\n")
+        val input = if (contextText.isEmpty()) userMessage else "$contextText\nUser: $userMessage"
 
         // Count tokens for each part *before* calling the client, so an over-budget
         // conversation can be refused without ever making the network call (see
@@ -52,8 +61,9 @@ class LlmAgent(
         // truncate or reject.
         val requestTokens = TokenEstimator.estimate(userMessage)
         val historyTokens = TokenEstimator.estimate(historyText)
+        val summaryTokens = TokenEstimator.estimate(summaryText)
         val systemInstructionTokens = TokenEstimator.estimate(config.systemInstruction)
-        val promptTokens = requestTokens + historyTokens + systemInstructionTokens
+        val promptTokens = requestTokens + historyTokens + summaryTokens + systemInstructionTokens
 
         val reservedOutputTokens = config.maxOutputTokens ?: DEFAULT_RESERVED_OUTPUT_TOKENS
         val contextWindowTokens = client.contextWindowTokens(model)
@@ -96,7 +106,8 @@ class LlmAgent(
                                 historyTokens = historyTokens,
                                 systemInstructionTokens = systemInstructionTokens,
                                 promptTokens = promptTokens,
-                                completionTokens = TokenEstimator.estimate(answer)
+                                completionTokens = TokenEstimator.estimate(answer),
+                                summaryTokens = summaryTokens
                             )
                         )
                     )

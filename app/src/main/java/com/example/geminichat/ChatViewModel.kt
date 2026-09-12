@@ -7,6 +7,7 @@ import com.example.geminichat.agent.AgentCatalog
 import com.example.geminichat.agent.AgentConfig
 import com.example.geminichat.agent.AgentMessage
 import com.example.geminichat.agent.AgentRequest
+import com.example.geminichat.agent.HistoryCompressor
 import com.example.geminichat.agent.LlmAgent
 import com.example.geminichat.agent.TokenUsage
 import kotlinx.coroutines.Dispatchers
@@ -47,7 +48,24 @@ data class ChatUiState(
      * Running total of every [TokenUsage.totalTokens] in this dialog so far — shown in the UI
      * to make the token cost of a growing conversation visible as it happens (Day 8).
      */
-    val dialogTokenTotal: Int = 0
+    val dialogTokenTotal: Int = 0,
+    /**
+     * Day 9 context compression: when enabled, only the most recent messages are sent
+     * verbatim and older turns are replaced by [contextSummary] (see [HistoryCompressor]).
+     * Exposed as a toggle so the same conversation's quality/token cost can be compared
+     * with and without compression.
+     */
+    val compressionEnabled: Boolean = true,
+    /** The running summary standing in for turns already folded out of [messages]. */
+    val contextSummary: String = "",
+    /** How many of the oldest [messages] are already represented by [contextSummary]. */
+    val summarizedMessageCount: Int = 0,
+    /**
+     * Tokens spent on the summarization calls themselves (Day 9), tracked separately from
+     * [dialogTokenTotal] so the "cost of compressing" isn't confused with the cost of actual
+     * chat turns.
+     */
+    val compressionTokensTotal: Int = 0
 )
 
 /**
@@ -61,6 +79,7 @@ class ChatViewModel(
 ) : ViewModel() {
 
     private val geminiClient = GeminiApiClient(apiKey)
+    private val historyCompressor = HistoryCompressor(client = geminiClient)
 
     // Restore whatever was last saved so a fresh process picks the conversation back up —
     // the ViewModel no longer starts every run from a blank slate.
@@ -75,7 +94,10 @@ class ChatViewModel(
             selectedModel = restored.selectedModel,
             agentName = restoredAgentConfig.displayName,
             agentDescription = restoredAgentConfig.description,
-            selectedAgentId = restoredAgentConfig.id
+            selectedAgentId = restoredAgentConfig.id,
+            compressionEnabled = restored.compressionEnabled,
+            contextSummary = restored.summary,
+            summarizedMessageCount = restored.summarizedMessageCount
         )
     )
     val uiState: StateFlow<ChatUiState> = _uiState
@@ -100,6 +122,16 @@ class ChatViewModel(
         persistHistory()
     }
 
+    /**
+     * Toggles Day 9 context compression on/off, so the same conversation can be A/B compared
+     * (quality, token cost) with and without it — the summary already accumulated is kept
+     * around either way, ready to be reused if compression is turned back on.
+     */
+    fun onCompressionToggled(enabled: Boolean) {
+        _uiState.value = _uiState.value.copy(compressionEnabled = enabled)
+        persistHistory()
+    }
+
     /** Writes the current transcript + selected agent/model so a restart can resume from it. */
     private fun persistHistory() {
         val store = historyStore ?: return
@@ -109,7 +141,10 @@ class ChatViewModel(
                 ChatHistorySnapshot(
                     messages = state.messages,
                     selectedAgentId = state.selectedAgentId,
-                    selectedModel = state.selectedModel
+                    selectedModel = state.selectedModel,
+                    compressionEnabled = state.compressionEnabled,
+                    summary = state.contextSummary,
+                    summarizedMessageCount = state.summarizedMessageCount
                 )
             )
         }
@@ -144,7 +179,15 @@ class ChatViewModel(
                 // Hard safety net: no matter what the underlying HTTP client does, the user
                 // should never be stuck on the loading indicator forever.
                 withTimeout(125_000) {
-                    agent.handle(AgentRequest(userMessage = prompt, history = history, modelOverride = model))
+                    val (recentHistory, summary) = prepareRequestContext(history, model)
+                    agent.handle(
+                        AgentRequest(
+                            userMessage = prompt,
+                            history = recentHistory,
+                            modelOverride = model,
+                            summary = summary
+                        )
+                    )
                         .onSuccess { response ->
                             _uiState.value = _uiState.value.copy(
                                 messages = _uiState.value.messages + ChatMessage(
@@ -178,6 +221,50 @@ class ChatViewModel(
                 )
             }
         }
+    }
+
+    /**
+     * Decides what to actually send as this turn's history/summary (Day 9). When compression
+     * is disabled, the full raw [history] is sent as-is (the pre-Day-9 behavior, kept around
+     * for a direct quality/token comparison). When enabled:
+     * - if enough newly aged-out messages have piled up beyond the recent window, folds them
+     *   into the running summary first (a real LLM call — see [HistoryCompressor.fold]),
+     *   updating [ChatUiState.contextSummary]/[ChatUiState.summarizedMessageCount] and
+     *   accumulating [ChatUiState.compressionTokensTotal].
+     * - either way, only the recent tail of [history] is sent verbatim, alongside whatever
+     *   summary is currently stored.
+     */
+    private suspend fun prepareRequestContext(
+        history: List<AgentMessage>,
+        model: String
+    ): Pair<List<AgentMessage>, String?> {
+        val state = _uiState.value
+        if (!state.compressionEnabled) {
+            return history to null
+        }
+
+        val foldRange = historyCompressor.pendingFoldRange(history.size, state.summarizedMessageCount)
+        if (foldRange != null) {
+            val messagesToFold = history.subList(foldRange.first, foldRange.last + 1)
+            historyCompressor.fold(
+                previousSummary = state.contextSummary.ifBlank { null },
+                messagesToFold = messagesToFold,
+                model = model
+            ).onSuccess { outcome ->
+                _uiState.value = _uiState.value.copy(
+                    contextSummary = outcome.summary,
+                    summarizedMessageCount = foldRange.last + 1,
+                    compressionTokensTotal = _uiState.value.compressionTokensTotal + outcome.tokensUsed
+                )
+                persistHistory()
+            }
+            // On failure, silently keep the previous summary/counts and fall through — the
+            // conversation still works, just without folding in this new chunk yet; the next
+            // turn will retry once another chunk's worth of messages has piled up.
+        }
+
+        val latestState = _uiState.value
+        return historyCompressor.recentTail(history) to latestState.contextSummary.ifBlank { null }
     }
 
     override fun onCleared() {
