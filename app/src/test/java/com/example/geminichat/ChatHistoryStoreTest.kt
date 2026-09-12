@@ -45,7 +45,10 @@ class ChatHistoryStoreTest {
                 ChatMessage("Start with 5 minutes of light cardio, then bodyweight squats.", isFromUser = false)
             ),
             selectedAgentId = "personal-trainer",
-            selectedModel = "gemini-1.5-flash"
+            selectedModel = "gemini-1.5-flash",
+            compressionEnabled = false,
+            summary = "User asked about squat warm-ups; agent suggested light cardio first.",
+            summarizedMessageCount = 2
         )
         ChatHistoryStore(file).save(original)
 
@@ -62,5 +65,20 @@ class ChatHistoryStoreTest {
         val snapshot = ChatHistoryStore(file).load()
 
         assertFalse(snapshot.messages.isNotEmpty())
+    }
+
+    @Test
+    fun `load defaults Day 9 compression fields for a pre-Day-9 snapshot file`() {
+        // Simulates a file saved before compressionEnabled/summary/summarizedMessageCount
+        // existed — ignoreUnknownKeys plus field defaults should make this a no-op upgrade.
+        file.writeText(
+            """{"messages":[],"selectedAgentId":"personal-trainer","selectedModel":"gemini-1.5-flash"}"""
+        )
+
+        val snapshot = ChatHistoryStore(file).load()
+
+        assertTrue(snapshot.compressionEnabled)
+        assertEquals("", snapshot.summary)
+        assertEquals(0, snapshot.summarizedMessageCount)
     }
 }

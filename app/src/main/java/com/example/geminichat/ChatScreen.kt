@@ -25,6 +25,7 @@ import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Scaffold
+import androidx.compose.material3.Switch
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.material3.TopAppBar
@@ -101,6 +102,13 @@ fun ChatScreen(viewModel: ChatViewModel) {
                         modifier = Modifier.padding(horizontal = 16.dp, vertical = 2.dp)
                     )
                 }
+                CompressionBar(
+                    enabled = uiState.compressionEnabled,
+                    summarizedMessageCount = uiState.summarizedMessageCount,
+                    contextSummary = uiState.contextSummary,
+                    compressionTokensTotal = uiState.compressionTokensTotal,
+                    onToggle = viewModel::onCompressionToggled
+                )
             }
         }
     ) { padding ->
@@ -162,6 +170,48 @@ fun ChatScreen(viewModel: ChatViewModel) {
                     Icon(Icons.AutoMirrored.Filled.Send, contentDescription = "Send")
                 }
             }
+        }
+    }
+}
+
+/**
+ * Day 9 context-compression controls: a switch to A/B compare "full history" vs. "compressed
+ * history" for the same conversation, plus a compact readout of the current summary state and
+ * what compressing it has cost in (separately tracked) tokens — see
+ * [ChatViewModel.onCompressionToggled] and [ChatUiState.compressionTokensTotal].
+ */
+@Composable
+private fun CompressionBar(
+    enabled: Boolean,
+    summarizedMessageCount: Int,
+    contextSummary: String,
+    compressionTokensTotal: Int,
+    onToggle: (Boolean) -> Unit
+) {
+    Column {
+        Row(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(horizontal = 12.dp),
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            Text(
+                text = "Compress history",
+                style = MaterialTheme.typography.labelSmall,
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
+                modifier = Modifier.weight(1f)
+            )
+            Switch(checked = enabled, onCheckedChange = onToggle)
+        }
+        if (enabled && summarizedMessageCount > 0) {
+            Text(
+                text = "Summary covers $summarizedMessageCount older messages " +
+                    "(~${contextSummary.length} chars) · compression cost: " +
+                    "$compressionTokensTotal tokens",
+                style = MaterialTheme.typography.labelSmall,
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
+                modifier = Modifier.padding(horizontal = 16.dp, vertical = 2.dp)
+            )
         }
     }
 }
@@ -260,8 +310,9 @@ private fun MessageBubble(message: ChatMessage) {
                     )
                     message.tokenUsage?.let { usage ->
                         Text(
-                            text = "prompt ${usage.promptTokens} (history ${usage.historyTokens}) · " +
-                                "reply ${usage.completionTokens} · total ${usage.totalTokens}",
+                            text = "prompt ${usage.promptTokens} (history ${usage.historyTokens}, " +
+                                "summary ${usage.summaryTokens}) · reply ${usage.completionTokens} · " +
+                                "total ${usage.totalTokens}",
                             style = MaterialTheme.typography.labelSmall,
                             color = MaterialTheme.colorScheme.onSurfaceVariant,
                             modifier = Modifier.padding(top = 4.dp)

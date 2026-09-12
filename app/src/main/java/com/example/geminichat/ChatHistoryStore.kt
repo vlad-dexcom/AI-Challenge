@@ -13,7 +13,16 @@ import kotlinx.serialization.json.Json
 data class ChatHistorySnapshot(
     val messages: List<ChatMessage> = emptyList(),
     val selectedAgentId: String = AgentDefaults.AGENT_ID,
-    val selectedModel: String = GeminiApiClient.DEFAULT_MODEL
+    val selectedModel: String = GeminiApiClient.DEFAULT_MODEL,
+    /**
+     * Day 9 context-compression state, so a restart resumes with the same summary/toggle
+     * instead of losing it and falling back to the full raw history.
+     */
+    val compressionEnabled: Boolean = true,
+    /** Running summary that stands in for the older turns already folded out of [messages]. */
+    val summary: String = "",
+    /** How many of the oldest [messages] are already represented by [summary]. */
+    val summarizedMessageCount: Int = 0
 )
 
 /**
