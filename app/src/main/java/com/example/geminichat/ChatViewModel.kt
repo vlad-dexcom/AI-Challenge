@@ -56,21 +56,11 @@ data class ChatUiState(
  * "send the user's message to the current agent and show what comes back".
  */
 class ChatViewModel(
-    private val apiKey: String,
+    apiKey: String,
     private val historyStore: ChatHistoryStore? = null,
-    /**
-     * Test/debug-only override forwarded to [GeminiApiClient]: set this to a small number
-     * (e.g. 200) to force every request through the "conversation is too long" overflow path
-     * (see [com.example.geminichat.agent.ContextWindowExceededException]) and see it surface in
-     * the running app. Leave `null` (the default) for real usage.
-     */
-    private val debugContextWindowOverrideTokens: Int? = null
 ) : ViewModel() {
 
-    private val geminiClient = GeminiApiClient(
-        apiKey = apiKey,
-        debugContextWindowOverrideTokens = debugContextWindowOverrideTokens
-    )
+    private val geminiClient = GeminiApiClient(apiKey)
 
     // Restore whatever was last saved so a fresh process picks the conversation back up —
     // the ViewModel no longer starts every run from a blank slate.
