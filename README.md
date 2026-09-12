@@ -84,6 +84,15 @@ Every `LlmAgent.handle` call now counts tokens and can refuse to send an over-bu
   the model's context window** (a fake small window makes a realistic multi-turn history fail
   with `ContextWindowExceededException` and zero calls to the client), plus a sanity check that
   a short dialog still succeeds against that same tiny window.
+- **Manually triggering the overflow in the running app** — `GeminiApiClient` and
+  `ChatViewModel` both accept an optional `debugContextWindowOverrideTokens` constructor
+  parameter (default `null`, no effect on real usage). Passing a small value (e.g. `200`)
+  forces every model to report that tiny context window, so even a short chat overflows and
+  you can see the "conversation is too long" error surface for real in `ChatScreen`'s error
+  banner — e.g. temporarily change `MainActivity`'s `ChatViewModel(apiKey = ...)` call to
+  `ChatViewModel(apiKey = ..., debugContextWindowOverrideTokens = 200)`, run the app, send a
+  message, and revert the change afterward. See `GeminiApiClientTest.kt` for the unit-level
+  proof that the override takes effect.
 
 ## Setup
 
