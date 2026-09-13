@@ -46,7 +46,7 @@ class ChatHistoryStoreTest {
             ),
             selectedAgentId = "personal-trainer",
             selectedModel = "gemini-1.5-flash",
-            compressionEnabled = false,
+            contextStrategy = "SLIDING_WINDOW",
             summary = "User asked about squat warm-ups; agent suggested light cardio first.",
             summarizedMessageCount = 2
         )
@@ -68,17 +68,19 @@ class ChatHistoryStoreTest {
     }
 
     @Test
-    fun `load defaults Day 9 compression fields for a pre-Day-9 snapshot file`() {
-        // Simulates a file saved before compressionEnabled/summary/summarizedMessageCount
-        // existed — ignoreUnknownKeys plus field defaults should make this a no-op upgrade.
+    fun `load defaults Day 10 context-strategy fields for a pre-Day-10 snapshot file`() {
+        // Simulates a file saved before contextStrategy/facts/branches existed —
+        // ignoreUnknownKeys plus field defaults should make this a no-op upgrade.
         file.writeText(
             """{"messages":[],"selectedAgentId":"personal-trainer","selectedModel":"gemini-1.5-flash"}"""
         )
 
         val snapshot = ChatHistoryStore(file).load()
 
-        assertTrue(snapshot.compressionEnabled)
+        assertEquals("SUMMARY", snapshot.contextStrategy)
         assertEquals("", snapshot.summary)
         assertEquals(0, snapshot.summarizedMessageCount)
+        assertTrue(snapshot.facts.isEmpty())
+        assertEquals("main", snapshot.currentBranchId)
     }
 }

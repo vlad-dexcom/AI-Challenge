@@ -28,11 +28,19 @@ data class AgentRequest(
     val modelOverride: String? = null,
     /**
      * Optional condensed stand-in for older turns that have been folded out of [history] by
-     * [com.example.geminichat.agent.HistoryCompressor] (Day 9). When set, [LlmAgent] prepends
-     * it to the prompt ahead of [history] instead of requiring the full, ever-growing
-     * transcript to be replayed every turn.
+     * [com.example.geminichat.agent.HistoryCompressor] (Day 9, the "Summary" strategy — see
+     * [com.example.geminichat.agent.ContextStrategy]). When set, [LlmAgent] prepends it to the
+     * prompt ahead of [history] instead of requiring the full, ever-growing transcript to be
+     * replayed every turn.
      */
-    val summary: String? = null
+    val summary: String? = null,
+    /**
+     * Optional rendered "sticky facts" key-value memory block (Day 10, the "Facts" strategy —
+     * see [com.example.geminichat.agent.FactsExtractor]): durable facts distilled from the
+     * conversation (goal, constraints, preferences, decisions) that should survive regardless
+     * of how much raw history is dropped. Rendered ahead of [summary]/[history] when set.
+     */
+    val facts: String? = null
 )
 
 /** Successful output of [Agent.handle]. */
@@ -55,10 +63,12 @@ data class AgentResponse(
  * - [summaryTokens] — the condensed stand-in for older turns (see [AgentRequest.summary] /
  *   [com.example.geminichat.agent.HistoryCompressor]); zero when no compression has happened
  *   yet or compression is disabled.
+ * - [factsTokens] — the rendered sticky facts key-value memory (see [AgentRequest.facts] /
+ *   [com.example.geminichat.agent.FactsExtractor]); zero unless the Facts strategy is active.
  * - [systemInstructionTokens] — the agent's persona/system instruction, sent separately from
  *   [LlmRequestSpec.input] but still counted against the model's context window.
  * - [promptTokens] — everything actually sent to the model for this call
- *   (`requestTokens + historyTokens + summaryTokens + systemInstructionTokens`).
+ *   (`requestTokens + historyTokens + summaryTokens + factsTokens + systemInstructionTokens`).
  * - [completionTokens] — the model's reply.
  * - [totalTokens] — `promptTokens + completionTokens`, i.e. this call's full token cost.
  */
@@ -68,7 +78,8 @@ data class TokenUsage(
     val systemInstructionTokens: Int,
     val promptTokens: Int,
     val completionTokens: Int,
-    val summaryTokens: Int = 0
+    val summaryTokens: Int = 0,
+    val factsTokens: Int = 0
 ) {
     val totalTokens: Int get() = promptTokens + completionTokens
 }
