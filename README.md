@@ -98,9 +98,11 @@ Every `LlmAgent.handle` call now counts tokens and can refuse to send an over-bu
 
 `agent/memory/` splits the agent's memory into three independently-stored layers instead of one
 growing blob — see `docs/day11-memory-model.md` for the full write-up (routing rules, a worked
-example, and automated proof of the recall difference vs. a plain sliding window):
+example, and automated proof of the effect on the agent's prompt/answers). This is the only
+context-management mechanism in the app; there is no strategy switcher.
 
-- **Short-term** — the raw dialog / Day 9 summary, unchanged, still in `ChatHistoryStore`.
+- **Short-term** — the raw dialog, unchanged, still in `ChatHistoryStore`; only the last
+  `MemoryRouter.RECENT_CONTEXT_SIZE` messages are sent to the model verbatim.
 - **Working** (`MemoryStore.kt`'s `WorkingMemoryStore`) — current-task data (goal, steps, open
   questions), one file per app, keyed by branch id; cleared by "End task".
 - **Long-term** (`LongTermMemoryStore`) — durable user profile/decisions/knowledge, one global
@@ -108,8 +110,7 @@ example, and automated proof of the recall difference vs. a plain sliding window
 
 `MemoryRouter` classifies each user turn into working/long-term via one LLM call, then a
 deterministic guard-rules pass (`applyGuardRules`) protects anything the user pinned manually in
-the UI's memory panel from ever being overwritten or dropped. Select `Memory layers` (the
-default) in `ChatScreen`'s "Context strategy" dropdown to use it.
+the UI's memory panel from ever being overwritten or dropped.
 
 ## Setup
 

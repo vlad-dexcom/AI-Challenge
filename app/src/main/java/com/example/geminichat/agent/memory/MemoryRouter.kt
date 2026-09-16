@@ -50,10 +50,9 @@ private val ROUTER_JSON = Json { ignoreUnknownKeys = true; isLenient = true }
  * questions — cleared by "End task") and [MemoryLayer.LONG_TERM] (durable facts about the
  * *user*: profile, standing decisions, knowledge — cleared only by an explicit user action).
  * [MemoryLayer.SHORT_TERM] (the dialog itself) is handled separately by the existing
- * transcript/[com.example.geminichat.agent.HistoryCompressor] machinery and never touched here.
+ * transcript machinery in [com.example.geminichat.ChatViewModel] and never touched here.
  *
- * Kept close in shape to [com.example.geminichat.agent.FactsExtractor]: a suspend step
- * ([route]) doing the actual LLM-backed classification, with parsing isolated in
+ * A suspend step ([route]) does the actual LLM-backed classification, with parsing isolated in
  * [parseRouting] so it's unit-testable without a network dependency, and a deterministic
  * [applyGuardRules] pass so the LLM's output can never corrupt memory outright (malformed
  * JSON, oversized values, or — critically — overwriting something the user pinned manually).
@@ -87,6 +86,14 @@ class MemoryRouter(private val client: LlmClient) {
         /** Guard rule: values longer than this are truncated (prevents a raw transcript dump
          * from being smuggled into a single "fact"). */
         const val MAX_VALUE_LENGTH = 200
+
+        /**
+         * How many most-recent messages are sent verbatim as [route]'s `recentContext` and as
+         * [com.example.geminichat.agent.AgentRequest.history] alongside the memory layers —
+         * older turns are represented only by whatever the router already classified into
+         * [MemoryLayer.WORKING]/[MemoryLayer.LONG_TERM], not resent raw every turn.
+         */
+        const val RECENT_CONTEXT_SIZE = 8
 
         /**
          * Best-effort parse of a router reply that should be `{"working": {...}, "long_term":
@@ -132,8 +139,7 @@ class MemoryRouter(private val client: LlmClient) {
      * reply, falls back to the previous layers unchanged (the routing cost is still counted,
      * since the call was made).
      *
-     * @param recentContext a short recent tail of the dialog, for grounding — mirrors
-     *   [com.example.geminichat.agent.FactsExtractor.extract].
+     * @param recentContext a short recent tail of the dialog, for grounding.
      * @param turn the 1-based user-message turn index, stamped onto any item this call writes.
      */
     suspend fun route(

@@ -16,10 +16,9 @@ enum class MemorySource { ROUTER, USER }
 /**
  * A single fact living in [MemoryLayer.WORKING] or [MemoryLayer.LONG_TERM] — the two layers
  * that are structured key-value memory (as opposed to [MemoryLayer.SHORT_TERM], which is just
- * the raw/summarized transcript).
+ * the raw transcript).
  *
- * @property key short, stable, snake_case identifier (mirrors Day 10's
- *   [com.example.geminichat.agent.FactsExtractor] key convention), e.g. `"goal_event"`.
+ * @property key short, stable, snake_case identifier, e.g. `"goal_event"`.
  * @property value the fact's current value, e.g. `"полумарафон"`.
  * @property source who last wrote this item — see [MemorySource].
  * @property turn the 1-based user-message turn index this item was last written/confirmed on,

@@ -142,4 +142,55 @@ class LlmAgentTest {
 
         assertEquals("Hi there", client.lastSpec?.input)
     }
+
+    /**
+     * Day 11's "как это влияет на ответы агента" check: a fact mentioned once, early in a long
+     * conversation, has long since scrolled out of the recent-history window the ViewModel keeps
+     * (see [com.example.geminichat.agent.memory.MemoryRouter.RECENT_CONTEXT_SIZE]) — simulated
+     * here by *not* including it in [AgentRequest.history] at all, exactly as
+     * `ChatViewModel.prepareRequestContext` builds `history.takeLast(RECENT_CONTEXT_SIZE)`.
+     * Without memory layers the model would simply never see it again. With
+     * [AgentRequest.longTermMemory] carrying it forward, it still reaches the prompt — so the
+     * agent can still answer correctly.
+     */
+    @Test
+    fun `long-term memory keeps an old fact in the prompt after it has fallen out of recent history`() = runTest {
+        val client = FakeLlmClient(Result.success("ok"))
+        val agent = LlmAgent(config = testConfig, client = client)
+
+        // Recent history no longer contains anything about the shoulder injury mentioned turns
+        // ago; only long-term memory carries it forward.
+        val recentHistory = listOf(
+            AgentMessage(role = AgentMessage.Role.USER, text = "What's next in my plan?"),
+            AgentMessage(role = AgentMessage.Role.AGENT, text = "Week 3: add light strength work.")
+        )
+
+        agent.handle(
+            AgentRequest(
+                userMessage = "Can I bench press now?",
+                history = recentHistory,
+                longTermMemory = "- injury_shoulder: cannot do overhead press"
+            )
+        )
+
+        val renderedInput = client.lastSpec?.input.orEmpty()
+        assertTrue(renderedInput.contains("injury_shoulder"))
+        assertTrue(!renderedInput.contains("What's a good warm-up?"))
+    }
+
+    @Test
+    fun `without long-term memory an old fact absent from recent history never reaches the prompt`() = runTest {
+        val client = FakeLlmClient(Result.success("ok"))
+        val agent = LlmAgent(config = testConfig, client = client)
+
+        val recentHistory = listOf(
+            AgentMessage(role = AgentMessage.Role.USER, text = "What's next in my plan?"),
+            AgentMessage(role = AgentMessage.Role.AGENT, text = "Week 3: add light strength work.")
+        )
+
+        agent.handle(AgentRequest(userMessage = "Can I bench press now?", history = recentHistory))
+
+        val renderedInput = client.lastSpec?.input.orEmpty()
+        assertTrue(!renderedInput.contains("injury_shoulder"))
+    }
 }

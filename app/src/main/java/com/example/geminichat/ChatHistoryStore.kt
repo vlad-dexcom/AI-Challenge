@@ -7,8 +7,7 @@ import kotlinx.serialization.json.Json
 
 /**
  * Day 10: everything needed to resume one conversation *branch* independently of the others —
- * its own transcript, its own Day-9 summary state, and its own Day-10 sticky facts (see
- * [com.example.geminichat.agent.FactsExtractor]). [ChatViewModel] keeps one of these per branch
+ * its own transcript and its own token counters. [ChatViewModel] keeps one of these per branch
  * (only the currently active branch lives "unpacked" in [ChatUiState]; the rest sit here,
  * ready to be swapped back in on [ChatViewModel.onBranchSelected]).
  */
@@ -17,12 +16,7 @@ data class BranchSnapshot(
     val id: String,
     val name: String,
     val messages: List<ChatMessage> = emptyList(),
-    val contextSummary: String = "",
-    val summarizedMessageCount: Int = 0,
-    val facts: Map<String, String> = emptyMap(),
     val dialogTokenTotal: Int = 0,
-    val compressionTokensTotal: Int = 0,
-    val factsTokensTotal: Int = 0,
     /** Day 11: tokens spent on [com.example.geminichat.agent.memory.MemoryRouter] calls for
      * this branch. The branch's working memory *contents* are stored separately, in
      * [com.example.geminichat.agent.memory.WorkingMemoryStore], keyed by this branch's [id]. */
@@ -38,20 +32,6 @@ data class ChatHistorySnapshot(
     val messages: List<ChatMessage> = emptyList(),
     val selectedAgentId: String = AgentDefaults.AGENT_ID,
     val selectedModel: String = GeminiApiClient.DEFAULT_MODEL,
-    /**
-     * Day 10: which context-management strategy is active (see
-     * [com.example.geminichat.agent.ContextStrategy]) — replaces Day 9's boolean
-     * `compressionEnabled` now that there are more than two options.
-     */
-    val contextStrategy: String = "SUMMARY",
-    /** Running summary that stands in for the older turns already folded out of [messages]. */
-    val summary: String = "",
-    /** How many of the oldest [messages] are already represented by [summary]. */
-    val summarizedMessageCount: Int = 0,
-    /** Day 10 sticky facts key-value memory for the *active* branch. */
-    val facts: Map<String, String> = emptyMap(),
-    /** Tokens spent extracting/updating [facts] so far (active branch). */
-    val factsTokensTotal: Int = 0,
     /** Running total of [ChatUiState.dialogTokenTotal] for the active branch. */
     val dialogTokenTotal: Int = 0,
     /**

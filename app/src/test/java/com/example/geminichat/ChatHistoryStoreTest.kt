@@ -46,9 +46,7 @@ class ChatHistoryStoreTest {
             ),
             selectedAgentId = "personal-trainer",
             selectedModel = "gemini-1.5-flash",
-            contextStrategy = "SLIDING_WINDOW",
-            summary = "User asked about squat warm-ups; agent suggested light cardio first.",
-            summarizedMessageCount = 2
+            dialogTokenTotal = 42
         )
         ChatHistoryStore(file).save(original)
 
@@ -68,19 +66,16 @@ class ChatHistoryStoreTest {
     }
 
     @Test
-    fun `load defaults Day 10 context-strategy fields for a pre-Day-10 snapshot file`() {
-        // Simulates a file saved before contextStrategy/facts/branches existed —
-        // ignoreUnknownKeys plus field defaults should make this a no-op upgrade.
+    fun `load defaults gracefully for a snapshot file saved before newer fields existed`() {
+        // Simulates a file saved before dialogTokenTotal/branches existed — ignoreUnknownKeys
+        // plus field defaults should make this a no-op upgrade.
         file.writeText(
             """{"messages":[],"selectedAgentId":"personal-trainer","selectedModel":"gemini-1.5-flash"}"""
         )
 
         val snapshot = ChatHistoryStore(file).load()
 
-        assertEquals("SUMMARY", snapshot.contextStrategy)
-        assertEquals("", snapshot.summary)
-        assertEquals(0, snapshot.summarizedMessageCount)
-        assertTrue(snapshot.facts.isEmpty())
+        assertEquals(0, snapshot.dialogTokenTotal)
         assertEquals("main", snapshot.currentBranchId)
     }
 }

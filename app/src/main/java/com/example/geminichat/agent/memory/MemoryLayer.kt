@@ -4,12 +4,10 @@ package com.example.geminichat.agent.memory
  * Day 11: the three memory layers an agent keeps *separately*, each answering a different
  * question about what to remember and for how long:
  *
- * - [SHORT_TERM]: the current dialog itself — the raw turn-by-turn transcript (and, once it
- *   grows, Day 9's running [com.example.geminichat.agent.HistoryCompressor] summary standing
- *   in for the older part of it). Scoped to one conversation branch; wiped by "Clear dialog".
- *   This layer is *not* represented as [MemoryItem]s — it's the existing
- *   [com.example.geminichat.agent.AgentMessage] transcript/summary, listed here only so the
- *   three-layer model is complete and explicit.
+ * - [SHORT_TERM]: the current dialog itself — the raw turn-by-turn transcript. Scoped to one
+ *   conversation branch; wiped by "Clear dialog". This layer is *not* represented as
+ *   [MemoryItem]s — it's the existing [com.example.geminichat.agent.AgentMessage] transcript,
+ *   listed here only so the three-layer model is complete and explicit.
  * - [WORKING]: data about the *current task* the user and agent are working on together (a
  *   training plan being drafted, a bug being debugged, a document being written) — goals,
  *   constraints, decisions, and open questions that matter only until that task is done.

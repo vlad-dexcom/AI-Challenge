@@ -42,7 +42,6 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import com.example.geminichat.agent.AgentConfig
-import com.example.geminichat.agent.ContextStrategy
 import com.example.geminichat.agent.memory.MemoryRoutingDecision
 import com.example.geminichat.agent.memory.MemorySnapshot
 import dev.jeziellago.compose.markdowntext.MarkdownText
@@ -104,17 +103,6 @@ fun ChatScreen(viewModel: ChatViewModel) {
                         modifier = Modifier.padding(horizontal = 16.dp, vertical = 2.dp)
                     )
                 }
-                CompressionBar(
-                    strategy = uiState.contextStrategy,
-                    availableStrategies = ContextStrategy.entries,
-                    enabled = !uiState.isLoading,
-                    summarizedMessageCount = uiState.summarizedMessageCount,
-                    contextSummary = uiState.contextSummary,
-                    compressionTokensTotal = uiState.compressionTokensTotal,
-                    facts = uiState.facts,
-                    factsTokensTotal = uiState.factsTokensTotal,
-                    onStrategySelected = viewModel::onContextStrategySelected
-                )
                 BranchBar(
                     branches = uiState.branches,
                     currentBranchId = uiState.currentBranchId,
@@ -125,7 +113,6 @@ fun ChatScreen(viewModel: ChatViewModel) {
                     onCreateBranch = viewModel::onCreateBranchFromCheckpoint
                 )
                 MemoryPanel(
-                    strategy = uiState.contextStrategy,
                     longTermMemory = uiState.longTermMemory,
                     workingMemory = uiState.workingMemory,
                     memoryRoutingTokensTotal = uiState.memoryRoutingTokensTotal,
@@ -204,93 +191,8 @@ fun ChatScreen(viewModel: ChatViewModel) {
 }
 
 /**
- * Day 10 context-strategy controls: a dropdown to switch between [ContextStrategy.FULL_HISTORY],
- * [ContextStrategy.SLIDING_WINDOW], [ContextStrategy.FACTS], and [ContextStrategy.SUMMARY] on
- * the same conversation, plus a compact status line specific to whichever strategy is active —
- * see [ChatViewModel.onContextStrategySelected].
- */
-@Composable
-private fun CompressionBar(
-    strategy: ContextStrategy,
-    availableStrategies: List<ContextStrategy>,
-    enabled: Boolean,
-    summarizedMessageCount: Int,
-    contextSummary: String,
-    compressionTokensTotal: Int,
-    facts: Map<String, String>,
-    factsTokensTotal: Int,
-    onStrategySelected: (ContextStrategy) -> Unit
-) {
-    var expanded by remember { mutableStateOf(false) }
-
-    Column {
-        Row(
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(horizontal = 12.dp),
-            verticalAlignment = Alignment.CenterVertically
-        ) {
-            Text(
-                text = "Context strategy",
-                style = MaterialTheme.typography.labelSmall,
-                color = MaterialTheme.colorScheme.onSurfaceVariant,
-                modifier = Modifier.weight(1f)
-            )
-            Box {
-                TextButton(onClick = { if (enabled) expanded = true }, enabled = enabled) {
-                    Text(strategy.label)
-                    Icon(Icons.Filled.ArrowDropDown, contentDescription = "Select context strategy")
-                }
-                DropdownMenu(expanded = expanded, onDismissRequest = { expanded = false }) {
-                    availableStrategies.forEach { candidate ->
-                        DropdownMenuItem(
-                            text = { Text(candidate.label) },
-                            onClick = {
-                                onStrategySelected(candidate)
-                                expanded = false
-                            }
-                        )
-                    }
-                }
-            }
-        }
-        when (strategy) {
-            ContextStrategy.SUMMARY -> if (summarizedMessageCount > 0) {
-                Text(
-                    text = "Summary covers $summarizedMessageCount older messages " +
-                        "(~${contextSummary.length} chars) · compression cost: " +
-                        "$compressionTokensTotal tokens",
-                    style = MaterialTheme.typography.labelSmall,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant,
-                    modifier = Modifier.padding(horizontal = 16.dp, vertical = 2.dp)
-                )
-            }
-            ContextStrategy.FACTS -> if (facts.isNotEmpty()) {
-                Text(
-                    text = "Facts: " + facts.entries.joinToString("; ") { (k, v) -> "$k=$v" } +
-                        " · extraction cost: $factsTokensTotal tokens",
-                    style = MaterialTheme.typography.labelSmall,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant,
-                    modifier = Modifier.padding(horizontal = 16.dp, vertical = 2.dp)
-                )
-            }
-            ContextStrategy.SLIDING_WINDOW -> Text(
-                text = "Only the last ${ContextStrategy.SLIDING_WINDOW_SIZE} messages are sent; " +
-                    "older turns are dropped.",
-                style = MaterialTheme.typography.labelSmall,
-                color = MaterialTheme.colorScheme.onSurfaceVariant,
-                modifier = Modifier.padding(horizontal = 16.dp, vertical = 2.dp)
-            )
-            ContextStrategy.FULL_HISTORY -> {}
-            // Long-term/working memory item counts and controls are shown by MemoryPanel below.
-            ContextStrategy.MEMORY_LAYERS -> {}
-        }
-    }
-}
-
-/**
- * Day 11 memory inspector: only shown when [ContextStrategy.MEMORY_LAYERS] is active. Lists
- * every item in [com.example.geminichat.agent.memory.MemoryLayer.WORKING] and
+ * Day 11 memory inspector. Lists every item in
+ * [com.example.geminichat.agent.memory.MemoryLayer.WORKING] and
  * [com.example.geminichat.agent.memory.MemoryLayer.LONG_TERM] *separately* — so "what data
  * landed in which layer" is directly checkable, not just inferred from the model's answers —
  * plus manual overrides (promote/delete/add — see [ChatViewModel]) and "End task"/"Clear
@@ -299,7 +201,6 @@ private fun CompressionBar(
  */
 @Composable
 private fun MemoryPanel(
-    strategy: ContextStrategy,
     longTermMemory: MemorySnapshot,
     workingMemory: MemorySnapshot,
     memoryRoutingTokensTotal: Int,
@@ -312,8 +213,6 @@ private fun MemoryPanel(
     onEndTask: () -> Unit,
     onClearDialog: () -> Unit
 ) {
-    if (strategy != ContextStrategy.MEMORY_LAYERS) return
-
     var expanded by remember { mutableStateOf(false) }
     var newKey by remember { mutableStateOf("") }
     var newValue by remember { mutableStateOf("") }
@@ -595,7 +494,6 @@ private fun MessageBubble(message: ChatMessage) {
                     message.tokenUsage?.let { usage ->
                         Text(
                             text = "prompt ${usage.promptTokens} (history ${usage.historyTokens}, " +
-                                "summary ${usage.summaryTokens}, facts ${usage.factsTokens}, " +
                                 "lt ${usage.longTermMemoryTokens}, wm ${usage.workingMemoryTokens}) · " +
                                 "reply ${usage.completionTokens} · total ${usage.totalTokens}",
                             style = MaterialTheme.typography.labelSmall,

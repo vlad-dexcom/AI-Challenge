@@ -7,9 +7,6 @@ import com.example.geminichat.agent.AgentCatalog
 import com.example.geminichat.agent.AgentConfig
 import com.example.geminichat.agent.AgentMessage
 import com.example.geminichat.agent.AgentRequest
-import com.example.geminichat.agent.ContextStrategy
-import com.example.geminichat.agent.FactsExtractor
-import com.example.geminichat.agent.HistoryCompressor
 import com.example.geminichat.agent.LlmAgent
 import com.example.geminichat.agent.TokenUsage
 import com.example.geminichat.agent.memory.LongTermMemoryStore
@@ -64,27 +61,6 @@ data class ChatUiState(
      * per-branch (Day 10): switching branches swaps this total for the target branch's own.
      */
     val dialogTokenTotal: Int = 0,
-    /**
-     * Day 10: which context-management strategy is active — see [ContextStrategy]. Replaces
-     * Day 9's boolean `compressionEnabled` toggle now that there are more than two options
-     * (full history / sliding window / facts / summary), all selectable on the same
-     * conversation so their token cost and behavior can be compared directly.
-     */
-    val contextStrategy: ContextStrategy = ContextStrategy.DEFAULT,
-    /** The running summary standing in for turns already folded out of [messages] (Summary strategy). */
-    val contextSummary: String = "",
-    /** How many of the oldest [messages] are already represented by [contextSummary]. */
-    val summarizedMessageCount: Int = 0,
-    /**
-     * Tokens spent on the summarization calls themselves (Day 9), tracked separately from
-     * [dialogTokenTotal] so the "cost of compressing" isn't confused with the cost of actual
-     * chat turns.
-     */
-    val compressionTokensTotal: Int = 0,
-    /** Day 10 sticky facts key-value memory (Facts strategy) — see [FactsExtractor]. */
-    val facts: Map<String, String> = emptyMap(),
-    /** Tokens spent extracting/updating [facts] so far, tracked separately (mirrors [compressionTokensTotal]). */
-    val factsTokensTotal: Int = 0,
     /** Day 10 branching: every branch available to switch to, including the active one. */
     val branches: List<BranchOption> = listOf(BranchOption(MAIN_BRANCH_ID, MAIN_BRANCH_ID)),
     val currentBranchId: String = MAIN_BRANCH_ID,
@@ -104,7 +80,8 @@ data class ChatUiState(
      */
     val workingMemory: MemorySnapshot = MemorySnapshot.EMPTY,
     /** Tokens spent on [com.example.geminichat.agent.memory.MemoryRouter] calls so far
-     * (active branch), tracked separately (mirrors [compressionTokensTotal]/[factsTokensTotal]). */
+     * (active branch), tracked separately from [dialogTokenTotal] so the "cost of routing"
+     * isn't confused with the cost of actual chat turns. */
     val memoryRoutingTokensTotal: Int = 0,
     /** What the last [com.example.geminichat.agent.memory.MemoryRouter.route] call decided and
      * why — shown in the memory inspector so "what data landed in which layer" is checkable
@@ -130,8 +107,6 @@ class ChatViewModel(
 ) : ViewModel() {
 
     private val geminiClient = GeminiApiClient(apiKey, debugContextWindowOverrideTokens)
-    private val historyCompressor = HistoryCompressor(client = geminiClient)
-    private val factsExtractor = FactsExtractor(client = geminiClient)
     private val memoryRouter = MemoryRouter(client = geminiClient)
 
     // Restore whatever was last saved so a fresh process picks the conversation back up —
@@ -173,12 +148,6 @@ class ChatViewModel(
             agentDescription = restoredAgentConfig.description,
             selectedAgentId = restoredAgentConfig.id,
             dialogTokenTotal = restored.dialogTokenTotal,
-            contextStrategy = ContextStrategy.byName(restored.contextStrategy),
-            contextSummary = restored.summary,
-            summarizedMessageCount = restored.summarizedMessageCount,
-            compressionTokensTotal = 0,
-            facts = restored.facts,
-            factsTokensTotal = restored.factsTokensTotal,
             branches = branchOptions(),
             currentBranchId = currentBranchId,
             hasCheckpoint = checkpoint != null,
@@ -212,17 +181,6 @@ class ChatViewModel(
             agentName = config.displayName,
             agentDescription = config.description
         )
-        persistHistory()
-    }
-
-    /**
-     * Switches the active context-management strategy (Day 10) so the same conversation can
-     * be A/B compared across full history, sliding window, facts, and summary — everything
-     * already accumulated for each mode (summary text, facts map) is kept around either way,
-     * ready to be reused if that strategy is selected again.
-     */
-    fun onContextStrategySelected(strategy: ContextStrategy) {
-        _uiState.value = _uiState.value.copy(contextStrategy = strategy)
         persistHistory()
     }
 
@@ -280,12 +238,7 @@ class ChatViewModel(
             id = currentBranchId,
             name = currentBranchName,
             messages = state.messages,
-            contextSummary = state.contextSummary,
-            summarizedMessageCount = state.summarizedMessageCount,
-            facts = state.facts,
             dialogTokenTotal = state.dialogTokenTotal,
-            compressionTokensTotal = state.compressionTokensTotal,
-            factsTokensTotal = state.factsTokensTotal,
             memoryRoutingTokensTotal = state.memoryRoutingTokensTotal
         )
     }
@@ -305,12 +258,7 @@ class ChatViewModel(
             ?: MemorySnapshot.EMPTY
         _uiState.value = _uiState.value.copy(
             messages = snapshot.messages,
-            contextSummary = snapshot.contextSummary,
-            summarizedMessageCount = snapshot.summarizedMessageCount,
-            facts = snapshot.facts,
             dialogTokenTotal = snapshot.dialogTokenTotal,
-            compressionTokensTotal = snapshot.compressionTokensTotal,
-            factsTokensTotal = snapshot.factsTokensTotal,
             memoryRoutingTokensTotal = snapshot.memoryRoutingTokensTotal,
             workingMemory = working,
             lastMemoryDecisions = emptyList(),
@@ -416,10 +364,7 @@ class ChatViewModel(
     fun onClearDialog() {
         _uiState.value = _uiState.value.copy(
             messages = emptyList(),
-            contextSummary = "",
-            summarizedMessageCount = 0,
             dialogTokenTotal = 0,
-            compressionTokensTotal = 0,
             errorMessage = null
         )
         persistHistory()
@@ -436,11 +381,6 @@ class ChatViewModel(
                     messages = state.messages,
                     selectedAgentId = state.selectedAgentId,
                     selectedModel = state.selectedModel,
-                    contextStrategy = state.contextStrategy.name,
-                    summary = state.contextSummary,
-                    summarizedMessageCount = state.summarizedMessageCount,
-                    facts = state.facts,
-                    factsTokensTotal = state.factsTokensTotal,
                     dialogTokenTotal = state.dialogTokenTotal,
                     otherBranches = otherBranches.values.toList(),
                     currentBranchId = activeSnapshot.id,
@@ -486,8 +426,6 @@ class ChatViewModel(
                             userMessage = prompt,
                             history = context.history,
                             modelOverride = model,
-                            summary = context.summary,
-                            facts = context.facts,
                             longTermMemory = context.longTermMemory,
                             workingMemory = context.workingMemory
                         )
@@ -527,133 +465,56 @@ class ChatViewModel(
         }
     }
 
-    /** What actually gets sent to the agent for one turn (Day 10/11: strategy-dependent). */
+    /** What actually gets sent to the agent for one turn: a recent raw tail plus both memory layers. */
     private data class RequestContext(
         val history: List<AgentMessage>,
-        val summary: String? = null,
-        val facts: String? = null,
         val longTermMemory: String? = null,
         val workingMemory: String? = null
     )
 
     /**
-     * Decides what to actually send as this turn's history/summary/facts/memory layers, per
-     * the currently selected [ContextStrategy]:
-     * - [ContextStrategy.FULL_HISTORY]: the full raw [history], nothing else (pre-Day-9
-     *   baseline, kept for direct comparison).
-     * - [ContextStrategy.SLIDING_WINDOW]: only the last [ContextStrategy.SLIDING_WINDOW_SIZE]
-     *   messages, no summary/facts, no extra LLM calls.
-     * - [ContextStrategy.SUMMARY]: Day 9's compression — if enough newly aged-out messages
-     *   have piled up, folds them into the running summary first (a real LLM call — see
-     *   [HistoryCompressor.fold]), then sends the recent tail + summary.
-     * - [ContextStrategy.FACTS]: Day 10's sticky facts — merges [prompt] into the facts map via
-     *   [FactsExtractor.extract] (a real LLM call), then sends the recent tail + rendered facts
-     *   instead of the aged-out history.
-     * - [ContextStrategy.MEMORY_LAYERS]: Day 11's explicit memory model — [MemoryRouter.route]
-     *   classifies [prompt] into working/long-term memory (a real LLM call), then
-     *   [MemoryAssembler] renders both layers as separate blocks, sent alongside the recent
-     *   tail instead of the aged-out history.
+     * Day 11's explicit memory model: [MemoryRouter.route] classifies [prompt] into
+     * working/long-term memory (a real LLM call), then [MemoryAssembler] renders both layers
+     * as separate blocks, sent alongside a recent raw tail of [history]
+     * ([MemoryRouter.RECENT_CONTEXT_SIZE] messages) instead of the full, ever-growing
+     * transcript.
      */
     private suspend fun prepareRequestContext(
         history: List<AgentMessage>,
         model: String,
         prompt: String
     ): RequestContext {
-        return when (_uiState.value.contextStrategy) {
-            ContextStrategy.FULL_HISTORY -> RequestContext(history)
-
-            ContextStrategy.SLIDING_WINDOW -> RequestContext(
-                history.takeLast(ContextStrategy.SLIDING_WINDOW_SIZE)
+        val recentContext = history.takeLast(MemoryRouter.RECENT_CONTEXT_SIZE)
+        val state = _uiState.value
+        val turn = history.count { it.role == AgentMessage.Role.USER } + 1
+        memoryRouter.route(
+            previousWorking = state.workingMemory,
+            previousLongTerm = state.longTermMemory,
+            recentContext = recentContext,
+            newUserMessage = prompt,
+            turn = turn,
+            model = model
+        ).onSuccess { outcome ->
+            _uiState.value = _uiState.value.copy(
+                workingMemory = outcome.working,
+                longTermMemory = outcome.longTerm,
+                memoryRoutingTokensTotal = _uiState.value.memoryRoutingTokensTotal + outcome.tokensUsed,
+                lastMemoryDecisions = outcome.decisions
             )
-
-            ContextStrategy.SUMMARY -> {
-                val state = _uiState.value
-                val foldRange = historyCompressor.pendingFoldRange(history.size, state.summarizedMessageCount)
-                if (foldRange != null) {
-                    val messagesToFold = history.subList(foldRange.first, foldRange.last + 1)
-                    historyCompressor.fold(
-                        previousSummary = state.contextSummary.ifBlank { null },
-                        messagesToFold = messagesToFold,
-                        model = model
-                    ).onSuccess { outcome ->
-                        _uiState.value = _uiState.value.copy(
-                            contextSummary = outcome.summary,
-                            summarizedMessageCount = foldRange.last + 1,
-                            compressionTokensTotal = _uiState.value.compressionTokensTotal + outcome.tokensUsed
-                        )
-                        persistHistory()
-                    }
-                    // On failure, silently keep the previous summary/counts and fall through —
-                    // the conversation still works, just without folding in this new chunk yet;
-                    // the next turn will retry once another chunk's worth has piled up.
-                }
-                val latestState = _uiState.value
-                RequestContext(
-                    historyCompressor.recentTail(history),
-                    latestState.contextSummary.ifBlank { null },
-                    null
-                )
-            }
-
-            ContextStrategy.FACTS -> {
-                val recentContext = history.takeLast(ContextStrategy.SLIDING_WINDOW_SIZE)
-                val state = _uiState.value
-                factsExtractor.extract(
-                    previousFacts = state.facts,
-                    recentContext = recentContext,
-                    newUserMessage = prompt,
-                    model = model
-                ).onSuccess { outcome ->
-                    _uiState.value = _uiState.value.copy(
-                        facts = outcome.facts,
-                        factsTokensTotal = _uiState.value.factsTokensTotal + outcome.tokensUsed
-                    )
-                    persistHistory()
-                }
-                // On failure, keep the previous facts map and fall through — the conversation
-                // still works with whatever facts were already known.
-                val latestState = _uiState.value
-                RequestContext(
-                    recentContext,
-                    null,
-                    factsExtractor.render(latestState.facts).ifBlank { null }
-                )
-            }
-
-            ContextStrategy.MEMORY_LAYERS -> {
-                val recentContext = history.takeLast(ContextStrategy.SLIDING_WINDOW_SIZE)
-                val state = _uiState.value
-                val turn = history.count { it.role == AgentMessage.Role.USER } + 1
-                memoryRouter.route(
-                    previousWorking = state.workingMemory,
-                    previousLongTerm = state.longTermMemory,
-                    recentContext = recentContext,
-                    newUserMessage = prompt,
-                    turn = turn,
-                    model = model
-                ).onSuccess { outcome ->
-                    _uiState.value = _uiState.value.copy(
-                        workingMemory = outcome.working,
-                        longTermMemory = outcome.longTerm,
-                        memoryRoutingTokensTotal = _uiState.value.memoryRoutingTokensTotal + outcome.tokensUsed,
-                        lastMemoryDecisions = outcome.decisions
-                    )
-                    persistMemoryLayers()
-                }
-                // On failure, keep the previous layers unchanged and fall through — the
-                // conversation still works with whatever memory was already known.
-                val latestMemoryState = _uiState.value
-                val assembled = MemoryAssembler.assemble(
-                    longTerm = latestMemoryState.longTermMemory,
-                    working = latestMemoryState.workingMemory
-                )
-                RequestContext(
-                    history = recentContext,
-                    longTermMemory = assembled.longTermBlock.ifEmpty { null },
-                    workingMemory = assembled.workingBlock.ifEmpty { null }
-                )
-            }
+            persistMemoryLayers()
         }
+        // On failure, keep the previous layers unchanged and fall through — the conversation
+        // still works with whatever memory was already known.
+        val latestMemoryState = _uiState.value
+        val assembled = MemoryAssembler.assemble(
+            longTerm = latestMemoryState.longTermMemory,
+            working = latestMemoryState.workingMemory
+        )
+        return RequestContext(
+            history = recentContext,
+            longTermMemory = assembled.longTermBlock.ifEmpty { null },
+            workingMemory = assembled.workingBlock.ifEmpty { null }
+        )
     }
 
     override fun onCleared() {
