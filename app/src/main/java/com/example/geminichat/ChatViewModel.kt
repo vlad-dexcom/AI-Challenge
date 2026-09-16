@@ -12,6 +12,14 @@ import com.example.geminichat.agent.FactsExtractor
 import com.example.geminichat.agent.HistoryCompressor
 import com.example.geminichat.agent.LlmAgent
 import com.example.geminichat.agent.TokenUsage
+import com.example.geminichat.agent.memory.LongTermMemoryStore
+import com.example.geminichat.agent.memory.MemoryAssembler
+import com.example.geminichat.agent.memory.MemoryItem
+import com.example.geminichat.agent.memory.MemoryRouter
+import com.example.geminichat.agent.memory.MemoryRoutingDecision
+import com.example.geminichat.agent.memory.MemorySnapshot
+import com.example.geminichat.agent.memory.MemorySource
+import com.example.geminichat.agent.memory.WorkingMemoryStore
 import java.util.UUID
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.TimeoutCancellationException
@@ -81,7 +89,27 @@ data class ChatUiState(
     val branches: List<BranchOption> = listOf(BranchOption(MAIN_BRANCH_ID, MAIN_BRANCH_ID)),
     val currentBranchId: String = MAIN_BRANCH_ID,
     /** Whether a checkpoint has been saved and is ready to be forked into a new branch. */
-    val hasCheckpoint: Boolean = false
+    val hasCheckpoint: Boolean = false,
+    /**
+     * Day 11 [com.example.geminichat.agent.memory.MemoryLayer.LONG_TERM] layer: durable facts
+     * about the *user* (profile, standing decisions, knowledge), stored separately from
+     * [workingMemory] and global across branches/agents — see
+     * [com.example.geminichat.agent.memory.LongTermMemoryStore].
+     */
+    val longTermMemory: MemorySnapshot = MemorySnapshot.EMPTY,
+    /**
+     * Day 11 [com.example.geminichat.agent.memory.MemoryLayer.WORKING] layer: facts about the
+     * *current task* only — per branch, cleared independently of [longTermMemory] by "End
+     * task" (see [com.example.geminichat.agent.memory.WorkingMemoryStore]).
+     */
+    val workingMemory: MemorySnapshot = MemorySnapshot.EMPTY,
+    /** Tokens spent on [com.example.geminichat.agent.memory.MemoryRouter] calls so far
+     * (active branch), tracked separately (mirrors [compressionTokensTotal]/[factsTokensTotal]). */
+    val memoryRoutingTokensTotal: Int = 0,
+    /** What the last [com.example.geminichat.agent.memory.MemoryRouter.route] call decided and
+     * why — shown in the memory inspector so "what data landed in which layer" is checkable
+     * turn by turn, not just inferred from the final state. */
+    val lastMemoryDecisions: List<MemoryRoutingDecision> = emptyList()
 ) {
     companion object {
         const val MAIN_BRANCH_ID = "main"
@@ -96,11 +124,15 @@ data class ChatUiState(
 class ChatViewModel(
     apiKey: String,
     private val historyStore: ChatHistoryStore? = null,
+    private val longTermMemoryStore: LongTermMemoryStore? = null,
+    private val workingMemoryStore: WorkingMemoryStore? = null,
+    debugContextWindowOverrideTokens: Int? = null,
 ) : ViewModel() {
 
-    private val geminiClient = GeminiApiClient(apiKey)
+    private val geminiClient = GeminiApiClient(apiKey, debugContextWindowOverrideTokens)
     private val historyCompressor = HistoryCompressor(client = geminiClient)
     private val factsExtractor = FactsExtractor(client = geminiClient)
+    private val memoryRouter = MemoryRouter(client = geminiClient)
 
     // Restore whatever was last saved so a fresh process picks the conversation back up —
     // the ViewModel no longer starts every run from a blank slate.
@@ -121,6 +153,18 @@ class ChatViewModel(
         otherBranches.values.map { it.name } + currentBranchName + (checkpoint?.name ?: "")
     )
 
+    // Day 11 memory layers: long-term is global (loaded once, not scoped to any branch);
+    // working is per-branch (loaded for whichever branch is currently active); the checkpoint's
+    // own working memory is kept alongside [checkpoint] so forking a new branch from it carries
+    // the right working memory over (see [onCreateBranchFromCheckpoint]).
+    private var longTermMemory: MemorySnapshot = longTermMemoryStore?.load() ?: MemorySnapshot.EMPTY
+    private var checkpointWorkingMemory: MemorySnapshot =
+        if (checkpoint != null) {
+            workingMemoryStore?.load(CHECKPOINT_WORKING_MEMORY_KEY) ?: MemorySnapshot.EMPTY
+        } else {
+            MemorySnapshot.EMPTY
+        }
+
     private val _uiState = MutableStateFlow(
         ChatUiState(
             messages = restored.messages,
@@ -137,10 +181,19 @@ class ChatViewModel(
             factsTokensTotal = restored.factsTokensTotal,
             branches = branchOptions(),
             currentBranchId = currentBranchId,
-            hasCheckpoint = checkpoint != null
+            hasCheckpoint = checkpoint != null,
+            longTermMemory = longTermMemory,
+            workingMemory = workingMemoryStore?.load(currentBranchId) ?: MemorySnapshot.EMPTY,
+            memoryRoutingTokensTotal = 0
         )
     )
     val uiState: StateFlow<ChatUiState> = _uiState
+
+    companion object {
+        /** Reserved [WorkingMemoryStore] key for the pending checkpoint's own working memory —
+         * it isn't a real branch, so it can't collide with a [UUID]-based branch id. */
+        private const val CHECKPOINT_WORKING_MEMORY_KEY = "__checkpoint__"
+    }
 
     fun onInputChange(newInput: String) {
         _uiState.value = _uiState.value.copy(input = newInput)
@@ -176,10 +229,14 @@ class ChatViewModel(
     /**
      * Day 10 branching: snapshots the *active* branch's current state as a checkpoint. Doesn't
      * create a branch by itself — call [onCreateBranchFromCheckpoint] (once or more) afterwards
-     * to fork one or more independent branches from this exact point.
+     * to fork one or more independent branches from this exact point. Day 11: the active
+     * branch's working memory is captured alongside it, so a forked branch starts with the
+     * same task-in-progress context, not an empty working layer.
      */
     fun onSaveCheckpoint() {
         checkpoint = currentBranchSnapshot()
+        checkpointWorkingMemory = _uiState.value.workingMemory
+        workingMemoryStore?.save(CHECKPOINT_WORKING_MEMORY_KEY, checkpointWorkingMemory)
         _uiState.value = _uiState.value.copy(hasCheckpoint = true)
         persistHistory()
     }
@@ -188,7 +245,9 @@ class ChatViewModel(
      * Creates a brand-new branch that starts as an exact copy of the saved [checkpoint] and
      * switches to it. Calling this twice from the same checkpoint (without saving a new one in
      * between) produces two independent siblings sharing the same history up to that point —
-     * each then continues on its own from there.
+     * each then continues on its own from there. Day 11: both siblings also start from the
+     * same [checkpointWorkingMemory], then diverge independently as each branch's own task
+     * progresses.
      */
     fun onCreateBranchFromCheckpoint() {
         val source = checkpoint ?: return
@@ -197,8 +256,10 @@ class ChatViewModel(
             id = UUID.randomUUID().toString(),
             name = "Branch $branchCounter"
         )
+        persistWorkingMemory(currentBranchId, _uiState.value.workingMemory)
         otherBranches[currentBranchId] = currentBranchSnapshot()
-        loadBranch(newBranch)
+        persistWorkingMemory(newBranch.id, checkpointWorkingMemory)
+        loadBranch(newBranch, workingMemoryOverride = checkpointWorkingMemory)
         persistHistory()
     }
 
@@ -206,6 +267,7 @@ class ChatViewModel(
     fun onBranchSelected(branchId: String) {
         if (branchId == currentBranchId) return
         val target = otherBranches[branchId] ?: return
+        persistWorkingMemory(currentBranchId, _uiState.value.workingMemory)
         otherBranches[currentBranchId] = currentBranchSnapshot()
         otherBranches.remove(target.id)
         loadBranch(target)
@@ -223,13 +285,24 @@ class ChatViewModel(
             facts = state.facts,
             dialogTokenTotal = state.dialogTokenTotal,
             compressionTokensTotal = state.compressionTokensTotal,
-            factsTokensTotal = state.factsTokensTotal
+            factsTokensTotal = state.factsTokensTotal,
+            memoryRoutingTokensTotal = state.memoryRoutingTokensTotal
         )
     }
 
-    private fun loadBranch(snapshot: BranchSnapshot) {
+    /**
+     * Loads [snapshot] as the active branch. Day 11's working memory isn't part of
+     * [BranchSnapshot] (it lives in its own [WorkingMemoryStore] file — see [MemoryLayer]), so
+     * it's loaded separately here: from [workingMemoryOverride] when the caller already has it
+     * on hand (forking a new branch from a checkpoint), otherwise from [workingMemoryStore] by
+     * branch id (switching to an existing branch).
+     */
+    private fun loadBranch(snapshot: BranchSnapshot, workingMemoryOverride: MemorySnapshot? = null) {
         currentBranchId = snapshot.id
         currentBranchName = snapshot.name
+        val working = workingMemoryOverride
+            ?: workingMemoryStore?.load(snapshot.id)
+            ?: MemorySnapshot.EMPTY
         _uiState.value = _uiState.value.copy(
             messages = snapshot.messages,
             contextSummary = snapshot.contextSummary,
@@ -238,6 +311,9 @@ class ChatViewModel(
             dialogTokenTotal = snapshot.dialogTokenTotal,
             compressionTokensTotal = snapshot.compressionTokensTotal,
             factsTokensTotal = snapshot.factsTokensTotal,
+            memoryRoutingTokensTotal = snapshot.memoryRoutingTokensTotal,
+            workingMemory = working,
+            lastMemoryDecisions = emptyList(),
             currentBranchId = snapshot.id,
             branches = branchOptions(snapshot.id, snapshot.name),
             errorMessage = null
@@ -257,6 +333,96 @@ class ChatViewModel(
         val pattern = Regex("^Branch (\\d+)$")
         return names.mapNotNull { name -> pattern.find(name)?.groupValues?.get(1)?.toIntOrNull() }
             .maxOrNull() ?: 0
+    }
+
+    /** Persists [snapshot] as [branchId]'s working memory (Day 11), independently of
+     * [ChatHistoryStore] — see [WorkingMemoryStore]. */
+    private fun persistWorkingMemory(branchId: String, snapshot: MemorySnapshot) {
+        workingMemoryStore?.save(branchId, snapshot)
+    }
+
+    /** Persists both Day 11 memory layers for the *active* branch: long-term globally (see
+     * [LongTermMemoryStore]) and working memory keyed by [currentBranchId] (see
+     * [WorkingMemoryStore]) — always in their own files, never mixed into [ChatHistoryStore]. */
+    private fun persistMemoryLayers() {
+        val state = _uiState.value
+        longTermMemoryStore?.save(state.longTermMemory)
+        persistWorkingMemory(currentBranchId, state.workingMemory)
+    }
+
+    /**
+     * Day 11: manually promotes a [MemoryLayer.WORKING] item to [MemoryLayer.LONG_TERM] — the
+     * "явный выбор" escape hatch when the user wants something to outlive the current task.
+     * The promoted item is marked [MemorySource.USER] and pinned so [MemoryRouter] can never
+     * later silently overwrite or drop it.
+     */
+    fun onPromoteToLongTerm(key: String) {
+        val state = _uiState.value
+        val item = state.workingMemory.items[key] ?: return
+        val pinnedItem = item.copy(source = MemorySource.USER, pinned = true)
+        _uiState.value = state.copy(
+            workingMemory = MemorySnapshot(state.workingMemory.items - key),
+            longTermMemory = MemorySnapshot(state.longTermMemory.items + (key to pinnedItem))
+        )
+        persistMemoryLayers()
+    }
+
+    /** Day 11: manually adds/overwrites a long-term item (e.g. correcting the router, or
+     * recording something it never had a chance to see). Always pinned. */
+    fun onAddLongTermItem(rawKey: String, rawValue: String) {
+        val key = rawKey.trim().lowercase().replace(Regex("[^a-z0-9]+"), "_").trim('_')
+        val value = rawValue.trim()
+        if (key.isEmpty() || value.isEmpty()) return
+        val item = MemoryItem(key = key, value = value, source = MemorySource.USER, pinned = true)
+        val state = _uiState.value
+        _uiState.value = state.copy(
+            longTermMemory = MemorySnapshot(state.longTermMemory.items + (key to item))
+        )
+        persistMemoryLayers()
+    }
+
+    /** Day 11: manually deletes one long-term item. */
+    fun onDeleteLongTermItem(key: String) {
+        val state = _uiState.value
+        _uiState.value = state.copy(longTermMemory = MemorySnapshot(state.longTermMemory.items - key))
+        persistMemoryLayers()
+    }
+
+    /** Day 11: manually deletes one working-memory item. */
+    fun onDeleteWorkingItem(key: String) {
+        val state = _uiState.value
+        _uiState.value = state.copy(workingMemory = MemorySnapshot(state.workingMemory.items - key))
+        persistMemoryLayers()
+    }
+
+    /**
+     * Day 11 "End task": clears [MemoryLayer.WORKING] only — [MemoryLayer.LONG_TERM] and the
+     * dialog itself ([MemoryLayer.SHORT_TERM]) are left untouched, demonstrating that the three
+     * layers really are independent.
+     */
+    fun onEndTask() {
+        _uiState.value = _uiState.value.copy(
+            workingMemory = MemorySnapshot.EMPTY,
+            lastMemoryDecisions = emptyList()
+        )
+        persistMemoryLayers()
+    }
+
+    /**
+     * Day 11 "Clear dialog": clears [MemoryLayer.SHORT_TERM] (transcript + Day 9 summary state)
+     * only — [MemoryLayer.WORKING] and [MemoryLayer.LONG_TERM] are left untouched, so the agent
+     * still remembers the current task and the user's profile in a brand new conversation.
+     */
+    fun onClearDialog() {
+        _uiState.value = _uiState.value.copy(
+            messages = emptyList(),
+            contextSummary = "",
+            summarizedMessageCount = 0,
+            dialogTokenTotal = 0,
+            compressionTokensTotal = 0,
+            errorMessage = null
+        )
+        persistHistory()
     }
 
     /** Writes the current transcript + selected agent/model so a restart can resume from it. */
@@ -321,7 +487,9 @@ class ChatViewModel(
                             history = context.history,
                             modelOverride = model,
                             summary = context.summary,
-                            facts = context.facts
+                            facts = context.facts,
+                            longTermMemory = context.longTermMemory,
+                            workingMemory = context.workingMemory
                         )
                     )
                         .onSuccess { response ->
@@ -359,16 +527,18 @@ class ChatViewModel(
         }
     }
 
-    /** What actually gets sent to the agent for one turn (Day 10: strategy-dependent). */
+    /** What actually gets sent to the agent for one turn (Day 10/11: strategy-dependent). */
     private data class RequestContext(
         val history: List<AgentMessage>,
-        val summary: String?,
-        val facts: String?
+        val summary: String? = null,
+        val facts: String? = null,
+        val longTermMemory: String? = null,
+        val workingMemory: String? = null
     )
 
     /**
-     * Decides what to actually send as this turn's history/summary/facts, per the currently
-     * selected [ContextStrategy]:
+     * Decides what to actually send as this turn's history/summary/facts/memory layers, per
+     * the currently selected [ContextStrategy]:
      * - [ContextStrategy.FULL_HISTORY]: the full raw [history], nothing else (pre-Day-9
      *   baseline, kept for direct comparison).
      * - [ContextStrategy.SLIDING_WINDOW]: only the last [ContextStrategy.SLIDING_WINDOW_SIZE]
@@ -379,6 +549,10 @@ class ChatViewModel(
      * - [ContextStrategy.FACTS]: Day 10's sticky facts — merges [prompt] into the facts map via
      *   [FactsExtractor.extract] (a real LLM call), then sends the recent tail + rendered facts
      *   instead of the aged-out history.
+     * - [ContextStrategy.MEMORY_LAYERS]: Day 11's explicit memory model — [MemoryRouter.route]
+     *   classifies [prompt] into working/long-term memory (a real LLM call), then
+     *   [MemoryAssembler] renders both layers as separate blocks, sent alongside the recent
+     *   tail instead of the aged-out history.
      */
     private suspend fun prepareRequestContext(
         history: List<AgentMessage>,
@@ -386,12 +560,10 @@ class ChatViewModel(
         prompt: String
     ): RequestContext {
         return when (_uiState.value.contextStrategy) {
-            ContextStrategy.FULL_HISTORY -> RequestContext(history, null, null)
+            ContextStrategy.FULL_HISTORY -> RequestContext(history)
 
             ContextStrategy.SLIDING_WINDOW -> RequestContext(
-                history.takeLast(ContextStrategy.SLIDING_WINDOW_SIZE),
-                null,
-                null
+                history.takeLast(ContextStrategy.SLIDING_WINDOW_SIZE)
             )
 
             ContextStrategy.SUMMARY -> {
@@ -445,6 +617,40 @@ class ChatViewModel(
                     recentContext,
                     null,
                     factsExtractor.render(latestState.facts).ifBlank { null }
+                )
+            }
+
+            ContextStrategy.MEMORY_LAYERS -> {
+                val recentContext = history.takeLast(ContextStrategy.SLIDING_WINDOW_SIZE)
+                val state = _uiState.value
+                val turn = history.count { it.role == AgentMessage.Role.USER } + 1
+                memoryRouter.route(
+                    previousWorking = state.workingMemory,
+                    previousLongTerm = state.longTermMemory,
+                    recentContext = recentContext,
+                    newUserMessage = prompt,
+                    turn = turn,
+                    model = model
+                ).onSuccess { outcome ->
+                    _uiState.value = _uiState.value.copy(
+                        workingMemory = outcome.working,
+                        longTermMemory = outcome.longTerm,
+                        memoryRoutingTokensTotal = _uiState.value.memoryRoutingTokensTotal + outcome.tokensUsed,
+                        lastMemoryDecisions = outcome.decisions
+                    )
+                    persistMemoryLayers()
+                }
+                // On failure, keep the previous layers unchanged and fall through — the
+                // conversation still works with whatever memory was already known.
+                val latestMemoryState = _uiState.value
+                val assembled = MemoryAssembler.assemble(
+                    longTerm = latestMemoryState.longTermMemory,
+                    working = latestMemoryState.workingMemory
+                )
+                RequestContext(
+                    history = recentContext,
+                    longTermMemory = assembled.longTermBlock.ifEmpty { null },
+                    workingMemory = assembled.workingBlock.ifEmpty { null }
                 )
             }
         }

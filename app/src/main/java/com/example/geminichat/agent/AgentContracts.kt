@@ -40,7 +40,22 @@ data class AgentRequest(
      * conversation (goal, constraints, preferences, decisions) that should survive regardless
      * of how much raw history is dropped. Rendered ahead of [summary]/[history] when set.
      */
-    val facts: String? = null
+    val facts: String? = null,
+    /**
+     * Optional rendered [com.example.geminichat.agent.memory.MemoryLayer.LONG_TERM] block
+     * (Day 11, the "Memory layers" strategy): durable facts about the *user* — profile,
+     * standing decisions, knowledge — that persist across tasks, branches, and even agent
+     * personas (see [com.example.geminichat.agent.memory.MemoryStore]). Rendered first, ahead
+     * of everything else, since it's the most stable, least likely to change.
+     */
+    val longTermMemory: String? = null,
+    /**
+     * Optional rendered [com.example.geminichat.agent.memory.MemoryLayer.WORKING] block
+     * (Day 11): facts about the *current task* only — goal, constraints, steps already
+     * decided, open questions — cleared independently of [longTermMemory] once the task ends.
+     * Rendered right after [longTermMemory], ahead of [summary]/[history].
+     */
+    val workingMemory: String? = null
 )
 
 /** Successful output of [Agent.handle]. */
@@ -65,10 +80,17 @@ data class AgentResponse(
  *   yet or compression is disabled.
  * - [factsTokens] — the rendered sticky facts key-value memory (see [AgentRequest.facts] /
  *   [com.example.geminichat.agent.FactsExtractor]); zero unless the Facts strategy is active.
+ * - [longTermMemoryTokens] — the rendered
+ *   [com.example.geminichat.agent.memory.MemoryLayer.LONG_TERM] block (see
+ *   [AgentRequest.longTermMemory]); zero unless the Memory-layers strategy is active.
+ * - [workingMemoryTokens] — the rendered
+ *   [com.example.geminichat.agent.memory.MemoryLayer.WORKING] block (see
+ *   [AgentRequest.workingMemory]); zero unless the Memory-layers strategy is active.
  * - [systemInstructionTokens] — the agent's persona/system instruction, sent separately from
  *   [LlmRequestSpec.input] but still counted against the model's context window.
  * - [promptTokens] — everything actually sent to the model for this call
- *   (`requestTokens + historyTokens + summaryTokens + factsTokens + systemInstructionTokens`).
+ *   (`requestTokens + historyTokens + summaryTokens + factsTokens + longTermMemoryTokens +
+ *   workingMemoryTokens + systemInstructionTokens`).
  * - [completionTokens] — the model's reply.
  * - [totalTokens] — `promptTokens + completionTokens`, i.e. this call's full token cost.
  */
@@ -79,7 +101,9 @@ data class TokenUsage(
     val promptTokens: Int,
     val completionTokens: Int,
     val summaryTokens: Int = 0,
-    val factsTokens: Int = 0
+    val factsTokens: Int = 0,
+    val longTermMemoryTokens: Int = 0,
+    val workingMemoryTokens: Int = 0
 ) {
     val totalTokens: Int get() = promptTokens + completionTokens
 }

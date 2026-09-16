@@ -55,7 +55,15 @@ class LlmAgent(
         // ahead of the summary/history, since it's the most load-bearing, highest-priority
         // context.
         val factsText = request.facts?.trim().orEmpty()
+        // Day 11 memory layers (see [AgentRequest.longTermMemory]/[AgentRequest.workingMemory]):
+        // rendered ahead of everything else — long-term first (most stable: who the user is),
+        // then working (what the current task is) — so the model reads "who is this" before
+        // "what are we doing right now" before the recent conversation itself.
+        val longTermMemoryText = request.longTermMemory?.trim().orEmpty()
+        val workingMemoryText = request.workingMemory?.trim().orEmpty()
         val contextText = listOf(
+            longTermMemoryText.takeIf { it.isNotEmpty() },
+            workingMemoryText.takeIf { it.isNotEmpty() },
             factsText.takeIf { it.isNotEmpty() }?.let { "Known facts:\n$it" },
             summaryText.takeIf { it.isNotEmpty() }?.let { "Summary of earlier conversation:\n$it" },
             historyText.takeIf { it.isNotEmpty() }
@@ -70,9 +78,11 @@ class LlmAgent(
         val historyTokens = TokenEstimator.estimate(historyText)
         val summaryTokens = TokenEstimator.estimate(summaryText)
         val factsTokens = TokenEstimator.estimate(factsText)
+        val longTermMemoryTokens = TokenEstimator.estimate(longTermMemoryText)
+        val workingMemoryTokens = TokenEstimator.estimate(workingMemoryText)
         val systemInstructionTokens = TokenEstimator.estimate(config.systemInstruction)
         val promptTokens = requestTokens + historyTokens + summaryTokens + factsTokens +
-            systemInstructionTokens
+            longTermMemoryTokens + workingMemoryTokens + systemInstructionTokens
 
         val reservedOutputTokens = config.maxOutputTokens ?: DEFAULT_RESERVED_OUTPUT_TOKENS
         val contextWindowTokens = client.contextWindowTokens(model)
@@ -117,7 +127,9 @@ class LlmAgent(
                                 promptTokens = promptTokens,
                                 completionTokens = TokenEstimator.estimate(answer),
                                 summaryTokens = summaryTokens,
-                                factsTokens = factsTokens
+                                factsTokens = factsTokens,
+                                longTermMemoryTokens = longTermMemoryTokens,
+                                workingMemoryTokens = workingMemoryTokens
                             )
                         )
                     )

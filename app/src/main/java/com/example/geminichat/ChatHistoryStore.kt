@@ -22,7 +22,11 @@ data class BranchSnapshot(
     val facts: Map<String, String> = emptyMap(),
     val dialogTokenTotal: Int = 0,
     val compressionTokensTotal: Int = 0,
-    val factsTokensTotal: Int = 0
+    val factsTokensTotal: Int = 0,
+    /** Day 11: tokens spent on [com.example.geminichat.agent.memory.MemoryRouter] calls for
+     * this branch. The branch's working memory *contents* are stored separately, in
+     * [com.example.geminichat.agent.memory.WorkingMemoryStore], keyed by this branch's [id]. */
+    val memoryRoutingTokensTotal: Int = 0
 )
 
 /**

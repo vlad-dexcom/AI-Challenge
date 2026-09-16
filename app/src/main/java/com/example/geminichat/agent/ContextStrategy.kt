@@ -16,15 +16,25 @@ package com.example.geminichat.agent
  *   `facts + last N messages` instead of the full/aged-out history.
  * - [SUMMARY]: Day 9's running-summary compression (see [HistoryCompressor]) — folds aged-out
  *   turns into a single narrative summary via an LLM call.
+ * - [MEMORY_LAYERS]: Day 11's explicit memory model (see
+ *   [com.example.geminichat.agent.memory.MemoryLayer]) — a
+ *   [com.example.geminichat.agent.memory.MemoryRouter] classifies every user message into
+ *   *working* memory (current task) and *long-term* memory (profile/decisions/knowledge),
+ *   stored separately from the short-term dialog itself, and all three are rendered as
+ *   distinct, separately-costed prompt blocks (see
+ *   [com.example.geminichat.agent.memory.MemoryAssembler]). The new default: it generalizes
+ *   [FACTS] by separating "facts about this task" from "facts about the user" instead of
+ *   lumping everything into one flat KV map.
  */
 enum class ContextStrategy(val label: String) {
     FULL_HISTORY("Full history"),
     SLIDING_WINDOW("Sliding window"),
     FACTS("Facts (key-value memory)"),
-    SUMMARY("Summary (compression)");
+    SUMMARY("Summary (compression)"),
+    MEMORY_LAYERS("Memory layers (short/working/long-term)");
 
     companion object {
-        val DEFAULT = SUMMARY
+        val DEFAULT = MEMORY_LAYERS
 
         /** How many most-recent messages [SLIDING_WINDOW] keeps verbatim. */
         const val SLIDING_WINDOW_SIZE = 8
