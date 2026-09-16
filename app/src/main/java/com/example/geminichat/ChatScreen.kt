@@ -1,5 +1,6 @@
 package com.example.geminichat
 
+import androidx.compose.foundation.Image
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -11,6 +12,7 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.imePadding
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.horizontalScroll
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.lazy.rememberLazyListState
@@ -48,6 +50,8 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.vector.ImageVector
+import androidx.compose.ui.res.vectorResource
 import androidx.compose.ui.unit.dp
 import com.example.geminichat.agent.memory.MemoryRoutingDecision
 import com.example.geminichat.agent.memory.MemorySnapshot
@@ -102,10 +106,17 @@ fun ChatScreen(viewModel: ChatViewModel) {
                     title = { Text(uiState.agentName) },
                     actions = {
                         IconButton(onClick = { showBranchSheet = true }) {
-                            Icon(Icons.AutoMirrored.Filled.ListIcon, contentDescription = "Branch")
+                            Icon(
+                                imageVector = ImageVector.vectorResource(R.drawable.ic_branch),
+                                contentDescription = "Branch"
+                            )
                         }
                         IconButton(onClick = { showSettings = true }) {
-                            Icon(Icons.Filled.Settings, contentDescription = "Settings")
+                            Icon(
+
+                                Icons.Filled.Settings,
+                                contentDescription = "Settings"
+                            )
                         }
                     }
                 )
@@ -355,10 +366,12 @@ private fun MemoryPanel(
 
 /**
  * Day 12 personalization panel: edits the single, global [UserProfile] in place — there is no
- * selector, since there is only ever one profile (see [UserProfile]). Text fields commit on
- * every keystroke via [onFieldChange] (mirrors [MemoryPanel]'s immediate-apply style);
- * constraints are a separate add/remove list since they're a set, not a single overwritable
- * value.
+ * per-profile selector, since there is only ever one profile (see [UserProfile]). The preset
+ * row at the top is a shortcut that overwrites every field at once with one of
+ * [UserProfile.PRESETS], so maximally different profiles can be tried back to back; regular
+ * text fields still commit on every keystroke via [onFieldChange] (mirrors [MemoryPanel]'s
+ * immediate-apply style), and constraints are a separate add/remove list since they're a set,
+ * not a single overwritable value.
  */
 @Composable
 private fun ProfilePanel(
@@ -368,6 +381,7 @@ private fun ProfilePanel(
     onFieldChange: (ProfileField, String) -> Unit,
     onAddConstraint: (String) -> Unit,
     onRemoveConstraint: (String) -> Unit,
+    onApplyPreset: (UserProfile) -> Unit,
     onReset: () -> Unit
 ) {
     var expanded by remember { mutableStateOf(false) }
@@ -394,6 +408,23 @@ private fun ProfilePanel(
             }
         }
         if (!expanded) return@Column
+
+        Text(
+            text = "Presets (test with very different profiles)",
+            style = MaterialTheme.typography.labelMedium,
+            modifier = Modifier.padding(top = 4.dp)
+        )
+        Row(
+            modifier = Modifier
+                .fillMaxWidth()
+                .horizontalScroll(rememberScrollState())
+        ) {
+            UserProfile.PRESETS.forEach { preset ->
+                TextButton(onClick = { onApplyPreset(preset.profile) }, enabled = enabled) {
+                    Text(preset.label)
+                }
+            }
+        }
 
         OutlinedTextField(
             value = profile.displayName,
@@ -685,6 +716,7 @@ private fun SettingsScreen(uiState: ChatUiState, viewModel: ChatViewModel, onBac
                 onFieldChange = viewModel::onProfileFieldChange,
                 onAddConstraint = viewModel::onAddConstraint,
                 onRemoveConstraint = viewModel::onRemoveConstraint,
+                onApplyPreset = viewModel::onApplyPreset,
                 onReset = viewModel::onResetProfile
             )
         }

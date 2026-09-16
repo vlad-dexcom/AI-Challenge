@@ -94,5 +94,62 @@ data class UserProfile(
             constraints = listOf("нет доступа к тренажёрному залу"),
             notes = ""
         )
+
+        /**
+         * Ready-made profiles for exercising personalization end to end: each one pushes a
+         * different combination of [language], [expertise], [tone], [format],
+         * [maxAnswerSentences] and [constraints], so picking two presets in a row should make
+         * the agent's next reply visibly different — see the Settings screen's preset row and
+         * `docs/day12-personalization-test-scenario.md`.
+         */
+        val PRESETS: List<ProfilePreset> = listOf(
+            ProfilePreset("Новичок дома", STARTER),
+            ProfilePreset(
+                "Продвинутый атлет (EN)",
+                UserProfile(
+                    displayName = "Alex",
+                    about = "Experienced lifter, trains at a fully equipped gym 5x/week.",
+                    language = "English",
+                    expertise = ExpertiseLevel.ADVANCED,
+                    tone = "direct, no small talk",
+                    format = "bullet points only, with sets/reps/%1RM numbers",
+                    maxAnswerSentences = 2,
+                    constraints = emptyList(),
+                    notes = "always give concrete numbers, never vague advice"
+                )
+            ),
+            ProfilePreset(
+                "Осторожный новичок (травма)",
+                UserProfile(
+                    displayName = "Марина",
+                    about = "Восстанавливается после травмы поясницы, тренируется под присмотром врача.",
+                    language = "русский",
+                    expertise = ExpertiseLevel.BEGINNER,
+                    tone = "очень бережно, подробно объяснять каждый шаг",
+                    format = "подробное пошаговое объяснение техники, без сокращений",
+                    maxAnswerSentences = null,
+                    constraints = listOf("боль в пояснице", "не приседать глубоко", "не бегать"),
+                    notes = "всегда напоминать размяться перед началом"
+                )
+            ),
+            ProfilePreset(
+                "Минимализм",
+                UserProfile(
+                    displayName = "",
+                    about = "",
+                    language = "",
+                    expertise = ExpertiseLevel.INTERMEDIATE,
+                    tone = "нейтрально, без вступлений",
+                    format = "только пункты, без пояснений",
+                    maxAnswerSentences = 2,
+                    constraints = emptyList(),
+                    notes = "не повторять то, что уже было сказано раньше"
+                )
+            )
+        )
     }
 }
+
+/** One entry of [UserProfile.PRESETS]: a human-readable [label] paired with the full
+ * [profile] it loads when picked. */
+data class ProfilePreset(val label: String, val profile: UserProfile)

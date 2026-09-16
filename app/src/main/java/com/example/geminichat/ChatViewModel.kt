@@ -434,6 +434,14 @@ class ChatViewModel(
         persistProfile()
     }
 
+    /** Day 12: overwrites the whole profile with one of [UserProfile.PRESETS] in one step —
+     * lets the same conversation be re-run under maximally different profiles to check that
+     * personalization is actually picked up (see the Settings screen's preset row). */
+    fun onApplyPreset(preset: UserProfile) {
+        _uiState.value = _uiState.value.copy(userProfile = preset, pendingPreferenceSuggestion = null)
+        persistProfile()
+    }
+
     /** Day 12: resets the profile back to [UserProfile.EMPTY] — the agent's prompt then
      * matches its pre-Day-12 behavior exactly (see [ProfileRenderer.render]). */
     fun onResetProfile() {
