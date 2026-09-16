@@ -1,6 +1,5 @@
 package com.example.geminichat
 
-import androidx.compose.foundation.Image
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -37,7 +36,6 @@ import androidx.compose.material3.TopAppBar
 import androidx.compose.material3.rememberModalBottomSheetState
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
-import androidx.compose.material.icons.automirrored.filled.List as ListIcon
 import androidx.compose.material.icons.automirrored.filled.Send
 import androidx.compose.material.icons.filled.ArrowDropDown
 import androidx.compose.material.icons.filled.Settings
@@ -113,7 +111,6 @@ fun ChatScreen(viewModel: ChatViewModel) {
                         }
                         IconButton(onClick = { showSettings = true }) {
                             Icon(
-
                                 Icons.Filled.Settings,
                                 contentDescription = "Settings"
                             )
