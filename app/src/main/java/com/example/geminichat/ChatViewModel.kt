@@ -17,6 +17,13 @@ import com.example.geminichat.agent.memory.MemoryRoutingDecision
 import com.example.geminichat.agent.memory.MemorySnapshot
 import com.example.geminichat.agent.memory.MemorySource
 import com.example.geminichat.agent.memory.WorkingMemoryStore
+import com.example.geminichat.agent.profile.ExpertiseLevel
+import com.example.geminichat.agent.profile.PreferenceAdvisor
+import com.example.geminichat.agent.profile.PreferenceSuggestion
+import com.example.geminichat.agent.profile.ProfileField
+import com.example.geminichat.agent.profile.ProfileRenderer
+import com.example.geminichat.agent.profile.UserProfile
+import com.example.geminichat.agent.profile.UserProfileStore
 import java.util.UUID
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.TimeoutCancellationException
@@ -86,7 +93,22 @@ data class ChatUiState(
     /** What the last [com.example.geminichat.agent.memory.MemoryRouter.route] call decided and
      * why — shown in the memory inspector so "what data landed in which layer" is checkable
      * turn by turn, not just inferred from the final state. */
-    val lastMemoryDecisions: List<MemoryRoutingDecision> = emptyList()
+    val lastMemoryDecisions: List<MemoryRoutingDecision> = emptyList(),
+    /**
+     * Day 12: the single, global, user-editable personalization profile (see
+     * [com.example.geminichat.agent.profile.UserProfile]) — distinct from [longTermMemory],
+     * which holds facts the agent *learned* rather than preferences the user *declared*.
+     * Unlike [longTermMemory]/[workingMemory] there is no catalog to switch between; this is
+     * the one profile, edited in place.
+     */
+    val userProfile: UserProfile = UserProfile.EMPTY,
+    /** A pending [PreferenceAdvisor] suggestion awaiting the user's "Apply"/"Dismiss" — never
+     * applied to [userProfile] automatically (see [ChatViewModel.onApplySuggestion]). */
+    val pendingPreferenceSuggestion: PreferenceSuggestion? = null,
+    /** Tokens spent on [PreferenceAdvisor] calls so far, tracked separately from
+     * [dialogTokenTotal] and [memoryRoutingTokensTotal] so the cost of each mechanism is
+     * visible on its own. */
+    val personalizationTokensTotal: Int = 0
 ) {
     companion object {
         const val MAIN_BRANCH_ID = "main"
@@ -103,11 +125,13 @@ class ChatViewModel(
     private val historyStore: ChatHistoryStore? = null,
     private val longTermMemoryStore: LongTermMemoryStore? = null,
     private val workingMemoryStore: WorkingMemoryStore? = null,
+    private val userProfileStore: UserProfileStore? = null,
     debugContextWindowOverrideTokens: Int? = null,
 ) : ViewModel() {
 
     private val geminiClient = GeminiApiClient(apiKey, debugContextWindowOverrideTokens)
     private val memoryRouter = MemoryRouter(client = geminiClient)
+    private val preferenceAdvisor = PreferenceAdvisor(client = geminiClient)
 
     // Restore whatever was last saved so a fresh process picks the conversation back up —
     // the ViewModel no longer starts every run from a blank slate.
@@ -140,6 +164,10 @@ class ChatViewModel(
             MemorySnapshot.EMPTY
         }
 
+    // Day 12: the single global profile, loaded once (not scoped to any branch, mirroring
+    // [longTermMemory]'s "one global value" shape).
+    private var userProfile: UserProfile = userProfileStore?.load() ?: UserProfile.EMPTY
+
     private val _uiState = MutableStateFlow(
         ChatUiState(
             messages = restored.messages,
@@ -153,7 +181,9 @@ class ChatViewModel(
             hasCheckpoint = checkpoint != null,
             longTermMemory = longTermMemory,
             workingMemory = workingMemoryStore?.load(currentBranchId) ?: MemorySnapshot.EMPTY,
-            memoryRoutingTokensTotal = 0
+            memoryRoutingTokensTotal = 0,
+            userProfile = userProfile,
+            personalizationTokensTotal = 0
         )
     )
     val uiState: StateFlow<ChatUiState> = _uiState
@@ -370,6 +400,105 @@ class ChatViewModel(
         persistHistory()
     }
 
+    /**
+     * Day 12: overwrites a single scalar field of the profile (everything except
+     * [UserProfile.constraints], which is a set — see [onAddConstraint]/[onRemoveConstraint]).
+     * Applied immediately and persisted; there is no separate "save" step in the UI.
+     */
+    fun onProfileFieldChange(field: ProfileField, rawValue: String) {
+        val current = _uiState.value.userProfile
+        val updated = applyFieldValue(current, field, rawValue) ?: return
+        _uiState.value = _uiState.value.copy(userProfile = updated)
+        persistProfile()
+    }
+
+    /** Day 12: adds one entry to [UserProfile.constraints] (a set, not overwritten like other
+     * fields); no-op for a blank or already-present constraint. */
+    fun onAddConstraint(rawConstraint: String) {
+        val constraint = rawConstraint.trim()
+        if (constraint.isEmpty()) return
+        val current = _uiState.value.userProfile
+        if (current.constraints.any { it.equals(constraint, ignoreCase = true) }) return
+        _uiState.value = _uiState.value.copy(
+            userProfile = current.copy(constraints = current.constraints + constraint)
+        )
+        persistProfile()
+    }
+
+    /** Day 12: removes one entry from [UserProfile.constraints] by exact text match. */
+    fun onRemoveConstraint(constraint: String) {
+        val current = _uiState.value.userProfile
+        _uiState.value = _uiState.value.copy(
+            userProfile = current.copy(constraints = current.constraints - constraint)
+        )
+        persistProfile()
+    }
+
+    /** Day 12: overwrites the whole profile with one of [UserProfile.PRESETS] in one step —
+     * lets the same conversation be re-run under maximally different profiles to check that
+     * personalization is actually picked up (see the Settings screen's preset row). */
+    fun onApplyPreset(preset: UserProfile) {
+        _uiState.value = _uiState.value.copy(userProfile = preset, pendingPreferenceSuggestion = null)
+        persistProfile()
+    }
+
+    /** Day 12: resets the profile back to [UserProfile.EMPTY] — the agent's prompt then
+     * matches its pre-Day-12 behavior exactly (see [ProfileRenderer.render]). */
+    fun onResetProfile() {
+        _uiState.value = _uiState.value.copy(
+            userProfile = UserProfile.EMPTY,
+            pendingPreferenceSuggestion = null
+        )
+        persistProfile()
+    }
+
+    /**
+     * Day 12: applies the pending [PreferenceAdvisor] suggestion the user approved, then
+     * clears it — this is the *only* place a [PreferenceAdvisor] suggestion ever changes
+     * [UserProfile]; it is never applied automatically (see [prepareRequestContext]).
+     */
+    fun onApplySuggestion() {
+        val suggestion = _uiState.value.pendingPreferenceSuggestion ?: return
+        val current = _uiState.value.userProfile
+        val updated = when (suggestion.field) {
+            ProfileField.ADD_CONSTRAINT -> current.copy(constraints = current.constraints + suggestion.value)
+            ProfileField.REMOVE_CONSTRAINT -> current.copy(constraints = current.constraints - suggestion.value)
+            else -> applyFieldValue(current, suggestion.field, suggestion.value) ?: current
+        }
+        _uiState.value = _uiState.value.copy(userProfile = updated, pendingPreferenceSuggestion = null)
+        persistProfile()
+    }
+
+    /** Day 12: discards the pending suggestion without changing the profile. */
+    fun onDismissSuggestion() {
+        _uiState.value = _uiState.value.copy(pendingPreferenceSuggestion = null)
+    }
+
+    /** Applies [rawValue] to [field] on [profile], returning the updated copy, or `null` for
+     * the two constraint pseudo-fields (handled separately — see [onApplySuggestion]). */
+    private fun applyFieldValue(profile: UserProfile, field: ProfileField, rawValue: String): UserProfile? {
+        val value = rawValue.trim()
+        return when (field) {
+            ProfileField.DISPLAY_NAME -> profile.copy(displayName = value)
+            ProfileField.ABOUT -> profile.copy(about = value)
+            ProfileField.LANGUAGE -> profile.copy(language = value)
+            ProfileField.EXPERTISE -> profile.copy(
+                expertise = ExpertiseLevel.entries.firstOrNull { it.name.equals(value, ignoreCase = true) }
+            )
+            ProfileField.TONE -> profile.copy(tone = value)
+            ProfileField.FORMAT -> profile.copy(format = value)
+            ProfileField.MAX_ANSWER_SENTENCES -> profile.copy(maxAnswerSentences = value.toIntOrNull())
+            ProfileField.NOTES -> profile.copy(notes = value)
+            ProfileField.ADD_CONSTRAINT, ProfileField.REMOVE_CONSTRAINT -> null
+        }
+    }
+
+    /** Persists the single global profile (Day 12), independently of every memory layer and
+     * of [persistHistory] — see [UserProfileStore]. */
+    private fun persistProfile() {
+        userProfileStore?.save(_uiState.value.userProfile)
+    }
+
     /** Writes the current transcript + selected agent/model so a restart can resume from it. */
     private fun persistHistory() {
         val store = historyStore ?: return
@@ -427,7 +556,8 @@ class ChatViewModel(
                             history = context.history,
                             modelOverride = model,
                             longTermMemory = context.longTermMemory,
-                            workingMemory = context.workingMemory
+                            workingMemory = context.workingMemory,
+                            userProfile = context.userProfile
                         )
                     )
                         .onSuccess { response ->
@@ -465,11 +595,13 @@ class ChatViewModel(
         }
     }
 
-    /** What actually gets sent to the agent for one turn: a recent raw tail plus both memory layers. */
+    /** What actually gets sent to the agent for one turn: a recent raw tail plus both memory
+     * layers and the Day 12 profile block. */
     private data class RequestContext(
         val history: List<AgentMessage>,
         val longTermMemory: String? = null,
-        val workingMemory: String? = null
+        val workingMemory: String? = null,
+        val userProfile: String? = null
     )
 
     /**
@@ -480,6 +612,11 @@ class ChatViewModel(
      * both layers as separate blocks, sent alongside a recent raw tail of [history]
      * ([MemoryRouter.RECENT_CONTEXT_SIZE] messages) instead of the full, ever-growing
      * transcript.
+     *
+     * Day 12: also renders the current [ChatUiState.userProfile] (unconditionally, on every
+     * turn — see [ProfileRenderer.render]) and separately calls [PreferenceAdvisor] to check
+     * whether [prompt] states a new personalization preference; any suggestion is surfaced as
+     * [ChatUiState.pendingPreferenceSuggestion] for the user to approve, never applied here.
      */
     private suspend fun prepareRequestContext(
         history: List<AgentMessage>,
@@ -513,10 +650,24 @@ class ChatViewModel(
             longTerm = latestMemoryState.longTermMemory,
             working = latestMemoryState.workingMemory
         )
+
+        // Day 12: a separate LLM call, independent of memory routing, checks whether this turn
+        // states a personalization preference. On failure or "no preference stated" it simply
+        // leaves [ChatUiState.pendingPreferenceSuggestion] as-is — never blocks the chat turn.
+        preferenceAdvisor.suggest(profile = latestMemoryState.userProfile, newUserMessage = prompt, model = model)
+            .onSuccess { outcome ->
+                _uiState.value = _uiState.value.copy(
+                    personalizationTokensTotal = _uiState.value.personalizationTokensTotal + outcome.tokensUsed,
+                    pendingPreferenceSuggestion = outcome.suggestion ?: _uiState.value.pendingPreferenceSuggestion
+                )
+            }
+
+        val profileBlock = ProfileRenderer.render(latestMemoryState.userProfile)
         return RequestContext(
             history = agentHistoryTail,
             longTermMemory = assembled.longTermBlock.ifEmpty { null },
-            workingMemory = assembled.workingBlock.ifEmpty { null }
+            workingMemory = assembled.workingBlock.ifEmpty { null },
+            userProfile = profileBlock.ifEmpty { null }
         )
     }
 

@@ -4,7 +4,9 @@ A minimal Android app with a single `ChatScreen` (Jetpack Compose) where a user'
 handled by an **agent** (not a bare API call) that talks to the Gemini API and returns a reply.
 
 - **No Gemini SDK** — plain REST calls via [Ktor](https://ktor.io) client (`GeminiApiClient.kt`).
-- **UI**: Jetpack Compose, single screen (`ChatScreen.kt`), state held in `ChatViewModel`.
+- **UI**: Jetpack Compose. Main chat screen (`ChatScreen.kt`) plus a dedicated Settings screen
+  (model + profile) and a Branch bottom sheet, reached via the chat screen's app bar; state held
+  in `ChatViewModel`.
 - **Model**: selectable per-message, defaults to `gemini-3.5-flash`.
 - **Endpoint**: `POST https://generativelanguage.googleapis.com/v1beta/interactions`
   (Google's current recommended [Interactions API](https://ai.google.dev/api/interactions-api),
@@ -112,6 +114,38 @@ context-management mechanism in the app; there is no strategy switcher.
 deterministic guard-rules pass (`applyGuardRules`) protects anything the user pinned manually in
 the UI's memory panel from ever being overwritten or dropped.
 
+## Personalization (Day 12)
+
+`agent/profile/` adds a single, global, user-editable **profile** on top of the Day 11 memory
+model — see `docs/day12-personalization.md` for the full write-up (field table, the
+profile-vs-memory boundary, the hybrid update flow, worked prompt comparisons). This is *not*
+another memory layer: memory holds facts the agent *learned*; the profile holds preferences the
+user *declared* (tone, format, expertise, hard constraints). There is exactly one profile per
+app — like Day 11's long-term memory — editable but not switchable; no catalog of profiles to
+pick between.
+
+- **`agent/profile/UserProfile.kt`** — the profile's fields (`displayName`, `about`, `language`,
+  `expertise`, `tone`, `format`, `maxAnswerSentences`, `constraints`, `notes`); `UserProfile.EMPTY`
+  renders to nothing (agent behaves exactly as before Day 12); `UserProfile.STARTER` seeds a
+  realistic first-run example instead of a blank form.
+- **`agent/profile/ProfileRenderer.kt`** — deterministically renders the profile into a single
+  labeled block. `agent/LlmAgent.kt` appends this block to the agent's system instruction (not
+  the user-turn prompt, where Day 11's memory blocks live) on *every* request, since it's an
+  instruction about how to answer, not conversational context — see `AgentRequest.userProfile`
+  and `TokenUsage.profileTokens` (counted into the Day 8 context-window budget).
+- **`agent/profile/UserProfileStore.kt`** — persists the single profile to its own
+  `user_profile.json`, independent of every memory-layer file.
+- **`agent/profile/PreferenceAdvisor.kt`** — the hybrid update path: the profile is edited by
+  hand in the UI, but after a turn that sounds like a stated preference ("keep it shorter", "no
+  barbell"), one LLM call proposes a single field change. It is *never* applied automatically —
+  `ChatScreen` shows it as an Apply/Dismiss banner (`ChatViewModel.onApplySuggestion`/
+  `onDismissSuggestion`); the profile only ever changes by hand or by explicit approval.
+- **UI** — the model picker and `ProfilePanel` (every field, the constraint list, a "Reset
+  profile" action, and a preset row that loads one of `UserProfile.PRESETS` in one tap) now live
+  on a dedicated **Settings** screen, reached via the ⚙️ button in the chat screen's app bar; the
+  suggestion banner still appears on the chat screen itself, above the input row, whenever
+  `PreferenceAdvisor` has a pending proposal.
+
 ## Setup
 
 1. Get a Gemini API key from [Google AI Studio](https://aistudio.google.com/apikey).
@@ -139,17 +173,23 @@ the UI's memory panel from ever being overwritten or dropped.
 - `agent/` — the agent abstraction: `Agent`, `AgentConfig`/`AgentCatalog`, `AgentRequest`/
   `AgentResponse`/`AgentMessage`, `LlmClient`/`LlmRequestSpec`, `TokenUsage`/`TokenEstimator`,
   `ContextWindowExceededException`, and the `LlmAgent` implementation.
+- `agent/memory/` — the Day 11 memory layers (`MemoryLayer`, `MemoryItem`/`MemorySnapshot`,
+  `MemoryRouter`, `MemoryAssembler`, `LongTermMemoryStore`/`WorkingMemoryStore`).
+- `agent/profile/` — the Day 12 personalization profile (`UserProfile`, `ProfileRenderer`,
+  `UserProfileStore`, `PreferenceAdvisor`).
 - `GeminiModels.kt` — kotlinx.serialization request/response DTOs for the Gemini Interactions
   API, including `system_instruction` and `generation_config`.
 - `GeminiApiClient.kt` — Ktor `HttpClient` wrapper implementing `LlmClient`; POSTs the request
   and parses the `model_output` step's text.
 - `ChatViewModel.kt` — holds chat messages/input/loading state, delegates to the current `Agent`.
-- `ChatScreen.kt` — the app's only screen: message list + input field + send button + agent/model
-  selectors.
+- `ChatScreen.kt` — the chat screen (message list + input + send button, memory panel, branch
+  bottom sheet trigger) plus the Settings screen (model picker, personalization profile).
 - `MainActivity.kt` — hosts `ChatScreen`.
 
 ## Adding a new agent persona
 
 Add an `AgentConfig` entry to `AgentCatalog` (id, display name, description, system
-instruction, optional model/generation overrides) and list it in `AgentCatalog.ALL` — it will
-automatically show up in the agent selector, with no other code changes required.
+instruction, optional model/generation overrides) and list it in `AgentCatalog.ALL`. The app is
+trainer-only by default with no agent picker in the UI (see the UI-cleanup note above), so
+switching personas currently requires code (e.g. changing `AgentCatalog.DEFAULT` or restoring an
+in-app selector).

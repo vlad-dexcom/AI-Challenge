@@ -40,7 +40,16 @@ data class AgentRequest(
      * questions — cleared independently of [longTermMemory] once the task ends. Rendered right
      * after [longTermMemory], ahead of [history].
      */
-    val workingMemory: String? = null
+    val workingMemory: String? = null,
+    /**
+     * Optional rendered Day 12 [com.example.geminichat.agent.profile.UserProfile] block (see
+     * [com.example.geminichat.agent.profile.ProfileRenderer]): declarative personalization
+     * directives (tone, format, constraints) rather than a fact the agent learned. Unlike
+     * [longTermMemory]/[workingMemory], which [LlmAgent] folds into the user-turn prompt, this
+     * is appended to [AgentConfig.systemInstruction] — see [LlmAgent.handle] — since it's an
+     * instruction about *how* to answer, not conversational context.
+     */
+    val userProfile: String? = null
 )
 
 /** Successful output of [Agent.handle]. */
@@ -65,11 +74,14 @@ data class AgentResponse(
  * - [workingMemoryTokens] — the rendered
  *   [com.example.geminichat.agent.memory.MemoryLayer.WORKING] block (see
  *   [AgentRequest.workingMemory]); zero when that layer is empty.
+ * - [profileTokens] — the rendered Day 12 [com.example.geminichat.agent.profile.UserProfile]
+ *   block (see [AgentRequest.userProfile]), folded into the system instruction; zero when the
+ *   profile is empty.
  * - [systemInstructionTokens] — the agent's persona/system instruction, sent separately from
  *   [LlmRequestSpec.input] but still counted against the model's context window.
  * - [promptTokens] — everything actually sent to the model for this call
  *   (`requestTokens + historyTokens + longTermMemoryTokens + workingMemoryTokens +
- *   systemInstructionTokens`).
+ *   profileTokens + systemInstructionTokens`).
  * - [completionTokens] — the model's reply.
  * - [totalTokens] — `promptTokens + completionTokens`, i.e. this call's full token cost.
  */
@@ -80,7 +92,8 @@ data class TokenUsage(
     val promptTokens: Int,
     val completionTokens: Int,
     val longTermMemoryTokens: Int = 0,
-    val workingMemoryTokens: Int = 0
+    val workingMemoryTokens: Int = 0,
+    val profileTokens: Int = 0
 ) {
     val totalTokens: Int get() = promptTokens + completionTokens
 }
