@@ -41,6 +41,13 @@ import java.nio.channels.UnresolvedAddressException
  */
 class GeminiApiClient(
     private val apiKey: String,
+    /**
+     * Debug-only escape hatch (default `null`, no effect on real usage): forces
+     * [contextWindowTokens] to report this value for every model, so an over-budget
+     * conversation can be triggered on demand without needing 1M+ real tokens of history.
+     * See `README.md` for how to use it in the running app.
+     */
+    private val debugContextWindowOverrideTokens: Int? = null,
 ) : LlmClient {
     companion object {
         /**
@@ -91,7 +98,9 @@ class GeminiApiClient(
     private val endpoint = "https://generativelanguage.googleapis.com/v1beta/interactions"
 
     override fun contextWindowTokens(model: String): Int =
-        CONTEXT_WINDOW_TOKENS[model] ?: LlmClient.DEFAULT_CONTEXT_WINDOW_TOKENS
+        debugContextWindowOverrideTokens
+            ?: CONTEXT_WINDOW_TOKENS[model]
+            ?: LlmClient.DEFAULT_CONTEXT_WINDOW_TOKENS
 
     override suspend fun complete(spec: LlmRequestSpec): Result<String> {
         if (apiKey.isBlank()) {

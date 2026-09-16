@@ -44,20 +44,15 @@ class LlmAgent(
 
         val model = request.modelOverride ?: config.model
         val historyText = renderHistory(request.history)
-        // A Day 9 summary (see [AgentRequest.summary]) stands in for older turns that
-        // [com.example.geminichat.agent.HistoryCompressor] has folded out of [historyText] —
-        // it's rendered ahead of the recent history so the model still has that context
-        // without replaying the full, ever-growing transcript.
-        val summaryText = request.summary?.trim().orEmpty()
-        // A Day 10 sticky facts block (see [AgentRequest.facts]) is the "Facts" strategy's
-        // stand-in for durable details that must survive regardless of how much raw history
-        // gets dropped (see [com.example.geminichat.agent.FactsExtractor]). Rendered first,
-        // ahead of the summary/history, since it's the most load-bearing, highest-priority
-        // context.
-        val factsText = request.facts?.trim().orEmpty()
+        // The agent's memory layers (see [AgentRequest.longTermMemory]/[AgentRequest.workingMemory]):
+        // rendered ahead of everything else — long-term first (most stable: who the user is),
+        // then working (what the current task is) — so the model reads "who is this" before
+        // "what are we doing right now" before the recent conversation itself.
+        val longTermMemoryText = request.longTermMemory?.trim().orEmpty()
+        val workingMemoryText = request.workingMemory?.trim().orEmpty()
         val contextText = listOf(
-            factsText.takeIf { it.isNotEmpty() }?.let { "Known facts:\n$it" },
-            summaryText.takeIf { it.isNotEmpty() }?.let { "Summary of earlier conversation:\n$it" },
+            longTermMemoryText.takeIf { it.isNotEmpty() },
+            workingMemoryText.takeIf { it.isNotEmpty() },
             historyText.takeIf { it.isNotEmpty() }
         ).filterNotNull().joinToString("\n")
         val input = if (contextText.isEmpty()) userMessage else "$contextText\nUser: $userMessage"
@@ -68,11 +63,11 @@ class LlmAgent(
         // truncate or reject.
         val requestTokens = TokenEstimator.estimate(userMessage)
         val historyTokens = TokenEstimator.estimate(historyText)
-        val summaryTokens = TokenEstimator.estimate(summaryText)
-        val factsTokens = TokenEstimator.estimate(factsText)
+        val longTermMemoryTokens = TokenEstimator.estimate(longTermMemoryText)
+        val workingMemoryTokens = TokenEstimator.estimate(workingMemoryText)
         val systemInstructionTokens = TokenEstimator.estimate(config.systemInstruction)
-        val promptTokens = requestTokens + historyTokens + summaryTokens + factsTokens +
-            systemInstructionTokens
+        val promptTokens = requestTokens + historyTokens +
+            longTermMemoryTokens + workingMemoryTokens + systemInstructionTokens
 
         val reservedOutputTokens = config.maxOutputTokens ?: DEFAULT_RESERVED_OUTPUT_TOKENS
         val contextWindowTokens = client.contextWindowTokens(model)
@@ -116,8 +111,8 @@ class LlmAgent(
                                 systemInstructionTokens = systemInstructionTokens,
                                 promptTokens = promptTokens,
                                 completionTokens = TokenEstimator.estimate(answer),
-                                summaryTokens = summaryTokens,
-                                factsTokens = factsTokens
+                                longTermMemoryTokens = longTermMemoryTokens,
+                                workingMemoryTokens = workingMemoryTokens
                             )
                         )
                     )
@@ -128,7 +123,7 @@ class LlmAgent(
     }
 
     /**
-     * Renders [history] as a "User: ...\n<Agent>: ..." transcript so the model has the full
+     * Renders [history] as a "User: ...\n<Agent>: ..." transcript so the model has the recent
      * prior conversation as context (empty string when there is no history yet). The caller
      * (currently [com.example.geminichat.ChatViewModel]) decides what history to pass in — it
      * is now persisted/restored across app restarts via

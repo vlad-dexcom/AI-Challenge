@@ -94,6 +94,24 @@ Every `LlmAgent.handle` call now counts tokens and can refuse to send an over-bu
   message, and revert the change afterward. See `GeminiApiClientTest.kt` for the unit-level
   proof that the override takes effect.
 
+## Memory model (Day 11)
+
+`agent/memory/` splits the agent's memory into three independently-stored layers instead of one
+growing blob — see `docs/day11-memory-model.md` for the full write-up (routing rules, a worked
+example, and automated proof of the effect on the agent's prompt/answers). This is the only
+context-management mechanism in the app; there is no strategy switcher.
+
+- **Short-term** — the raw dialog, unchanged, still in `ChatHistoryStore`; only the last
+  `MemoryRouter.RECENT_CONTEXT_SIZE` messages are sent to the model verbatim.
+- **Working** (`MemoryStore.kt`'s `WorkingMemoryStore`) — current-task data (goal, steps, open
+  questions), one file per app, keyed by branch id; cleared by "End task".
+- **Long-term** (`LongTermMemoryStore`) — durable user profile/decisions/knowledge, one global
+  file, shared across every branch; cleared only by explicitly deleting an item.
+
+`MemoryRouter` classifies each user turn into working/long-term via one LLM call, then a
+deterministic guard-rules pass (`applyGuardRules`) protects anything the user pinned manually in
+the UI's memory panel from ever being overwritten or dropped.
+
 ## Setup
 
 1. Get a Gemini API key from [Google AI Studio](https://aistudio.google.com/apikey).

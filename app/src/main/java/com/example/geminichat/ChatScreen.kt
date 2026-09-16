@@ -42,7 +42,8 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import com.example.geminichat.agent.AgentConfig
-import com.example.geminichat.agent.ContextStrategy
+import com.example.geminichat.agent.memory.MemoryRoutingDecision
+import com.example.geminichat.agent.memory.MemorySnapshot
 import dev.jeziellago.compose.markdowntext.MarkdownText
 
 /**
@@ -102,17 +103,6 @@ fun ChatScreen(viewModel: ChatViewModel) {
                         modifier = Modifier.padding(horizontal = 16.dp, vertical = 2.dp)
                     )
                 }
-                CompressionBar(
-                    strategy = uiState.contextStrategy,
-                    availableStrategies = ContextStrategy.entries,
-                    enabled = !uiState.isLoading,
-                    summarizedMessageCount = uiState.summarizedMessageCount,
-                    contextSummary = uiState.contextSummary,
-                    compressionTokensTotal = uiState.compressionTokensTotal,
-                    facts = uiState.facts,
-                    factsTokensTotal = uiState.factsTokensTotal,
-                    onStrategySelected = viewModel::onContextStrategySelected
-                )
                 BranchBar(
                     branches = uiState.branches,
                     currentBranchId = uiState.currentBranchId,
@@ -121,6 +111,19 @@ fun ChatScreen(viewModel: ChatViewModel) {
                     onBranchSelected = viewModel::onBranchSelected,
                     onSaveCheckpoint = viewModel::onSaveCheckpoint,
                     onCreateBranch = viewModel::onCreateBranchFromCheckpoint
+                )
+                MemoryPanel(
+                    longTermMemory = uiState.longTermMemory,
+                    workingMemory = uiState.workingMemory,
+                    memoryRoutingTokensTotal = uiState.memoryRoutingTokensTotal,
+                    lastMemoryDecisions = uiState.lastMemoryDecisions,
+                    enabled = !uiState.isLoading,
+                    onPromote = viewModel::onPromoteToLongTerm,
+                    onDeleteWorking = viewModel::onDeleteWorkingItem,
+                    onDeleteLongTerm = viewModel::onDeleteLongTermItem,
+                    onAddLongTerm = viewModel::onAddLongTermItem,
+                    onEndTask = viewModel::onEndTask,
+                    onClearDialog = viewModel::onClearDialog
                 )
             }
         }
@@ -188,84 +191,152 @@ fun ChatScreen(viewModel: ChatViewModel) {
 }
 
 /**
- * Day 10 context-strategy controls: a dropdown to switch between [ContextStrategy.FULL_HISTORY],
- * [ContextStrategy.SLIDING_WINDOW], [ContextStrategy.FACTS], and [ContextStrategy.SUMMARY] on
- * the same conversation, plus a compact status line specific to whichever strategy is active —
- * see [ChatViewModel.onContextStrategySelected].
+ * Day 11 memory inspector. Lists every item in
+ * [com.example.geminichat.agent.memory.MemoryLayer.WORKING] and
+ * [com.example.geminichat.agent.memory.MemoryLayer.LONG_TERM] *separately* — so "what data
+ * landed in which layer" is directly checkable, not just inferred from the model's answers —
+ * plus manual overrides (promote/delete/add — see [ChatViewModel]) and "End task"/"Clear
+ * dialog", which demonstrate the three layers are independent by only ever clearing one of
+ * them at a time.
  */
 @Composable
-private fun CompressionBar(
-    strategy: ContextStrategy,
-    availableStrategies: List<ContextStrategy>,
+private fun MemoryPanel(
+    longTermMemory: MemorySnapshot,
+    workingMemory: MemorySnapshot,
+    memoryRoutingTokensTotal: Int,
+    lastMemoryDecisions: List<MemoryRoutingDecision>,
     enabled: Boolean,
-    summarizedMessageCount: Int,
-    contextSummary: String,
-    compressionTokensTotal: Int,
-    facts: Map<String, String>,
-    factsTokensTotal: Int,
-    onStrategySelected: (ContextStrategy) -> Unit
+    onPromote: (String) -> Unit,
+    onDeleteWorking: (String) -> Unit,
+    onDeleteLongTerm: (String) -> Unit,
+    onAddLongTerm: (String, String) -> Unit,
+    onEndTask: () -> Unit,
+    onClearDialog: () -> Unit
 ) {
     var expanded by remember { mutableStateOf(false) }
+    var newKey by remember { mutableStateOf("") }
+    var newValue by remember { mutableStateOf("") }
 
-    Column {
+    Column(modifier = Modifier.padding(horizontal = 12.dp, vertical = 2.dp)) {
         Row(
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(horizontal = 12.dp),
+            modifier = Modifier.fillMaxWidth(),
             verticalAlignment = Alignment.CenterVertically
         ) {
             Text(
-                text = "Context strategy",
+                text = "Memory: ${workingMemory.items.size} working · " +
+                    "${longTermMemory.items.size} long-term · routing cost " +
+                    "$memoryRoutingTokensTotal tokens",
                 style = MaterialTheme.typography.labelSmall,
                 color = MaterialTheme.colorScheme.onSurfaceVariant,
                 modifier = Modifier.weight(1f)
             )
-            Box {
-                TextButton(onClick = { if (enabled) expanded = true }, enabled = enabled) {
-                    Text(strategy.label)
-                    Icon(Icons.Filled.ArrowDropDown, contentDescription = "Select context strategy")
-                }
-                DropdownMenu(expanded = expanded, onDismissRequest = { expanded = false }) {
-                    availableStrategies.forEach { candidate ->
-                        DropdownMenuItem(
-                            text = { Text(candidate.label) },
-                            onClick = {
-                                onStrategySelected(candidate)
-                                expanded = false
-                            }
-                        )
-                    }
+            TextButton(onClick = { expanded = !expanded }) {
+                Text(if (expanded) "Hide" else "Show")
+            }
+        }
+        if (!expanded) return@Column
+
+        Text(
+            text = "Long-term (profile, decisions, knowledge)",
+            style = MaterialTheme.typography.labelMedium,
+            modifier = Modifier.padding(top = 4.dp)
+        )
+        if (longTermMemory.items.isEmpty()) {
+            Text(
+                "(empty)",
+                style = MaterialTheme.typography.labelSmall,
+                color = MaterialTheme.colorScheme.onSurfaceVariant
+            )
+        }
+        longTermMemory.items.values.sortedBy { it.key }.forEach { item ->
+            Row(verticalAlignment = Alignment.CenterVertically, modifier = Modifier.fillMaxWidth()) {
+                Text(
+                    text = "${item.key}: ${item.value}" + if (item.pinned) " (pinned)" else "",
+                    style = MaterialTheme.typography.bodySmall,
+                    modifier = Modifier.weight(1f)
+                )
+                TextButton(onClick = { onDeleteLongTerm(item.key) }, enabled = enabled) {
+                    Text("Delete")
                 }
             }
         }
-        when (strategy) {
-            ContextStrategy.SUMMARY -> if (summarizedMessageCount > 0) {
-                Text(
-                    text = "Summary covers $summarizedMessageCount older messages " +
-                        "(~${contextSummary.length} chars) · compression cost: " +
-                        "$compressionTokensTotal tokens",
-                    style = MaterialTheme.typography.labelSmall,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant,
-                    modifier = Modifier.padding(horizontal = 16.dp, vertical = 2.dp)
-                )
+        Row(
+            verticalAlignment = Alignment.CenterVertically,
+            modifier = Modifier.fillMaxWidth().padding(top = 4.dp)
+        ) {
+            OutlinedTextField(
+                value = newKey,
+                onValueChange = { newKey = it },
+                placeholder = { Text("key") },
+                singleLine = true,
+                modifier = Modifier.weight(1f)
+            )
+            Spacer(modifier = Modifier.size(4.dp))
+            OutlinedTextField(
+                value = newValue,
+                onValueChange = { newValue = it },
+                placeholder = { Text("value") },
+                singleLine = true,
+                modifier = Modifier.weight(1f)
+            )
+            TextButton(
+                onClick = {
+                    onAddLongTerm(newKey, newValue)
+                    newKey = ""
+                    newValue = ""
+                },
+                enabled = enabled && newKey.isNotBlank() && newValue.isNotBlank()
+            ) {
+                Text("Add")
             }
-            ContextStrategy.FACTS -> if (facts.isNotEmpty()) {
+        }
+
+        Text(
+            text = "Working (current task)",
+            style = MaterialTheme.typography.labelMedium,
+            modifier = Modifier.padding(top = 8.dp)
+        )
+        if (workingMemory.items.isEmpty()) {
+            Text(
+                "(empty)",
+                style = MaterialTheme.typography.labelSmall,
+                color = MaterialTheme.colorScheme.onSurfaceVariant
+            )
+        }
+        workingMemory.items.values.sortedBy { it.key }.forEach { item ->
+            Row(verticalAlignment = Alignment.CenterVertically, modifier = Modifier.fillMaxWidth()) {
                 Text(
-                    text = "Facts: " + facts.entries.joinToString("; ") { (k, v) -> "$k=$v" } +
-                        " · extraction cost: $factsTokensTotal tokens",
-                    style = MaterialTheme.typography.labelSmall,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant,
-                    modifier = Modifier.padding(horizontal = 16.dp, vertical = 2.dp)
+                    text = "${item.key}: ${item.value}",
+                    style = MaterialTheme.typography.bodySmall,
+                    modifier = Modifier.weight(1f)
                 )
+                TextButton(onClick = { onPromote(item.key) }, enabled = enabled) {
+                    Text("Promote")
+                }
+                TextButton(onClick = { onDeleteWorking(item.key) }, enabled = enabled) {
+                    Text("Delete")
+                }
             }
-            ContextStrategy.SLIDING_WINDOW -> Text(
-                text = "Only the last ${ContextStrategy.SLIDING_WINDOW_SIZE} messages are sent; " +
-                    "older turns are dropped.",
+        }
+
+        if (lastMemoryDecisions.isNotEmpty()) {
+            Text(
+                text = "Last turn routed: " + lastMemoryDecisions.joinToString("; ") { decision ->
+                    "${decision.layer} ${decision.key} (${decision.reason})"
+                },
                 style = MaterialTheme.typography.labelSmall,
                 color = MaterialTheme.colorScheme.onSurfaceVariant,
-                modifier = Modifier.padding(horizontal = 16.dp, vertical = 2.dp)
+                modifier = Modifier.padding(top = 4.dp)
             )
-            ContextStrategy.FULL_HISTORY -> {}
+        }
+
+        Row(modifier = Modifier.padding(top = 4.dp)) {
+            TextButton(onClick = onEndTask, enabled = enabled) {
+                Text("End task")
+            }
+            TextButton(onClick = onClearDialog, enabled = enabled) {
+                Text("Clear dialog")
+            }
         }
     }
 }
@@ -423,7 +494,7 @@ private fun MessageBubble(message: ChatMessage) {
                     message.tokenUsage?.let { usage ->
                         Text(
                             text = "prompt ${usage.promptTokens} (history ${usage.historyTokens}, " +
-                                "summary ${usage.summaryTokens}, facts ${usage.factsTokens}) · " +
+                                "lt ${usage.longTermMemoryTokens}, wm ${usage.workingMemoryTokens}) · " +
                                 "reply ${usage.completionTokens} · total ${usage.totalTokens}",
                             style = MaterialTheme.typography.labelSmall,
                             color = MaterialTheme.colorScheme.onSurfaceVariant,
