@@ -57,6 +57,16 @@ class LlmAgent(
         ).filterNotNull().joinToString("\n")
         val input = if (contextText.isEmpty()) userMessage else "$contextText\nUser: $userMessage"
 
+        // Day 12: the profile is personalization *instruction* ("how to answer"), not
+        // conversational context, so it's appended to the system instruction rather than
+        // mixed into [input] alongside memory/history.
+        val userProfileText = request.userProfile?.trim().orEmpty()
+        val effectiveSystemInstruction = if (userProfileText.isEmpty()) {
+            config.systemInstruction
+        } else {
+            "${config.systemInstruction}\n\n$userProfileText"
+        }
+
         // Count tokens for each part *before* calling the client, so an over-budget
         // conversation can be refused without ever making the network call (see
         // [ContextWindowExceededException]) instead of sending a request the model would
@@ -65,9 +75,10 @@ class LlmAgent(
         val historyTokens = TokenEstimator.estimate(historyText)
         val longTermMemoryTokens = TokenEstimator.estimate(longTermMemoryText)
         val workingMemoryTokens = TokenEstimator.estimate(workingMemoryText)
-        val systemInstructionTokens = TokenEstimator.estimate(config.systemInstruction)
+        val profileTokens = TokenEstimator.estimate(userProfileText)
+        val systemInstructionTokens = TokenEstimator.estimate(effectiveSystemInstruction)
         val promptTokens = requestTokens + historyTokens +
-            longTermMemoryTokens + workingMemoryTokens + systemInstructionTokens
+            longTermMemoryTokens + workingMemoryTokens + profileTokens + systemInstructionTokens
 
         val reservedOutputTokens = config.maxOutputTokens ?: DEFAULT_RESERVED_OUTPUT_TOKENS
         val contextWindowTokens = client.contextWindowTokens(model)
@@ -84,7 +95,7 @@ class LlmAgent(
         val spec = LlmRequestSpec(
             model = model,
             input = input,
-            systemInstruction = config.systemInstruction,
+            systemInstruction = effectiveSystemInstruction,
             maxOutputTokens = config.maxOutputTokens,
             temperature = config.temperature
         )
@@ -112,7 +123,8 @@ class LlmAgent(
                                 promptTokens = promptTokens,
                                 completionTokens = TokenEstimator.estimate(answer),
                                 longTermMemoryTokens = longTermMemoryTokens,
-                                workingMemoryTokens = workingMemoryTokens
+                                workingMemoryTokens = workingMemoryTokens,
+                                profileTokens = profileTokens
                             )
                         )
                     )

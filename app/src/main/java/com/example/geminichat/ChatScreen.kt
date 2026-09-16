@@ -44,6 +44,10 @@ import androidx.compose.ui.unit.dp
 import com.example.geminichat.agent.AgentConfig
 import com.example.geminichat.agent.memory.MemoryRoutingDecision
 import com.example.geminichat.agent.memory.MemorySnapshot
+import com.example.geminichat.agent.profile.ExpertiseLevel
+import com.example.geminichat.agent.profile.PreferenceSuggestion
+import com.example.geminichat.agent.profile.ProfileField
+import com.example.geminichat.agent.profile.UserProfile
 import dev.jeziellago.compose.markdowntext.MarkdownText
 
 /**
@@ -125,6 +129,22 @@ fun ChatScreen(viewModel: ChatViewModel) {
                     onEndTask = viewModel::onEndTask,
                     onClearDialog = viewModel::onClearDialog
                 )
+                ProfilePanel(
+                    profile = uiState.userProfile,
+                    personalizationTokensTotal = uiState.personalizationTokensTotal,
+                    enabled = !uiState.isLoading,
+                    onFieldChange = viewModel::onProfileFieldChange,
+                    onAddConstraint = viewModel::onAddConstraint,
+                    onRemoveConstraint = viewModel::onRemoveConstraint,
+                    onReset = viewModel::onResetProfile
+                )
+                uiState.pendingPreferenceSuggestion?.let { suggestion ->
+                    SuggestionBanner(
+                        suggestion = suggestion,
+                        onApply = viewModel::onApplySuggestion,
+                        onDismiss = viewModel::onDismissSuggestion
+                    )
+                }
             }
         }
     ) { padding ->
@@ -342,6 +362,239 @@ private fun MemoryPanel(
 }
 
 /**
+ * Day 12 personalization panel: edits the single, global [UserProfile] in place — there is no
+ * selector, since there is only ever one profile (see [UserProfile]). Text fields commit on
+ * every keystroke via [onFieldChange] (mirrors [MemoryPanel]'s immediate-apply style);
+ * constraints are a separate add/remove list since they're a set, not a single overwritable
+ * value.
+ */
+@Composable
+private fun ProfilePanel(
+    profile: UserProfile,
+    personalizationTokensTotal: Int,
+    enabled: Boolean,
+    onFieldChange: (ProfileField, String) -> Unit,
+    onAddConstraint: (String) -> Unit,
+    onRemoveConstraint: (String) -> Unit,
+    onReset: () -> Unit
+) {
+    var expanded by remember { mutableStateOf(false) }
+    var newConstraint by remember { mutableStateOf("") }
+
+    Column(modifier = Modifier.padding(horizontal = 12.dp, vertical = 2.dp)) {
+        Row(
+            modifier = Modifier.fillMaxWidth(),
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            Text(
+                text = if (profile.isEmpty()) {
+                    "Profile: not set up · personalization cost $personalizationTokensTotal tokens"
+                } else {
+                    "Profile: ${profile.displayName.ifBlank { "(unnamed)" }} · " +
+                        "personalization cost $personalizationTokensTotal tokens"
+                },
+                style = MaterialTheme.typography.labelSmall,
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
+                modifier = Modifier.weight(1f)
+            )
+            TextButton(onClick = { expanded = !expanded }) {
+                Text(if (expanded) "Hide" else "Show")
+            }
+        }
+        if (!expanded) return@Column
+
+        OutlinedTextField(
+            value = profile.displayName,
+            onValueChange = { onFieldChange(ProfileField.DISPLAY_NAME, it) },
+            label = { Text("Name") },
+            singleLine = true,
+            enabled = enabled,
+            modifier = Modifier.fillMaxWidth().padding(top = 4.dp)
+        )
+        OutlinedTextField(
+            value = profile.about,
+            onValueChange = { onFieldChange(ProfileField.ABOUT, it) },
+            label = { Text("About") },
+            enabled = enabled,
+            modifier = Modifier.fillMaxWidth().padding(top = 4.dp)
+        )
+        OutlinedTextField(
+            value = profile.language,
+            onValueChange = { onFieldChange(ProfileField.LANGUAGE, it) },
+            label = { Text("Language") },
+            singleLine = true,
+            enabled = enabled,
+            modifier = Modifier.fillMaxWidth().padding(top = 4.dp)
+        )
+        ExpertiseSelector(
+            selected = profile.expertise,
+            enabled = enabled,
+            onSelected = { level -> onFieldChange(ProfileField.EXPERTISE, level.name) }
+        )
+        OutlinedTextField(
+            value = profile.tone,
+            onValueChange = { onFieldChange(ProfileField.TONE, it) },
+            label = { Text("Tone") },
+            singleLine = true,
+            enabled = enabled,
+            modifier = Modifier.fillMaxWidth().padding(top = 4.dp)
+        )
+        OutlinedTextField(
+            value = profile.format,
+            onValueChange = { onFieldChange(ProfileField.FORMAT, it) },
+            label = { Text("Preferred format") },
+            singleLine = true,
+            enabled = enabled,
+            modifier = Modifier.fillMaxWidth().padding(top = 4.dp)
+        )
+        OutlinedTextField(
+            value = profile.maxAnswerSentences?.toString() ?: "",
+            onValueChange = { onFieldChange(ProfileField.MAX_ANSWER_SENTENCES, it) },
+            label = { Text("Max answer sentences") },
+            singleLine = true,
+            enabled = enabled,
+            modifier = Modifier.fillMaxWidth().padding(top = 4.dp)
+        )
+        OutlinedTextField(
+            value = profile.notes,
+            onValueChange = { onFieldChange(ProfileField.NOTES, it) },
+            label = { Text("Notes") },
+            enabled = enabled,
+            modifier = Modifier.fillMaxWidth().padding(top = 4.dp)
+        )
+
+        Text(
+            text = "Constraints",
+            style = MaterialTheme.typography.labelMedium,
+            modifier = Modifier.padding(top = 8.dp)
+        )
+        if (profile.constraints.isEmpty()) {
+            Text(
+                "(none)",
+                style = MaterialTheme.typography.labelSmall,
+                color = MaterialTheme.colorScheme.onSurfaceVariant
+            )
+        }
+        profile.constraints.forEach { constraint ->
+            Row(verticalAlignment = Alignment.CenterVertically, modifier = Modifier.fillMaxWidth()) {
+                Text(
+                    text = constraint,
+                    style = MaterialTheme.typography.bodySmall,
+                    modifier = Modifier.weight(1f)
+                )
+                TextButton(onClick = { onRemoveConstraint(constraint) }, enabled = enabled) {
+                    Text("Delete")
+                }
+            }
+        }
+        Row(
+            verticalAlignment = Alignment.CenterVertically,
+            modifier = Modifier.fillMaxWidth().padding(top = 4.dp)
+        ) {
+            OutlinedTextField(
+                value = newConstraint,
+                onValueChange = { newConstraint = it },
+                placeholder = { Text("e.g. no jumping") },
+                singleLine = true,
+                modifier = Modifier.weight(1f)
+            )
+            TextButton(
+                onClick = {
+                    onAddConstraint(newConstraint)
+                    newConstraint = ""
+                },
+                enabled = enabled && newConstraint.isNotBlank()
+            ) {
+                Text("Add")
+            }
+        }
+
+        Row(modifier = Modifier.padding(top = 4.dp)) {
+            TextButton(onClick = onReset, enabled = enabled) {
+                Text("Reset profile")
+            }
+        }
+    }
+}
+
+@Composable
+private fun ExpertiseSelector(
+    selected: ExpertiseLevel?,
+    enabled: Boolean,
+    onSelected: (ExpertiseLevel) -> Unit
+) {
+    var expanded by remember { mutableStateOf(false) }
+
+    Row(
+        verticalAlignment = Alignment.CenterVertically,
+        modifier = Modifier.fillMaxWidth().padding(top = 4.dp)
+    ) {
+        Text(
+            text = "Expertise",
+            style = MaterialTheme.typography.labelSmall,
+            color = MaterialTheme.colorScheme.onSurfaceVariant,
+            modifier = Modifier.weight(1f)
+        )
+        Box {
+            TextButton(onClick = { if (enabled) expanded = true }, enabled = enabled) {
+                Text(selected?.name?.lowercase() ?: "not set")
+                Icon(Icons.Filled.ArrowDropDown, contentDescription = "Select expertise")
+            }
+            DropdownMenu(expanded = expanded, onDismissRequest = { expanded = false }) {
+                ExpertiseLevel.entries.forEach { level ->
+                    DropdownMenuItem(
+                        text = { Text(level.name.lowercase()) },
+                        onClick = {
+                            onSelected(level)
+                            expanded = false
+                        }
+                    )
+                }
+            }
+        }
+    }
+}
+
+/**
+ * Day 12's hybrid update path made visible: a [com.example.geminichat.agent.profile.PreferenceAdvisor]
+ * suggestion is never applied to [UserProfile] automatically — it's shown here with the
+ * inferred reason, and only [onApply] (not the advisor call itself) ever changes the profile.
+ */
+@Composable
+private fun SuggestionBanner(
+    suggestion: PreferenceSuggestion,
+    onApply: () -> Unit,
+    onDismiss: () -> Unit
+) {
+    Card(
+        modifier = Modifier
+            .fillMaxWidth()
+            .padding(horizontal = 12.dp, vertical = 4.dp),
+        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.tertiaryContainer)
+    ) {
+        Column(modifier = Modifier.padding(12.dp)) {
+            Text(
+                text = "Assistant suggests updating your profile: ${suggestion.field.name.lowercase()} → " +
+                    "\"${suggestion.value}\"",
+                style = MaterialTheme.typography.bodySmall
+            )
+            if (suggestion.reason.isNotBlank()) {
+                Text(
+                    text = suggestion.reason,
+                    style = MaterialTheme.typography.labelSmall,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    modifier = Modifier.padding(top = 2.dp)
+                )
+            }
+            Row(modifier = Modifier.padding(top = 4.dp)) {
+                TextButton(onClick = onApply) { Text("Apply") }
+                TextButton(onClick = onDismiss) { Text("Dismiss") }
+            }
+        }
+    }
+}
+
+/**
  * Day 10 branching controls: a dropdown to switch between conversation branches, plus
  * "Save checkpoint" / "Branch from checkpoint" buttons. Saving a checkpoint just remembers the
  * active branch's current state; calling "Branch from checkpoint" once or more afterwards forks
@@ -494,7 +747,8 @@ private fun MessageBubble(message: ChatMessage) {
                     message.tokenUsage?.let { usage ->
                         Text(
                             text = "prompt ${usage.promptTokens} (history ${usage.historyTokens}, " +
-                                "lt ${usage.longTermMemoryTokens}, wm ${usage.workingMemoryTokens}) · " +
+                                "lt ${usage.longTermMemoryTokens}, wm ${usage.workingMemoryTokens}, " +
+                                "profile ${usage.profileTokens}) · " +
                                 "reply ${usage.completionTokens} · total ${usage.totalTokens}",
                             style = MaterialTheme.typography.labelSmall,
                             color = MaterialTheme.colorScheme.onSurfaceVariant,
