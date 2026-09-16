@@ -49,7 +49,14 @@ class LlmAgent(
         // it's rendered ahead of the recent history so the model still has that context
         // without replaying the full, ever-growing transcript.
         val summaryText = request.summary?.trim().orEmpty()
+        // A Day 10 sticky facts block (see [AgentRequest.facts]) is the "Facts" strategy's
+        // stand-in for durable details that must survive regardless of how much raw history
+        // gets dropped (see [com.example.geminichat.agent.FactsExtractor]). Rendered first,
+        // ahead of the summary/history, since it's the most load-bearing, highest-priority
+        // context.
+        val factsText = request.facts?.trim().orEmpty()
         val contextText = listOf(
+            factsText.takeIf { it.isNotEmpty() }?.let { "Known facts:\n$it" },
             summaryText.takeIf { it.isNotEmpty() }?.let { "Summary of earlier conversation:\n$it" },
             historyText.takeIf { it.isNotEmpty() }
         ).filterNotNull().joinToString("\n")
@@ -62,8 +69,10 @@ class LlmAgent(
         val requestTokens = TokenEstimator.estimate(userMessage)
         val historyTokens = TokenEstimator.estimate(historyText)
         val summaryTokens = TokenEstimator.estimate(summaryText)
+        val factsTokens = TokenEstimator.estimate(factsText)
         val systemInstructionTokens = TokenEstimator.estimate(config.systemInstruction)
-        val promptTokens = requestTokens + historyTokens + summaryTokens + systemInstructionTokens
+        val promptTokens = requestTokens + historyTokens + summaryTokens + factsTokens +
+            systemInstructionTokens
 
         val reservedOutputTokens = config.maxOutputTokens ?: DEFAULT_RESERVED_OUTPUT_TOKENS
         val contextWindowTokens = client.contextWindowTokens(model)
@@ -107,7 +116,8 @@ class LlmAgent(
                                 systemInstructionTokens = systemInstructionTokens,
                                 promptTokens = promptTokens,
                                 completionTokens = TokenEstimator.estimate(answer),
-                                summaryTokens = summaryTokens
+                                summaryTokens = summaryTokens,
+                                factsTokens = factsTokens
                             )
                         )
                     )

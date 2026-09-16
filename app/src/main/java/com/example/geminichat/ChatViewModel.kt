@@ -7,9 +7,12 @@ import com.example.geminichat.agent.AgentCatalog
 import com.example.geminichat.agent.AgentConfig
 import com.example.geminichat.agent.AgentMessage
 import com.example.geminichat.agent.AgentRequest
+import com.example.geminichat.agent.ContextStrategy
+import com.example.geminichat.agent.FactsExtractor
 import com.example.geminichat.agent.HistoryCompressor
 import com.example.geminichat.agent.LlmAgent
 import com.example.geminichat.agent.TokenUsage
+import java.util.UUID
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.TimeoutCancellationException
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -33,6 +36,9 @@ data class ChatMessage(
     val tokenUsage: TokenUsage? = null
 )
 
+/** One entry in the Day 10 branch selector — see [ChatViewModel.onBranchSelected]. */
+data class BranchOption(val id: String, val name: String)
+
 data class ChatUiState(
     val messages: List<ChatMessage> = emptyList(),
     val input: String = "",
@@ -46,17 +52,18 @@ data class ChatUiState(
     val availableAgents: List<AgentConfig> = AgentCatalog.ALL,
     /**
      * Running total of every [TokenUsage.totalTokens] in this dialog so far — shown in the UI
-     * to make the token cost of a growing conversation visible as it happens (Day 8).
+     * to make the token cost of a growing conversation visible as it happens (Day 8). This is
+     * per-branch (Day 10): switching branches swaps this total for the target branch's own.
      */
     val dialogTokenTotal: Int = 0,
     /**
-     * Day 9 context compression: when enabled, only the most recent messages are sent
-     * verbatim and older turns are replaced by [contextSummary] (see [HistoryCompressor]).
-     * Exposed as a toggle so the same conversation's quality/token cost can be compared
-     * with and without compression.
+     * Day 10: which context-management strategy is active — see [ContextStrategy]. Replaces
+     * Day 9's boolean `compressionEnabled` toggle now that there are more than two options
+     * (full history / sliding window / facts / summary), all selectable on the same
+     * conversation so their token cost and behavior can be compared directly.
      */
-    val compressionEnabled: Boolean = true,
-    /** The running summary standing in for turns already folded out of [messages]. */
+    val contextStrategy: ContextStrategy = ContextStrategy.DEFAULT,
+    /** The running summary standing in for turns already folded out of [messages] (Summary strategy). */
     val contextSummary: String = "",
     /** How many of the oldest [messages] are already represented by [contextSummary]. */
     val summarizedMessageCount: Int = 0,
@@ -65,8 +72,21 @@ data class ChatUiState(
      * [dialogTokenTotal] so the "cost of compressing" isn't confused with the cost of actual
      * chat turns.
      */
-    val compressionTokensTotal: Int = 0
-)
+    val compressionTokensTotal: Int = 0,
+    /** Day 10 sticky facts key-value memory (Facts strategy) — see [FactsExtractor]. */
+    val facts: Map<String, String> = emptyMap(),
+    /** Tokens spent extracting/updating [facts] so far, tracked separately (mirrors [compressionTokensTotal]). */
+    val factsTokensTotal: Int = 0,
+    /** Day 10 branching: every branch available to switch to, including the active one. */
+    val branches: List<BranchOption> = listOf(BranchOption(MAIN_BRANCH_ID, MAIN_BRANCH_ID)),
+    val currentBranchId: String = MAIN_BRANCH_ID,
+    /** Whether a checkpoint has been saved and is ready to be forked into a new branch. */
+    val hasCheckpoint: Boolean = false
+) {
+    companion object {
+        const val MAIN_BRANCH_ID = "main"
+    }
+}
 
 /**
  * Holds chat UI state and talks to an [Agent] — never directly to Gemini or any HTTP client.
@@ -80,6 +100,7 @@ class ChatViewModel(
 
     private val geminiClient = GeminiApiClient(apiKey)
     private val historyCompressor = HistoryCompressor(client = geminiClient)
+    private val factsExtractor = FactsExtractor(client = geminiClient)
 
     // Restore whatever was last saved so a fresh process picks the conversation back up —
     // the ViewModel no longer starts every run from a blank slate.
@@ -88,6 +109,18 @@ class ChatViewModel(
 
     private var agent: Agent = LlmAgent(config = restoredAgentConfig, client = geminiClient)
 
+    // Day 10 branching bookkeeping: branches *other than* the currently active one (whose
+    // state lives unpacked in [_uiState]), a pending checkpoint ready to be forked, and enough
+    // naming state to keep "Branch N" labels increasing across app restarts.
+    private val otherBranches: MutableMap<String, BranchSnapshot> =
+        restored.otherBranches.associateBy { it.id }.toMutableMap()
+    private var currentBranchId: String = restored.currentBranchId
+    private var currentBranchName: String = restored.currentBranchName
+    private var checkpoint: BranchSnapshot? = restored.checkpoint
+    private var branchCounter: Int = computeInitialBranchCounter(
+        otherBranches.values.map { it.name } + currentBranchName + (checkpoint?.name ?: "")
+    )
+
     private val _uiState = MutableStateFlow(
         ChatUiState(
             messages = restored.messages,
@@ -95,9 +128,16 @@ class ChatViewModel(
             agentName = restoredAgentConfig.displayName,
             agentDescription = restoredAgentConfig.description,
             selectedAgentId = restoredAgentConfig.id,
-            compressionEnabled = restored.compressionEnabled,
+            dialogTokenTotal = restored.dialogTokenTotal,
+            contextStrategy = ContextStrategy.byName(restored.contextStrategy),
             contextSummary = restored.summary,
-            summarizedMessageCount = restored.summarizedMessageCount
+            summarizedMessageCount = restored.summarizedMessageCount,
+            compressionTokensTotal = 0,
+            facts = restored.facts,
+            factsTokensTotal = restored.factsTokensTotal,
+            branches = branchOptions(),
+            currentBranchId = currentBranchId,
+            hasCheckpoint = checkpoint != null
         )
     )
     val uiState: StateFlow<ChatUiState> = _uiState
@@ -123,28 +163,123 @@ class ChatViewModel(
     }
 
     /**
-     * Toggles Day 9 context compression on/off, so the same conversation can be A/B compared
-     * (quality, token cost) with and without it — the summary already accumulated is kept
-     * around either way, ready to be reused if compression is turned back on.
+     * Switches the active context-management strategy (Day 10) so the same conversation can
+     * be A/B compared across full history, sliding window, facts, and summary — everything
+     * already accumulated for each mode (summary text, facts map) is kept around either way,
+     * ready to be reused if that strategy is selected again.
      */
-    fun onCompressionToggled(enabled: Boolean) {
-        _uiState.value = _uiState.value.copy(compressionEnabled = enabled)
+    fun onContextStrategySelected(strategy: ContextStrategy) {
+        _uiState.value = _uiState.value.copy(contextStrategy = strategy)
         persistHistory()
+    }
+
+    /**
+     * Day 10 branching: snapshots the *active* branch's current state as a checkpoint. Doesn't
+     * create a branch by itself — call [onCreateBranchFromCheckpoint] (once or more) afterwards
+     * to fork one or more independent branches from this exact point.
+     */
+    fun onSaveCheckpoint() {
+        checkpoint = currentBranchSnapshot()
+        _uiState.value = _uiState.value.copy(hasCheckpoint = true)
+        persistHistory()
+    }
+
+    /**
+     * Creates a brand-new branch that starts as an exact copy of the saved [checkpoint] and
+     * switches to it. Calling this twice from the same checkpoint (without saving a new one in
+     * between) produces two independent siblings sharing the same history up to that point —
+     * each then continues on its own from there.
+     */
+    fun onCreateBranchFromCheckpoint() {
+        val source = checkpoint ?: return
+        branchCounter += 1
+        val newBranch = source.copy(
+            id = UUID.randomUUID().toString(),
+            name = "Branch $branchCounter"
+        )
+        otherBranches[currentBranchId] = currentBranchSnapshot()
+        loadBranch(newBranch)
+        persistHistory()
+    }
+
+    /** Day 10 branching: switches the active branch, saving the current one's state first. */
+    fun onBranchSelected(branchId: String) {
+        if (branchId == currentBranchId) return
+        val target = otherBranches[branchId] ?: return
+        otherBranches[currentBranchId] = currentBranchSnapshot()
+        otherBranches.remove(target.id)
+        loadBranch(target)
+        persistHistory()
+    }
+
+    private fun currentBranchSnapshot(): BranchSnapshot {
+        val state = _uiState.value
+        return BranchSnapshot(
+            id = currentBranchId,
+            name = currentBranchName,
+            messages = state.messages,
+            contextSummary = state.contextSummary,
+            summarizedMessageCount = state.summarizedMessageCount,
+            facts = state.facts,
+            dialogTokenTotal = state.dialogTokenTotal,
+            compressionTokensTotal = state.compressionTokensTotal,
+            factsTokensTotal = state.factsTokensTotal
+        )
+    }
+
+    private fun loadBranch(snapshot: BranchSnapshot) {
+        currentBranchId = snapshot.id
+        currentBranchName = snapshot.name
+        _uiState.value = _uiState.value.copy(
+            messages = snapshot.messages,
+            contextSummary = snapshot.contextSummary,
+            summarizedMessageCount = snapshot.summarizedMessageCount,
+            facts = snapshot.facts,
+            dialogTokenTotal = snapshot.dialogTokenTotal,
+            compressionTokensTotal = snapshot.compressionTokensTotal,
+            factsTokensTotal = snapshot.factsTokensTotal,
+            currentBranchId = snapshot.id,
+            branches = branchOptions(snapshot.id, snapshot.name),
+            errorMessage = null
+        )
+    }
+
+    private fun branchOptions(
+        activeId: String = currentBranchId,
+        activeName: String = currentBranchName
+    ): List<BranchOption> {
+        val options = otherBranches.values.map { BranchOption(it.id, it.name) } +
+            BranchOption(activeId, activeName)
+        return options.sortedBy { it.name }
+    }
+
+    private fun computeInitialBranchCounter(names: List<String>): Int {
+        val pattern = Regex("^Branch (\\d+)$")
+        return names.mapNotNull { name -> pattern.find(name)?.groupValues?.get(1)?.toIntOrNull() }
+            .maxOrNull() ?: 0
     }
 
     /** Writes the current transcript + selected agent/model so a restart can resume from it. */
     private fun persistHistory() {
         val store = historyStore ?: return
         val state = _uiState.value
+        val activeSnapshot = currentBranchSnapshot()
         viewModelScope.launch(Dispatchers.IO) {
             store.save(
                 ChatHistorySnapshot(
                     messages = state.messages,
                     selectedAgentId = state.selectedAgentId,
                     selectedModel = state.selectedModel,
-                    compressionEnabled = state.compressionEnabled,
+                    contextStrategy = state.contextStrategy.name,
                     summary = state.contextSummary,
-                    summarizedMessageCount = state.summarizedMessageCount
+                    summarizedMessageCount = state.summarizedMessageCount,
+                    facts = state.facts,
+                    factsTokensTotal = state.factsTokensTotal,
+                    dialogTokenTotal = state.dialogTokenTotal,
+                    otherBranches = otherBranches.values.toList(),
+                    currentBranchId = activeSnapshot.id,
+                    currentBranchName = activeSnapshot.name,
+                    checkpoint = checkpoint
                 )
             )
         }
@@ -179,13 +314,14 @@ class ChatViewModel(
                 // Hard safety net: no matter what the underlying HTTP client does, the user
                 // should never be stuck on the loading indicator forever.
                 withTimeout(125_000) {
-                    val (recentHistory, summary) = prepareRequestContext(history, model)
+                    val context = prepareRequestContext(history, model, prompt)
                     agent.handle(
                         AgentRequest(
                             userMessage = prompt,
-                            history = recentHistory,
+                            history = context.history,
                             modelOverride = model,
-                            summary = summary
+                            summary = context.summary,
+                            facts = context.facts
                         )
                     )
                         .onSuccess { response ->
@@ -223,48 +359,95 @@ class ChatViewModel(
         }
     }
 
+    /** What actually gets sent to the agent for one turn (Day 10: strategy-dependent). */
+    private data class RequestContext(
+        val history: List<AgentMessage>,
+        val summary: String?,
+        val facts: String?
+    )
+
     /**
-     * Decides what to actually send as this turn's history/summary (Day 9). When compression
-     * is disabled, the full raw [history] is sent as-is (the pre-Day-9 behavior, kept around
-     * for a direct quality/token comparison). When enabled:
-     * - if enough newly aged-out messages have piled up beyond the recent window, folds them
-     *   into the running summary first (a real LLM call — see [HistoryCompressor.fold]),
-     *   updating [ChatUiState.contextSummary]/[ChatUiState.summarizedMessageCount] and
-     *   accumulating [ChatUiState.compressionTokensTotal].
-     * - either way, only the recent tail of [history] is sent verbatim, alongside whatever
-     *   summary is currently stored.
+     * Decides what to actually send as this turn's history/summary/facts, per the currently
+     * selected [ContextStrategy]:
+     * - [ContextStrategy.FULL_HISTORY]: the full raw [history], nothing else (pre-Day-9
+     *   baseline, kept for direct comparison).
+     * - [ContextStrategy.SLIDING_WINDOW]: only the last [ContextStrategy.SLIDING_WINDOW_SIZE]
+     *   messages, no summary/facts, no extra LLM calls.
+     * - [ContextStrategy.SUMMARY]: Day 9's compression — if enough newly aged-out messages
+     *   have piled up, folds them into the running summary first (a real LLM call — see
+     *   [HistoryCompressor.fold]), then sends the recent tail + summary.
+     * - [ContextStrategy.FACTS]: Day 10's sticky facts — merges [prompt] into the facts map via
+     *   [FactsExtractor.extract] (a real LLM call), then sends the recent tail + rendered facts
+     *   instead of the aged-out history.
      */
     private suspend fun prepareRequestContext(
         history: List<AgentMessage>,
-        model: String
-    ): Pair<List<AgentMessage>, String?> {
-        val state = _uiState.value
-        if (!state.compressionEnabled) {
-            return history to null
-        }
+        model: String,
+        prompt: String
+    ): RequestContext {
+        return when (_uiState.value.contextStrategy) {
+            ContextStrategy.FULL_HISTORY -> RequestContext(history, null, null)
 
-        val foldRange = historyCompressor.pendingFoldRange(history.size, state.summarizedMessageCount)
-        if (foldRange != null) {
-            val messagesToFold = history.subList(foldRange.first, foldRange.last + 1)
-            historyCompressor.fold(
-                previousSummary = state.contextSummary.ifBlank { null },
-                messagesToFold = messagesToFold,
-                model = model
-            ).onSuccess { outcome ->
-                _uiState.value = _uiState.value.copy(
-                    contextSummary = outcome.summary,
-                    summarizedMessageCount = foldRange.last + 1,
-                    compressionTokensTotal = _uiState.value.compressionTokensTotal + outcome.tokensUsed
+            ContextStrategy.SLIDING_WINDOW -> RequestContext(
+                history.takeLast(ContextStrategy.SLIDING_WINDOW_SIZE),
+                null,
+                null
+            )
+
+            ContextStrategy.SUMMARY -> {
+                val state = _uiState.value
+                val foldRange = historyCompressor.pendingFoldRange(history.size, state.summarizedMessageCount)
+                if (foldRange != null) {
+                    val messagesToFold = history.subList(foldRange.first, foldRange.last + 1)
+                    historyCompressor.fold(
+                        previousSummary = state.contextSummary.ifBlank { null },
+                        messagesToFold = messagesToFold,
+                        model = model
+                    ).onSuccess { outcome ->
+                        _uiState.value = _uiState.value.copy(
+                            contextSummary = outcome.summary,
+                            summarizedMessageCount = foldRange.last + 1,
+                            compressionTokensTotal = _uiState.value.compressionTokensTotal + outcome.tokensUsed
+                        )
+                        persistHistory()
+                    }
+                    // On failure, silently keep the previous summary/counts and fall through —
+                    // the conversation still works, just without folding in this new chunk yet;
+                    // the next turn will retry once another chunk's worth has piled up.
+                }
+                val latestState = _uiState.value
+                RequestContext(
+                    historyCompressor.recentTail(history),
+                    latestState.contextSummary.ifBlank { null },
+                    null
                 )
-                persistHistory()
             }
-            // On failure, silently keep the previous summary/counts and fall through — the
-            // conversation still works, just without folding in this new chunk yet; the next
-            // turn will retry once another chunk's worth of messages has piled up.
-        }
 
-        val latestState = _uiState.value
-        return historyCompressor.recentTail(history) to latestState.contextSummary.ifBlank { null }
+            ContextStrategy.FACTS -> {
+                val recentContext = history.takeLast(ContextStrategy.SLIDING_WINDOW_SIZE)
+                val state = _uiState.value
+                factsExtractor.extract(
+                    previousFacts = state.facts,
+                    recentContext = recentContext,
+                    newUserMessage = prompt,
+                    model = model
+                ).onSuccess { outcome ->
+                    _uiState.value = _uiState.value.copy(
+                        facts = outcome.facts,
+                        factsTokensTotal = _uiState.value.factsTokensTotal + outcome.tokensUsed
+                    )
+                    persistHistory()
+                }
+                // On failure, keep the previous facts map and fall through — the conversation
+                // still works with whatever facts were already known.
+                val latestState = _uiState.value
+                RequestContext(
+                    recentContext,
+                    null,
+                    factsExtractor.render(latestState.facts).ifBlank { null }
+                )
+            }
+        }
     }
 
     override fun onCleared() {

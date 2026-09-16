@@ -6,6 +6,26 @@ import kotlinx.serialization.SerializationException
 import kotlinx.serialization.json.Json
 
 /**
+ * Day 10: everything needed to resume one conversation *branch* independently of the others —
+ * its own transcript, its own Day-9 summary state, and its own Day-10 sticky facts (see
+ * [com.example.geminichat.agent.FactsExtractor]). [ChatViewModel] keeps one of these per branch
+ * (only the currently active branch lives "unpacked" in [ChatUiState]; the rest sit here,
+ * ready to be swapped back in on [ChatViewModel.onBranchSelected]).
+ */
+@Serializable
+data class BranchSnapshot(
+    val id: String,
+    val name: String,
+    val messages: List<ChatMessage> = emptyList(),
+    val contextSummary: String = "",
+    val summarizedMessageCount: Int = 0,
+    val facts: Map<String, String> = emptyMap(),
+    val dialogTokenTotal: Int = 0,
+    val compressionTokensTotal: Int = 0,
+    val factsTokensTotal: Int = 0
+)
+
+/**
  * Everything needed to resume a chat exactly where it left off: the message transcript plus
  * which agent persona and model were active.
  */
@@ -15,14 +35,31 @@ data class ChatHistorySnapshot(
     val selectedAgentId: String = AgentDefaults.AGENT_ID,
     val selectedModel: String = GeminiApiClient.DEFAULT_MODEL,
     /**
-     * Day 9 context-compression state, so a restart resumes with the same summary/toggle
-     * instead of losing it and falling back to the full raw history.
+     * Day 10: which context-management strategy is active (see
+     * [com.example.geminichat.agent.ContextStrategy]) — replaces Day 9's boolean
+     * `compressionEnabled` now that there are more than two options.
      */
-    val compressionEnabled: Boolean = true,
+    val contextStrategy: String = "SUMMARY",
     /** Running summary that stands in for the older turns already folded out of [messages]. */
     val summary: String = "",
     /** How many of the oldest [messages] are already represented by [summary]. */
-    val summarizedMessageCount: Int = 0
+    val summarizedMessageCount: Int = 0,
+    /** Day 10 sticky facts key-value memory for the *active* branch. */
+    val facts: Map<String, String> = emptyMap(),
+    /** Tokens spent extracting/updating [facts] so far (active branch). */
+    val factsTokensTotal: Int = 0,
+    /** Running total of [ChatUiState.dialogTokenTotal] for the active branch. */
+    val dialogTokenTotal: Int = 0,
+    /**
+     * Day 10 branching: every branch *other than* the currently active one (whose state is
+     * unpacked into the top-level fields above). The active branch's own snapshot is
+     * reconstructed on save from those top-level fields — see [ChatViewModel].
+     */
+    val otherBranches: List<BranchSnapshot> = emptyList(),
+    val currentBranchId: String = "main",
+    val currentBranchName: String = "main",
+    /** A saved checkpoint ready to be forked into one or more new branches, if any. */
+    val checkpoint: BranchSnapshot? = null
 )
 
 /**
@@ -32,6 +69,7 @@ data class ChatHistorySnapshot(
 object AgentDefaults {
     const val AGENT_ID = "personal-trainer"
 }
+
 
 /**
  * Persists [ChatHistorySnapshot] to a JSON file on disk so conversation context survives an
