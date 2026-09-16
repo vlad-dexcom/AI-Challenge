@@ -4,7 +4,9 @@ A minimal Android app with a single `ChatScreen` (Jetpack Compose) where a user'
 handled by an **agent** (not a bare API call) that talks to the Gemini API and returns a reply.
 
 - **No Gemini SDK** — plain REST calls via [Ktor](https://ktor.io) client (`GeminiApiClient.kt`).
-- **UI**: Jetpack Compose, single screen (`ChatScreen.kt`), state held in `ChatViewModel`.
+- **UI**: Jetpack Compose. Main chat screen (`ChatScreen.kt`) plus a dedicated Settings screen
+  (model + profile) and a Branch bottom sheet, reached via the chat screen's app bar; state held
+  in `ChatViewModel`.
 - **Model**: selectable per-message, defaults to `gemini-3.5-flash`.
 - **Endpoint**: `POST https://generativelanguage.googleapis.com/v1beta/interactions`
   (Google's current recommended [Interactions API](https://ai.google.dev/api/interactions-api),
@@ -138,9 +140,11 @@ pick between.
   barbell"), one LLM call proposes a single field change. It is *never* applied automatically —
   `ChatScreen` shows it as an Apply/Dismiss banner (`ChatViewModel.onApplySuggestion`/
   `onDismissSuggestion`); the profile only ever changes by hand or by explicit approval.
-- **UI** — `ChatScreen`'s `ProfilePanel` (next to `MemoryPanel`) edits every field and the
-  constraint list in place, with a "Reset profile" action; the suggestion banner appears above
-  the input row when `PreferenceAdvisor` has a pending proposal.
+- **UI** — the model picker and `ProfilePanel` (every field, the constraint list, a "Reset
+  profile" action, and a preset row that loads one of `UserProfile.PRESETS` in one tap) now live
+  on a dedicated **Settings** screen, reached via the ⚙️ button in the chat screen's app bar; the
+  suggestion banner still appears on the chat screen itself, above the input row, whenever
+  `PreferenceAdvisor` has a pending proposal.
 
 ## Setup
 
@@ -178,12 +182,14 @@ pick between.
 - `GeminiApiClient.kt` — Ktor `HttpClient` wrapper implementing `LlmClient`; POSTs the request
   and parses the `model_output` step's text.
 - `ChatViewModel.kt` — holds chat messages/input/loading state, delegates to the current `Agent`.
-- `ChatScreen.kt` — the app's only screen: message list + input field + send button + agent/model
-  selectors.
+- `ChatScreen.kt` — the chat screen (message list + input + send button, memory panel, branch
+  bottom sheet trigger) plus the Settings screen (model picker, personalization profile).
 - `MainActivity.kt` — hosts `ChatScreen`.
 
 ## Adding a new agent persona
 
 Add an `AgentConfig` entry to `AgentCatalog` (id, display name, description, system
-instruction, optional model/generation overrides) and list it in `AgentCatalog.ALL` — it will
-automatically show up in the agent selector, with no other code changes required.
+instruction, optional model/generation overrides) and list it in `AgentCatalog.ALL`. The app is
+trainer-only by default with no agent picker in the UI (see the UI-cleanup note above), so
+switching personas currently requires code (e.g. changing `AgentCatalog.DEFAULT` or restoring an
+in-app selector).
