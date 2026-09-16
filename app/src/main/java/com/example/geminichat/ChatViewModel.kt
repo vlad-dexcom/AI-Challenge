@@ -474,8 +474,10 @@ class ChatViewModel(
 
     /**
      * Day 11's explicit memory model: [MemoryRouter.route] classifies [prompt] into
-     * working/long-term memory (a real LLM call), then [MemoryAssembler] renders both layers
-     * as separate blocks, sent alongside a recent raw tail of [history]
+     * working/long-term memory (a real LLM call, grounded on just
+     * [MemoryRouter.ROUTER_CONTEXT_SIZE] recent messages — enough to disambiguate the newest
+     * message without repaying the cost of a larger window), then [MemoryAssembler] renders
+     * both layers as separate blocks, sent alongside a recent raw tail of [history]
      * ([MemoryRouter.RECENT_CONTEXT_SIZE] messages) instead of the full, ever-growing
      * transcript.
      */
@@ -484,13 +486,14 @@ class ChatViewModel(
         model: String,
         prompt: String
     ): RequestContext {
-        val recentContext = history.takeLast(MemoryRouter.RECENT_CONTEXT_SIZE)
+        val agentHistoryTail = history.takeLast(MemoryRouter.RECENT_CONTEXT_SIZE)
+        val routerContext = history.takeLast(MemoryRouter.ROUTER_CONTEXT_SIZE)
         val state = _uiState.value
         val turn = history.count { it.role == AgentMessage.Role.USER } + 1
         memoryRouter.route(
             previousWorking = state.workingMemory,
             previousLongTerm = state.longTermMemory,
-            recentContext = recentContext,
+            recentContext = routerContext,
             newUserMessage = prompt,
             turn = turn,
             model = model
@@ -511,7 +514,7 @@ class ChatViewModel(
             working = latestMemoryState.workingMemory
         )
         return RequestContext(
-            history = recentContext,
+            history = agentHistoryTail,
             longTermMemory = assembled.longTermBlock.ifEmpty { null },
             workingMemory = assembled.workingBlock.ifEmpty { null }
         )

@@ -88,12 +88,23 @@ class MemoryRouter(private val client: LlmClient) {
         const val MAX_VALUE_LENGTH = 200
 
         /**
-         * How many most-recent messages are sent verbatim as [route]'s `recentContext` and as
+         * How many most-recent messages are sent verbatim as
          * [com.example.geminichat.agent.AgentRequest.history] alongside the memory layers —
          * older turns are represented only by whatever the router already classified into
          * [MemoryLayer.WORKING]/[MemoryLayer.LONG_TERM], not resent raw every turn.
          */
         const val RECENT_CONTEXT_SIZE = 8
+
+        /**
+         * How many most-recent messages are sent as [route]'s `recentContext` — deliberately
+         * smaller than [RECENT_CONTEXT_SIZE]. The router only needs enough of the tail to
+         * disambiguate the newest message (pronouns, corrections, a task described across a
+         * couple of messages); it doesn't need the same window the agent uses to answer the
+         * user, since anything worth remembering longer-term should already have been
+         * classified into working/long-term memory on an earlier call. Keeping this window
+         * smaller halves the routing call's token cost without losing classification quality.
+         */
+        const val ROUTER_CONTEXT_SIZE = 4
 
         /**
          * Best-effort parse of a router reply that should be `{"working": {...}, "long_term":
@@ -139,7 +150,9 @@ class MemoryRouter(private val client: LlmClient) {
      * reply, falls back to the previous layers unchanged (the routing cost is still counted,
      * since the call was made).
      *
-     * @param recentContext a short recent tail of the dialog, for grounding.
+     * @param recentContext a short recent tail of the dialog, for grounding — the caller
+     *   should pass [ROUTER_CONTEXT_SIZE] messages, not the larger [RECENT_CONTEXT_SIZE] window
+     *   used for the agent's own prompt.
      * @param turn the 1-based user-message turn index, stamped onto any item this call writes.
      */
     suspend fun route(
