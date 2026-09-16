@@ -49,7 +49,24 @@ data class AgentRequest(
      * is appended to [AgentConfig.systemInstruction] — see [LlmAgent.handle] — since it's an
      * instruction about *how* to answer, not conversational context.
      */
-    val userProfile: String? = null
+    val userProfile: String? = null,
+    /**
+     * Optional Day 13 [com.example.geminichat.agent.task.TaskStateRenderer.render] block: where
+     * the current task stands right now — stage, current step, and who's expected to act next
+     * (see [com.example.geminichat.agent.task.TaskState]). Unlike [userProfile] (a standing
+     * instruction about *how* to answer), this is task *context* that changes turn to turn, so
+     * [LlmAgent] folds it into the user-turn prompt right after [workingMemory] rather than the
+     * system instruction.
+     */
+    val taskState: String? = null,
+    /**
+     * Optional Day 13 [com.example.geminichat.agent.task.TaskStateRenderer.stageRules] text: a
+     * short behavioral rule for the task's current stage (e.g. "don't re-propose an already
+     * approved plan"). Unlike [taskState], this *is* an instruction about how to behave, so
+     * [LlmAgent] appends it to [AgentConfig.systemInstruction] alongside [userProfile] rather
+     * than mixing it into the prompt body.
+     */
+    val taskStageRules: String? = null
 )
 
 /** Successful output of [Agent.handle]. */
@@ -77,11 +94,18 @@ data class AgentResponse(
  * - [profileTokens] — the rendered Day 12 [com.example.geminichat.agent.profile.UserProfile]
  *   block (see [AgentRequest.userProfile]), folded into the system instruction; zero when the
  *   profile is empty.
+ * - [taskStateTokens] — the rendered Day 13
+ *   [com.example.geminichat.agent.task.TaskStateRenderer.render] block (see
+ *   [AgentRequest.taskState]), folded into the prompt body; zero when no task is active.
+ * - [taskStageRulesTokens] — the Day 13
+ *   [com.example.geminichat.agent.task.TaskStateRenderer.stageRules] text (see
+ *   [AgentRequest.taskStageRules]), folded into the system instruction; zero when no task is
+ *   active.
  * - [systemInstructionTokens] — the agent's persona/system instruction, sent separately from
  *   [LlmRequestSpec.input] but still counted against the model's context window.
  * - [promptTokens] — everything actually sent to the model for this call
  *   (`requestTokens + historyTokens + longTermMemoryTokens + workingMemoryTokens +
- *   profileTokens + systemInstructionTokens`).
+ *   profileTokens + taskStateTokens + taskStageRulesTokens + systemInstructionTokens`).
  * - [completionTokens] — the model's reply.
  * - [totalTokens] — `promptTokens + completionTokens`, i.e. this call's full token cost.
  */
@@ -93,7 +117,9 @@ data class TokenUsage(
     val completionTokens: Int,
     val longTermMemoryTokens: Int = 0,
     val workingMemoryTokens: Int = 0,
-    val profileTokens: Int = 0
+    val profileTokens: Int = 0,
+    val taskStateTokens: Int = 0,
+    val taskStageRulesTokens: Int = 0
 ) {
     val totalTokens: Int get() = promptTokens + completionTokens
 }

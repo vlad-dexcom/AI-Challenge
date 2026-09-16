@@ -50,21 +50,29 @@ class LlmAgent(
         // "what are we doing right now" before the recent conversation itself.
         val longTermMemoryText = request.longTermMemory?.trim().orEmpty()
         val workingMemoryText = request.workingMemory?.trim().orEmpty()
+        // Day 13: where the task currently stands (stage/step/expected action) is task
+        // *context*, changing turn to turn just like the memory layers above it — so it's
+        // rendered into the prompt body right after working memory, not the system instruction.
+        val taskStateText = request.taskState?.trim().orEmpty()
         val contextText = listOf(
             longTermMemoryText.takeIf { it.isNotEmpty() },
             workingMemoryText.takeIf { it.isNotEmpty() },
+            taskStateText.takeIf { it.isNotEmpty() },
             historyText.takeIf { it.isNotEmpty() }
         ).filterNotNull().joinToString("\n")
         val input = if (contextText.isEmpty()) userMessage else "$contextText\nUser: $userMessage"
 
         // Day 12: the profile is personalization *instruction* ("how to answer"), not
         // conversational context, so it's appended to the system instruction rather than
-        // mixed into [input] alongside memory/history.
+        // mixed into [input] alongside memory/history. Day 13's stage rules are the same kind
+        // of thing — behavior, not context — so they're appended the same way.
         val userProfileText = request.userProfile?.trim().orEmpty()
-        val effectiveSystemInstruction = if (userProfileText.isEmpty()) {
+        val taskStageRulesText = request.taskStageRules?.trim().orEmpty()
+        val systemAdditions = listOf(userProfileText, taskStageRulesText).filter { it.isNotEmpty() }
+        val effectiveSystemInstruction = if (systemAdditions.isEmpty()) {
             config.systemInstruction
         } else {
-            "${config.systemInstruction}\n\n$userProfileText"
+            "${config.systemInstruction}\n\n${systemAdditions.joinToString("\n\n")}"
         }
 
         // Count tokens for each part *before* calling the client, so an over-budget
@@ -76,9 +84,12 @@ class LlmAgent(
         val longTermMemoryTokens = TokenEstimator.estimate(longTermMemoryText)
         val workingMemoryTokens = TokenEstimator.estimate(workingMemoryText)
         val profileTokens = TokenEstimator.estimate(userProfileText)
+        val taskStateTokens = TokenEstimator.estimate(taskStateText)
+        val taskStageRulesTokens = TokenEstimator.estimate(taskStageRulesText)
         val systemInstructionTokens = TokenEstimator.estimate(effectiveSystemInstruction)
         val promptTokens = requestTokens + historyTokens +
-            longTermMemoryTokens + workingMemoryTokens + profileTokens + systemInstructionTokens
+            longTermMemoryTokens + workingMemoryTokens + profileTokens +
+            taskStateTokens + taskStageRulesTokens + systemInstructionTokens
 
         val reservedOutputTokens = config.maxOutputTokens ?: DEFAULT_RESERVED_OUTPUT_TOKENS
         val contextWindowTokens = client.contextWindowTokens(model)
@@ -124,7 +135,9 @@ class LlmAgent(
                                 completionTokens = TokenEstimator.estimate(answer),
                                 longTermMemoryTokens = longTermMemoryTokens,
                                 workingMemoryTokens = workingMemoryTokens,
-                                profileTokens = profileTokens
+                                profileTokens = profileTokens,
+                                taskStateTokens = taskStateTokens,
+                                taskStageRulesTokens = taskStageRulesTokens
                             )
                         )
                     )

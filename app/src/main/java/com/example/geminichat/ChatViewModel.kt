@@ -24,6 +24,15 @@ import com.example.geminichat.agent.profile.ProfileField
 import com.example.geminichat.agent.profile.ProfileRenderer
 import com.example.geminichat.agent.profile.UserProfile
 import com.example.geminichat.agent.profile.UserProfileStore
+import com.example.geminichat.agent.task.TaskStage
+import com.example.geminichat.agent.task.TaskState
+import com.example.geminichat.agent.task.TaskStateAdvisor
+import com.example.geminichat.agent.task.TaskStateMachine
+import com.example.geminichat.agent.task.TaskStateRenderer
+import com.example.geminichat.agent.task.TaskStateStore
+import com.example.geminichat.agent.task.TaskTransitionAction
+import com.example.geminichat.agent.task.TaskTransitionSuggestion
+import com.example.geminichat.agent.task.TransitionResult
 import java.util.UUID
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.TimeoutCancellationException
@@ -108,7 +117,19 @@ data class ChatUiState(
     /** Tokens spent on [PreferenceAdvisor] calls so far, tracked separately from
      * [dialogTokenTotal] and [memoryRoutingTokensTotal] so the cost of each mechanism is
      * visible on its own. */
-    val personalizationTokensTotal: Int = 0
+    val personalizationTokensTotal: Int = 0,
+    /**
+     * Day 13: the formalized state of the current task (stage, current step, expected next
+     * action, pause flag) — see [com.example.geminichat.agent.task.TaskState]. Per branch, like
+     * [workingMemory], and [TaskState.NONE] when no task has been started on this branch.
+     */
+    val taskState: TaskState = TaskState.NONE,
+    /** A pending [TaskStateAdvisor] suggestion awaiting the user's "Apply"/"Dismiss" — never
+     * applied to [taskState] automatically (see [ChatViewModel.onApplyTaskTransitionSuggestion]). */
+    val pendingTaskTransitionSuggestion: TaskTransitionSuggestion? = null,
+    /** Tokens spent on [TaskStateAdvisor] calls so far, tracked separately from the other
+     * per-mechanism token totals above. */
+    val taskStateAdvisorTokensTotal: Int = 0
 ) {
     companion object {
         const val MAIN_BRANCH_ID = "main"
@@ -126,12 +147,14 @@ class ChatViewModel(
     private val longTermMemoryStore: LongTermMemoryStore? = null,
     private val workingMemoryStore: WorkingMemoryStore? = null,
     private val userProfileStore: UserProfileStore? = null,
+    private val taskStateStore: TaskStateStore? = null,
     debugContextWindowOverrideTokens: Int? = null,
 ) : ViewModel() {
 
     private val geminiClient = GeminiApiClient(apiKey, debugContextWindowOverrideTokens)
     private val memoryRouter = MemoryRouter(client = geminiClient)
     private val preferenceAdvisor = PreferenceAdvisor(client = geminiClient)
+    private val taskStateAdvisor = TaskStateAdvisor(client = geminiClient)
 
     // Restore whatever was last saved so a fresh process picks the conversation back up —
     // the ViewModel no longer starts every run from a blank slate.
@@ -164,6 +187,15 @@ class ChatViewModel(
             MemorySnapshot.EMPTY
         }
 
+    // Day 13: the checkpoint's own task state, kept alongside [checkpointWorkingMemory] so a
+    // branch forked from a checkpoint starts at the exact same stage/step, not a reset task.
+    private var checkpointTaskState: TaskState =
+        if (checkpoint != null) {
+            taskStateStore?.load(CHECKPOINT_WORKING_MEMORY_KEY) ?: TaskState.NONE
+        } else {
+            TaskState.NONE
+        }
+
     // Day 12: the single global profile, loaded once (not scoped to any branch, mirroring
     // [longTermMemory]'s "one global value" shape).
     private var userProfile: UserProfile = userProfileStore?.load() ?: UserProfile.EMPTY
@@ -183,7 +215,9 @@ class ChatViewModel(
             workingMemory = workingMemoryStore?.load(currentBranchId) ?: MemorySnapshot.EMPTY,
             memoryRoutingTokensTotal = 0,
             userProfile = userProfile,
-            personalizationTokensTotal = 0
+            personalizationTokensTotal = 0,
+            taskState = taskStateStore?.load(currentBranchId) ?: TaskState.NONE,
+            taskStateAdvisorTokensTotal = 0
         )
     )
     val uiState: StateFlow<ChatUiState> = _uiState
@@ -219,12 +253,15 @@ class ChatViewModel(
      * create a branch by itself — call [onCreateBranchFromCheckpoint] (once or more) afterwards
      * to fork one or more independent branches from this exact point. Day 11: the active
      * branch's working memory is captured alongside it, so a forked branch starts with the
-     * same task-in-progress context, not an empty working layer.
+     * same task-in-progress context, not an empty working layer. Day 13: same for its task
+     * state — a forked branch resumes at the exact same stage/step, not a reset task.
      */
     fun onSaveCheckpoint() {
         checkpoint = currentBranchSnapshot()
         checkpointWorkingMemory = _uiState.value.workingMemory
+        checkpointTaskState = _uiState.value.taskState
         workingMemoryStore?.save(CHECKPOINT_WORKING_MEMORY_KEY, checkpointWorkingMemory)
+        taskStateStore?.save(CHECKPOINT_WORKING_MEMORY_KEY, checkpointTaskState)
         _uiState.value = _uiState.value.copy(hasCheckpoint = true)
         persistHistory()
     }
@@ -235,7 +272,7 @@ class ChatViewModel(
      * between) produces two independent siblings sharing the same history up to that point —
      * each then continues on its own from there. Day 11: both siblings also start from the
      * same [checkpointWorkingMemory], then diverge independently as each branch's own task
-     * progresses.
+     * progresses. Day 13: likewise for [checkpointTaskState].
      */
     fun onCreateBranchFromCheckpoint() {
         val source = checkpoint ?: return
@@ -245,9 +282,11 @@ class ChatViewModel(
             name = "Branch $branchCounter"
         )
         persistWorkingMemory(currentBranchId, _uiState.value.workingMemory)
+        persistTaskState(currentBranchId, _uiState.value.taskState)
         otherBranches[currentBranchId] = currentBranchSnapshot()
         persistWorkingMemory(newBranch.id, checkpointWorkingMemory)
-        loadBranch(newBranch, workingMemoryOverride = checkpointWorkingMemory)
+        persistTaskState(newBranch.id, checkpointTaskState)
+        loadBranch(newBranch, workingMemoryOverride = checkpointWorkingMemory, taskStateOverride = checkpointTaskState)
         persistHistory()
     }
 
@@ -256,6 +295,7 @@ class ChatViewModel(
         if (branchId == currentBranchId) return
         val target = otherBranches[branchId] ?: return
         persistWorkingMemory(currentBranchId, _uiState.value.workingMemory)
+        persistTaskState(currentBranchId, _uiState.value.taskState)
         otherBranches[currentBranchId] = currentBranchSnapshot()
         otherBranches.remove(target.id)
         loadBranch(target)
@@ -278,14 +318,22 @@ class ChatViewModel(
      * [BranchSnapshot] (it lives in its own [WorkingMemoryStore] file — see [MemoryLayer]), so
      * it's loaded separately here: from [workingMemoryOverride] when the caller already has it
      * on hand (forking a new branch from a checkpoint), otherwise from [workingMemoryStore] by
-     * branch id (switching to an existing branch).
+     * branch id (switching to an existing branch). Day 13's task state follows the same
+     * pattern via [taskStateOverride]/[taskStateStore].
      */
-    private fun loadBranch(snapshot: BranchSnapshot, workingMemoryOverride: MemorySnapshot? = null) {
+    private fun loadBranch(
+        snapshot: BranchSnapshot,
+        workingMemoryOverride: MemorySnapshot? = null,
+        taskStateOverride: TaskState? = null
+    ) {
         currentBranchId = snapshot.id
         currentBranchName = snapshot.name
         val working = workingMemoryOverride
             ?: workingMemoryStore?.load(snapshot.id)
             ?: MemorySnapshot.EMPTY
+        val task = taskStateOverride
+            ?: taskStateStore?.load(snapshot.id)
+            ?: TaskState.NONE
         _uiState.value = _uiState.value.copy(
             messages = snapshot.messages,
             dialogTokenTotal = snapshot.dialogTokenTotal,
@@ -294,7 +342,9 @@ class ChatViewModel(
             lastMemoryDecisions = emptyList(),
             currentBranchId = snapshot.id,
             branches = branchOptions(snapshot.id, snapshot.name),
-            errorMessage = null
+            errorMessage = null,
+            taskState = task,
+            pendingTaskTransitionSuggestion = null
         )
     }
 
@@ -317,6 +367,12 @@ class ChatViewModel(
      * [ChatHistoryStore] — see [WorkingMemoryStore]. */
     private fun persistWorkingMemory(branchId: String, snapshot: MemorySnapshot) {
         workingMemoryStore?.save(branchId, snapshot)
+    }
+
+    /** Persists [state] as [branchId]'s task state (Day 13), independently of both
+     * [ChatHistoryStore] and the memory layers — see [TaskStateStore]. */
+    private fun persistTaskState(branchId: String, state: TaskState) {
+        taskStateStore?.save(branchId, state)
     }
 
     /** Persists both Day 11 memory layers for the *active* branch: long-term globally (see
@@ -374,16 +430,21 @@ class ChatViewModel(
     }
 
     /**
-     * Day 11 "End task": clears [MemoryLayer.WORKING] only — [MemoryLayer.LONG_TERM] and the
+     * Day 11 "End task": clears [MemoryLayer.WORKING] — [MemoryLayer.LONG_TERM] and the
      * dialog itself ([MemoryLayer.SHORT_TERM]) are left untouched, demonstrating that the three
-     * layers really are independent.
+     * layers really are independent. Day 13: also resets [TaskState] back to [TaskState.NONE]
+     * for this branch — "the task" this whole state machine tracks really is over, not just
+     * paused, so there is nothing left to resume.
      */
     fun onEndTask() {
         _uiState.value = _uiState.value.copy(
             workingMemory = MemorySnapshot.EMPTY,
-            lastMemoryDecisions = emptyList()
+            lastMemoryDecisions = emptyList(),
+            taskState = TaskState.NONE,
+            pendingTaskTransitionSuggestion = null
         )
         persistMemoryLayers()
+        persistTaskState(currentBranchId, TaskState.NONE)
     }
 
     /**
@@ -474,6 +535,107 @@ class ChatViewModel(
         _uiState.value = _uiState.value.copy(pendingPreferenceSuggestion = null)
     }
 
+    /**
+     * Day 13: starts a brand new task on the active branch, in [TaskStage.PLANNING], replacing
+     * whatever task was active before. [rawTitle] must not be blank.
+     */
+    fun onStartTask(rawTitle: String) {
+        applyTransition(TaskStateMachine.start(rawTitle))
+    }
+
+    /**
+     * Day 13 [TaskStage.PLANNING] -> [TaskStage.EXECUTION]: fixes [rawSteps] (one step per
+     * non-blank line) as the approved plan and moves to its first step.
+     */
+    fun onApprovePlan(rawSteps: String) {
+        val steps = rawSteps.lines()
+        applyTransition(TaskStateMachine.approvePlan(_uiState.value.taskState, steps))
+    }
+
+    /** Day 13: moves to the next step within [TaskStage.EXECUTION]. */
+    fun onNextStep() {
+        applyTransition(TaskStateMachine.nextStep(_uiState.value.taskState))
+    }
+
+    /** Day 13: moves back to the previous step within [TaskStage.EXECUTION]. */
+    fun onPreviousStep() {
+        applyTransition(TaskStateMachine.previousStep(_uiState.value.taskState))
+    }
+
+    /** Day 13 [TaskStage.EXECUTION] -> [TaskStage.VALIDATION]: all steps are done, check the result. */
+    fun onRequestValidation() {
+        applyTransition(TaskStateMachine.requestValidation(_uiState.value.taskState))
+    }
+
+    /** Day 13 [TaskStage.VALIDATION] -> [TaskStage.EXECUTION]: send the task back for rework. */
+    fun onSendBackToExecution(reason: String) {
+        applyTransition(TaskStateMachine.sendBackToExecution(_uiState.value.taskState, reason))
+    }
+
+    /** Day 13: marks the task [TaskStage.DONE] — from [TaskStage.VALIDATION] (finished) or
+     * [TaskStage.PLANNING] (cancelled before ever being executed). */
+    fun onCompleteTask() {
+        applyTransition(TaskStateMachine.complete(_uiState.value.taskState))
+    }
+
+    /** Day 13: freezes the task exactly where it is, so resuming continues without
+     * re-explaining anything (see [TaskState.paused]). */
+    fun onPauseTask() {
+        applyTransition(TaskStateMachine.pause(_uiState.value.taskState))
+    }
+
+    /** Day 13: lifts a pause, returning to exactly the stage/step that was paused. */
+    fun onResumeTask() {
+        applyTransition(TaskStateMachine.resume(_uiState.value.taskState))
+    }
+
+    /** Day 13: drops the task entirely, back to [TaskState.NONE]. */
+    fun onResetTask() {
+        applyTransition(TaskStateMachine.reset())
+    }
+
+    /**
+     * Day 13: applies a pending [TaskStateAdvisor] suggestion — the *only* place a suggestion
+     * ever changes [TaskState]; it is never applied automatically (see [prepareRequestContext]).
+     * Routes through the exact same [TaskStateMachine] operations a button press would use, so
+     * an invalid suggestion (stale by the time it's approved) is rejected the same way.
+     */
+    fun onApplyTaskTransitionSuggestion() {
+        val suggestion = _uiState.value.pendingTaskTransitionSuggestion ?: return
+        val state = _uiState.value.taskState
+        val result = when (suggestion.action) {
+            TaskTransitionAction.APPROVE_PLAN -> return // needs steps text; the UI collects
+            // those separately, so an approve-plan suggestion just surfaces the reason as a
+            // hint rather than being one-tap applicable.
+            TaskTransitionAction.NEXT_STEP -> TaskStateMachine.nextStep(state)
+            TaskTransitionAction.REQUEST_VALIDATION -> TaskStateMachine.requestValidation(state)
+            TaskTransitionAction.SEND_BACK_TO_EXECUTION -> TaskStateMachine.sendBackToExecution(state, suggestion.reason)
+            TaskTransitionAction.COMPLETE -> TaskStateMachine.complete(state)
+        }
+        _uiState.value = _uiState.value.copy(pendingTaskTransitionSuggestion = null)
+        applyTransition(result)
+    }
+
+    /** Day 13: discards the pending transition suggestion without changing the task. */
+    fun onDismissTaskTransitionSuggestion() {
+        _uiState.value = _uiState.value.copy(pendingTaskTransitionSuggestion = null)
+    }
+
+    /** Applies a [TransitionResult] from [TaskStateMachine]: an [TransitionResult.Applied]
+     * result updates and persists [TaskState]; a [TransitionResult.Rejected] one surfaces its
+     * reason as [ChatUiState.errorMessage] instead of silently doing nothing. */
+    private fun applyTransition(result: TransitionResult) {
+        when (result) {
+            is TransitionResult.Applied -> {
+                _uiState.value = _uiState.value.copy(taskState = result.state, errorMessage = null)
+                persistTaskState(currentBranchId, result.state)
+            }
+            is TransitionResult.Rejected -> {
+                _uiState.value = _uiState.value.copy(errorMessage = result.reason)
+            }
+        }
+    }
+
     /** Applies [rawValue] to [field] on [profile], returning the updated copy, or `null` for
      * the two constraint pseudo-fields (handled separately — see [onApplySuggestion]). */
     private fun applyFieldValue(profile: UserProfile, field: ProfileField, rawValue: String): UserProfile? {
@@ -557,7 +719,9 @@ class ChatViewModel(
                             modelOverride = model,
                             longTermMemory = context.longTermMemory,
                             workingMemory = context.workingMemory,
-                            userProfile = context.userProfile
+                            userProfile = context.userProfile,
+                            taskState = context.taskState,
+                            taskStageRules = context.taskStageRules
                         )
                     )
                         .onSuccess { response ->
@@ -596,12 +760,14 @@ class ChatViewModel(
     }
 
     /** What actually gets sent to the agent for one turn: a recent raw tail plus both memory
-     * layers and the Day 12 profile block. */
+     * layers, the Day 12 profile block, and the Day 13 task state block/rules. */
     private data class RequestContext(
         val history: List<AgentMessage>,
         val longTermMemory: String? = null,
         val workingMemory: String? = null,
-        val userProfile: String? = null
+        val userProfile: String? = null,
+        val taskState: String? = null,
+        val taskStageRules: String? = null
     )
 
     /**
@@ -617,6 +783,11 @@ class ChatViewModel(
      * turn — see [ProfileRenderer.render]) and separately calls [PreferenceAdvisor] to check
      * whether [prompt] states a new personalization preference; any suggestion is surfaced as
      * [ChatUiState.pendingPreferenceSuggestion] for the user to approve, never applied here.
+     *
+     * Day 13: renders the current [ChatUiState.taskState] (unconditionally, on every turn — see
+     * [TaskStateRenderer]) and separately calls [TaskStateAdvisor] to check whether [prompt]
+     * indicates the task's expected next action just happened; any suggestion is surfaced as
+     * [ChatUiState.pendingTaskTransitionSuggestion], never applied here.
      */
     private suspend fun prepareRequestContext(
         history: List<AgentMessage>,
@@ -662,12 +833,28 @@ class ChatViewModel(
                 )
             }
 
+        // Day 13: another separate LLM call checks whether this turn indicates the task's
+        // expected next action just happened. Same fail-safe shape as the advisor above: on
+        // failure or "no transition indicated" it simply leaves
+        // [ChatUiState.pendingTaskTransitionSuggestion] as-is.
+        taskStateAdvisor.suggest(state = latestMemoryState.taskState, newUserMessage = prompt, model = model)
+            .onSuccess { outcome ->
+                _uiState.value = _uiState.value.copy(
+                    taskStateAdvisorTokensTotal = _uiState.value.taskStateAdvisorTokensTotal + outcome.tokensUsed,
+                    pendingTaskTransitionSuggestion = outcome.suggestion ?: _uiState.value.pendingTaskTransitionSuggestion
+                )
+            }
+
         val profileBlock = ProfileRenderer.render(latestMemoryState.userProfile)
+        val taskStateBlock = TaskStateRenderer.render(latestMemoryState.taskState)
+        val taskStageRulesText = TaskStateRenderer.stageRules(latestMemoryState.taskState)
         return RequestContext(
             history = agentHistoryTail,
             longTermMemory = assembled.longTermBlock.ifEmpty { null },
             workingMemory = assembled.workingBlock.ifEmpty { null },
-            userProfile = profileBlock.ifEmpty { null }
+            userProfile = profileBlock.ifEmpty { null },
+            taskState = taskStateBlock.ifEmpty { null },
+            taskStageRules = taskStageRulesText.ifEmpty { null }
         )
     }
 
