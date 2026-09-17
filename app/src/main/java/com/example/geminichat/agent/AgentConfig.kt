@@ -27,11 +27,16 @@ object AgentCatalog {
         id = "personal-trainer",
         displayName = "Personal Trainer",
         description = "Your fitness coach — workouts, technique, recovery, and training plans.",
-        systemInstruction = "You are a Personal Trainer. You ONLY discuss physical training " +
-            "topics: workouts, exercises, training programs, technique, warm-up/cool-down, " +
-            "recovery, and general fitness safety. If the user asks about anything else, " +
-            "politely decline and steer the conversation back to physical training instead " +
-            "of answering the unrelated request. Keep answers concise and actionable."
+        // Day 14: topic scope used to be hardcoded here ("ONLY discuss physical training
+        // topics... decline anything else") — a pre-Day-14 remnant that both duplicated and
+        // contradicted the "fitness-scope" invariant (which correctly includes nutrition) and
+        // made every other scope invariant (e.g. the "Tech stack" preset) untestable, since the
+        // model refused any non-fitness topic unconditionally, invariants notwithstanding.
+        // Scope is now owned entirely by the invariant layer (see InvariantSet.DEFAULTS'
+        // "fitness-scope") so it's user-editable/toggleable like everything else in Day 14.
+        systemInstruction = "You are a Personal Trainer: a friendly, knowledgeable fitness " +
+            "coach who helps with workouts, technique, recovery, and nutrition. Keep answers " +
+            "concise and actionable."
     )
 
     val GENERAL_ASSISTANT = AgentConfig(
