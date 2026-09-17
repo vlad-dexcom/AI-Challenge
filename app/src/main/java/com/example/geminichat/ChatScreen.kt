@@ -51,6 +51,10 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.res.vectorResource
 import androidx.compose.ui.unit.dp
+import com.example.geminichat.agent.invariant.Invariant
+import com.example.geminichat.agent.invariant.InvariantCategory
+import com.example.geminichat.agent.invariant.InvariantPreset
+import com.example.geminichat.agent.invariant.InvariantSet
 import com.example.geminichat.agent.memory.MemoryRoutingDecision
 import com.example.geminichat.agent.memory.MemorySnapshot
 import com.example.geminichat.agent.profile.ExpertiseLevel
@@ -800,6 +804,219 @@ private fun ExpertiseSelector(
 }
 
 /**
+ * Day 14: shows the current [com.example.geminichat.agent.invariant.InvariantSet] — hard rules
+ * the agent must never break, grouped by category. A [Invariant.locked] entry shows a 🔒 badge
+ * instead of a switch (it can never be turned off) and has no delete action; every other
+ * invariant can be toggled or deleted. Mirrors [ProfilePanel]'s collapsible-panel/preset-row
+ * shape.
+ */
+@Composable
+private fun InvariantPanel(
+    invariants: InvariantSet,
+    enabled: Boolean,
+    onToggle: (String, Boolean) -> Unit,
+    onDelete: (String) -> Unit,
+    onAdd: (String, InvariantCategory, String, String, String, String) -> Unit,
+    onApplyPreset: (InvariantPreset) -> Unit,
+    onReset: () -> Unit
+) {
+    var expanded by remember { mutableStateOf(false) }
+    var newCategory by remember { mutableStateOf(InvariantCategory.SAFETY) }
+    var newStatement by remember { mutableStateOf("") }
+    var newRationale by remember { mutableStateOf("") }
+    var newAlternative by remember { mutableStateOf("") }
+    var newTriggers by remember { mutableStateOf("") }
+
+    val enabledCount = invariants.enabledInvariants.size
+    val totalCount = invariants.invariants.size
+
+    Column(modifier = Modifier.padding(horizontal = 12.dp, vertical = 2.dp)) {
+        Row(
+            modifier = Modifier.fillMaxWidth(),
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            Text(
+                text = "Invariants: $enabledCount of $totalCount enabled",
+                style = MaterialTheme.typography.labelSmall,
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
+                modifier = Modifier.weight(1f)
+            )
+            TextButton(onClick = { expanded = !expanded }) {
+                Text(if (expanded) "Hide" else "Show")
+            }
+        }
+        if (!expanded) return@Column
+
+        Text(
+            text = "Presets",
+            style = MaterialTheme.typography.labelMedium,
+            modifier = Modifier.padding(top = 4.dp)
+        )
+        Row(
+            modifier = Modifier
+                .fillMaxWidth()
+                .horizontalScroll(rememberScrollState())
+        ) {
+            InvariantSet.PRESETS.forEach { preset ->
+                TextButton(onClick = { onApplyPreset(preset) }, enabled = enabled) {
+                    Text(preset.label)
+                }
+            }
+        }
+
+        InvariantCategory.entries.forEach { category ->
+            val invariantsInCategory = invariants.invariants.filter { it.category == category }
+            if (invariantsInCategory.isEmpty()) return@forEach
+            Text(
+                text = category.name,
+                style = MaterialTheme.typography.labelMedium,
+                modifier = Modifier.padding(top = 8.dp)
+            )
+            invariantsInCategory.forEach { invariant ->
+                InvariantRow(invariant = invariant, enabled = enabled, onToggle = onToggle, onDelete = onDelete)
+            }
+        }
+
+        Text(
+            text = "Add invariant",
+            style = MaterialTheme.typography.labelMedium,
+            modifier = Modifier.padding(top = 8.dp)
+        )
+        InvariantCategorySelector(
+            selected = newCategory,
+            enabled = enabled,
+            onSelected = { newCategory = it }
+        )
+        OutlinedTextField(
+            value = newStatement,
+            onValueChange = { newStatement = it },
+            label = { Text("Rule") },
+            enabled = enabled,
+            modifier = Modifier.fillMaxWidth().padding(top = 4.dp)
+        )
+        OutlinedTextField(
+            value = newRationale,
+            onValueChange = { newRationale = it },
+            label = { Text("Why") },
+            enabled = enabled,
+            modifier = Modifier.fillMaxWidth().padding(top = 4.dp)
+        )
+        OutlinedTextField(
+            value = newAlternative,
+            onValueChange = { newAlternative = it },
+            label = { Text("Alternative to offer instead") },
+            enabled = enabled,
+            modifier = Modifier.fillMaxWidth().padding(top = 4.dp)
+        )
+        OutlinedTextField(
+            value = newTriggers,
+            onValueChange = { newTriggers = it },
+            label = { Text("Trigger patterns (comma-separated)") },
+            singleLine = true,
+            enabled = enabled,
+            modifier = Modifier.fillMaxWidth().padding(top = 4.dp)
+        )
+        Row(modifier = Modifier.padding(top = 4.dp)) {
+            TextButton(
+                onClick = {
+                    val id = newStatement.trim().lowercase()
+                        .replace(Regex("[^a-z0-9]+"), "-").trim('-')
+                    onAdd(id, newCategory, newStatement, newRationale, newAlternative, newTriggers)
+                    if (id.isNotBlank()) {
+                        newStatement = ""
+                        newRationale = ""
+                        newAlternative = ""
+                        newTriggers = ""
+                    }
+                },
+                enabled = enabled && newStatement.isNotBlank() && newRationale.isNotBlank()
+            ) {
+                Text("Add")
+            }
+            TextButton(onClick = onReset, enabled = enabled) {
+                Text("Reset to defaults")
+            }
+        }
+    }
+}
+
+@Composable
+private fun InvariantRow(
+    invariant: Invariant,
+    enabled: Boolean,
+    onToggle: (String, Boolean) -> Unit,
+    onDelete: (String) -> Unit
+) {
+    Column(modifier = Modifier.fillMaxWidth().padding(vertical = 2.dp)) {
+        Row(verticalAlignment = Alignment.CenterVertically, modifier = Modifier.fillMaxWidth()) {
+            Text(
+                text = invariant.statement,
+                style = MaterialTheme.typography.bodySmall,
+                modifier = Modifier.weight(1f)
+            )
+            if (invariant.locked) {
+                Text(
+                    text = "\uD83D\uDD12",
+                    modifier = Modifier.padding(horizontal = 4.dp)
+                )
+            } else {
+                Switch(
+                    checked = invariant.enabled,
+                    onCheckedChange = { onToggle(invariant.id, it) },
+                    enabled = enabled
+                )
+                TextButton(onClick = { onDelete(invariant.id) }, enabled = enabled) {
+                    Text("Delete")
+                }
+            }
+        }
+        Text(
+            text = invariant.rationale,
+            style = MaterialTheme.typography.labelSmall,
+            color = MaterialTheme.colorScheme.onSurfaceVariant
+        )
+    }
+}
+
+@Composable
+private fun InvariantCategorySelector(
+    selected: InvariantCategory,
+    enabled: Boolean,
+    onSelected: (InvariantCategory) -> Unit
+) {
+    var expanded by remember { mutableStateOf(false) }
+
+    Row(
+        verticalAlignment = Alignment.CenterVertically,
+        modifier = Modifier.fillMaxWidth().padding(top = 4.dp)
+    ) {
+        Text(
+            text = "Category",
+            style = MaterialTheme.typography.labelSmall,
+            color = MaterialTheme.colorScheme.onSurfaceVariant,
+            modifier = Modifier.weight(1f)
+        )
+        Box {
+            TextButton(onClick = { if (enabled) expanded = true }, enabled = enabled) {
+                Text(selected.name.lowercase())
+                Icon(Icons.Filled.ArrowDropDown, contentDescription = "Select category")
+            }
+            DropdownMenu(expanded = expanded, onDismissRequest = { expanded = false }) {
+                InvariantCategory.entries.forEach { category ->
+                    DropdownMenuItem(
+                        text = { Text(category.name.lowercase()) },
+                        onClick = {
+                            onSelected(category)
+                            expanded = false
+                        }
+                    )
+                }
+            }
+        }
+    }
+}
+
+/**
  * Day 12's hybrid update path made visible: a [com.example.geminichat.agent.profile.PreferenceAdvisor]
  * suggestion is never applied to [UserProfile] automatically — it's shown here with the
  * inferred reason, and only [onApply] (not the advisor call itself) ever changes the profile.
@@ -940,6 +1157,15 @@ private fun SettingsScreen(uiState: ChatUiState, viewModel: ChatViewModel, onBac
                 onApplyPreset = viewModel::onApplyPreset,
                 onReset = viewModel::onResetProfile
             )
+            InvariantPanel(
+                invariants = uiState.invariants,
+                enabled = !uiState.isLoading,
+                onToggle = viewModel::onToggleInvariant,
+                onDelete = viewModel::onDeleteInvariant,
+                onAdd = viewModel::onAddInvariant,
+                onApplyPreset = viewModel::onApplyInvariantPreset,
+                onReset = viewModel::onResetInvariants
+            )
         }
     }
 }
@@ -983,10 +1209,13 @@ private fun MessageBubble(message: ChatMessage) {
     ) {
         Card(
             colors = CardDefaults.cardColors(
-                containerColor = if (message.isFromUser)
+                containerColor = if (message.isFromUser) {
                     MaterialTheme.colorScheme.primaryContainer
-                else
+                } else if (message.refusedByInvariantIds.isNotEmpty()) {
+                    MaterialTheme.colorScheme.errorContainer
+                } else {
                     MaterialTheme.colorScheme.secondaryContainer
+                }
             )
         ) {
             if (message.isFromUser) {
@@ -998,6 +1227,17 @@ private fun MessageBubble(message: ChatMessage) {
                 )
             } else {
                 Column(modifier = Modifier.padding(12.dp)) {
+                    if (message.refusedByInvariantIds.isNotEmpty()) {
+                        // Day 14: this reply is a deterministic refusal — the model was never
+                        // called (see LlmAgent.handle) — so it's badged instead of looking like
+                        // an ordinary answer.
+                        Text(
+                            text = "⛔ Инвариант: ${message.refusedByInvariantIds.joinToString(", ")}",
+                            style = MaterialTheme.typography.labelMedium,
+                            color = MaterialTheme.colorScheme.onErrorContainer,
+                            modifier = Modifier.padding(bottom = 4.dp)
+                        )
+                    }
                     MarkdownText(
                         markdown = message.text,
                         style = MaterialTheme.typography.bodyLarge.copy(
@@ -1009,7 +1249,7 @@ private fun MessageBubble(message: ChatMessage) {
                         Text(
                             text = "prompt ${usage.promptTokens} (history ${usage.historyTokens}, " +
                                 "lt ${usage.longTermMemoryTokens}, wm ${usage.workingMemoryTokens}, " +
-                                "profile ${usage.profileTokens}) · " +
+                                "profile ${usage.profileTokens}, inv ${usage.invariantTokens}) · " +
                                 "reply ${usage.completionTokens} · total ${usage.totalTokens}",
                             style = MaterialTheme.typography.labelSmall,
                             color = MaterialTheme.colorScheme.onSurfaceVariant,

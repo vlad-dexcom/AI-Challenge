@@ -1,5 +1,9 @@
 package com.example.geminichat.agent
 
+import com.example.geminichat.agent.invariant.InvariantGuard
+import com.example.geminichat.agent.invariant.InvariantRenderer
+import com.example.geminichat.agent.invariant.InvariantSet
+
 /**
  * The default [Agent] implementation: a single persona ([config]) backed by any [LlmClient].
  * This is where "the logic of request/response is encapsulated in the agent" lives — the
@@ -25,7 +29,14 @@ package com.example.geminichat.agent
  */
 class LlmAgent(
     override val config: AgentConfig,
-    private val client: LlmClient
+    private val client: LlmClient,
+    /**
+     * Day 14: hard, non-negotiable rules (see
+     * [com.example.geminichat.agent.invariant.Invariant]) this agent enforces on every turn.
+     * Defaults to an empty set so every pre-Day-14 caller/test is unaffected. See [handle] for
+     * how a conflicting request is refused **before** [client] is ever called.
+     */
+    private val invariants: InvariantSet = InvariantSet()
 ) : Agent {
 
     companion object {
@@ -40,6 +51,32 @@ class LlmAgent(
         val userMessage = request.userMessage.trim()
         if (userMessage.isEmpty()) {
             return Result.failure(IllegalArgumentException("Please enter a message."))
+        }
+
+        // Day 14: the deterministic pre-check runs first, before any prompt is even assembled.
+        // A conflicting request is refused by code — the model is never called — so an
+        // invariant can never be talked around, and the refusal costs nothing (see
+        // [TokenUsage] on the returned response). This is the "medium" enforcement depth: only
+        // the request is checked, not the model's answer.
+        val conflicts = InvariantGuard.check(invariants, userMessage)
+        if (conflicts.isNotEmpty()) {
+            val requestTokens = TokenEstimator.estimate(userMessage)
+            return Result.success(
+                AgentResponse(
+                    text = InvariantGuard.refusalText(conflicts),
+                    agentId = config.id,
+                    model = request.modelOverride ?: config.model,
+                    elapsedMs = 0,
+                    tokenUsage = TokenUsage(
+                        requestTokens = requestTokens,
+                        historyTokens = 0,
+                        systemInstructionTokens = 0,
+                        promptTokens = 0,
+                        completionTokens = 0
+                    ),
+                    refusedByInvariantIds = conflicts.map { it.invariant.id }
+                )
+            )
         }
 
         val model = request.modelOverride ?: config.model
@@ -65,10 +102,14 @@ class LlmAgent(
         // Day 12: the profile is personalization *instruction* ("how to answer"), not
         // conversational context, so it's appended to the system instruction rather than
         // mixed into [input] alongside memory/history. Day 13's stage rules are the same kind
-        // of thing — behavior, not context — so they're appended the same way.
+        // of thing — behavior, not context — so they're appended the same way. Day 14's
+        // invariants block is appended *last*, so it has the final word if it conflicts with
+        // either the profile or the stage rules (see [InvariantRenderer]).
         val userProfileText = request.userProfile?.trim().orEmpty()
         val taskStageRulesText = request.taskStageRules?.trim().orEmpty()
-        val systemAdditions = listOf(userProfileText, taskStageRulesText).filter { it.isNotEmpty() }
+        val invariantsText = request.invariants?.trim().orEmpty()
+        val systemAdditions =
+            listOf(userProfileText, taskStageRulesText, invariantsText).filter { it.isNotEmpty() }
         val effectiveSystemInstruction = if (systemAdditions.isEmpty()) {
             config.systemInstruction
         } else {
@@ -86,10 +127,11 @@ class LlmAgent(
         val profileTokens = TokenEstimator.estimate(userProfileText)
         val taskStateTokens = TokenEstimator.estimate(taskStateText)
         val taskStageRulesTokens = TokenEstimator.estimate(taskStageRulesText)
+        val invariantTokens = TokenEstimator.estimate(invariantsText)
         val systemInstructionTokens = TokenEstimator.estimate(effectiveSystemInstruction)
         val promptTokens = requestTokens + historyTokens +
             longTermMemoryTokens + workingMemoryTokens + profileTokens +
-            taskStateTokens + taskStageRulesTokens + systemInstructionTokens
+            taskStateTokens + taskStageRulesTokens + invariantTokens + systemInstructionTokens
 
         val reservedOutputTokens = config.maxOutputTokens ?: DEFAULT_RESERVED_OUTPUT_TOKENS
         val contextWindowTokens = client.contextWindowTokens(model)
@@ -137,7 +179,8 @@ class LlmAgent(
                                 workingMemoryTokens = workingMemoryTokens,
                                 profileTokens = profileTokens,
                                 taskStateTokens = taskStateTokens,
-                                taskStageRulesTokens = taskStageRulesTokens
+                                taskStageRulesTokens = taskStageRulesTokens,
+                                invariantTokens = invariantTokens
                             )
                         )
                     )

@@ -1,5 +1,9 @@
 package com.example.geminichat.agent
 
+import com.example.geminichat.agent.invariant.Invariant
+import com.example.geminichat.agent.invariant.InvariantCategory
+import com.example.geminichat.agent.invariant.InvariantRenderer
+import com.example.geminichat.agent.invariant.InvariantSet
 import kotlinx.coroutines.test.runTest
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertNull
@@ -138,5 +142,72 @@ class TokenBudgetTest {
 
         assertTrue(result.isSuccess)
         assertEquals(1, client.callCount)
+    }
+
+    @Test
+    fun `Day 14 invariant tokens are counted and included in promptTokens`() = runTest {
+        val invariants = InvariantSet(
+            listOf(
+                Invariant(
+                    id = "no-op-invariant",
+                    category = InvariantCategory.SCOPE,
+                    statement = "Only ever discuss training topics.",
+                    rationale = "Keeps the agent focused."
+                )
+            )
+        )
+        val client = BudgetFakeLlmClient(result = Result.success("Sure."))
+        val agent = LlmAgent(config = config, client = client, invariants = invariants)
+
+        val result = agent.handle(
+            AgentRequest(
+                userMessage = "What's a good warm-up?",
+                invariants = InvariantRenderer.render(invariants)
+            )
+        )
+
+        assertTrue(result.isSuccess)
+        val usage = result.getOrThrow().tokenUsage
+        assertTrue(usage.invariantTokens > 0)
+        assertEquals(
+            usage.requestTokens + usage.historyTokens + usage.longTermMemoryTokens +
+                usage.workingMemoryTokens + usage.profileTokens + usage.taskStateTokens +
+                usage.taskStageRulesTokens + usage.invariantTokens + usage.systemInstructionTokens,
+            usage.promptTokens
+        )
+    }
+
+    @Test
+    fun `a large invariant set can push a dialog over a small context window`() = runTest {
+        // A repeated, verbose invariant catalog (not the pre-check, which never even
+        // reaches this path for an unrelated message) inflates the system instruction enough
+        // to overflow a tiny fake window, proving Day 14's block is billed like any other part
+        // of the prompt.
+        val bulkyInvariants = InvariantSet(
+            (1..40).map { i ->
+                Invariant(
+                    id = "bulky-$i",
+                    category = InvariantCategory.METHODOLOGY,
+                    statement = "This is a fairly long invariant statement number $i used only to " +
+                        "inflate the rendered prompt block for a context-window overflow test.",
+                    rationale = "Padding rationale text number $i to add more tokens to the block.",
+                    alternative = "Alternative suggestion text number $i, also fairly verbose."
+                )
+            }
+        )
+        val smallWindowConfig = config.copy(maxOutputTokens = 20)
+        val client = BudgetFakeLlmClient(fakeContextWindowTokens = 300)
+        val agent = LlmAgent(config = smallWindowConfig, client = client, invariants = bulkyInvariants)
+
+        val result = agent.handle(
+            AgentRequest(
+                userMessage = "What's a good warm-up?",
+                invariants = InvariantRenderer.render(bulkyInvariants)
+            )
+        )
+
+        assertTrue(result.isFailure)
+        assertTrue(result.exceptionOrNull() is ContextWindowExceededException)
+        assertEquals(0, client.callCount)
     }
 }

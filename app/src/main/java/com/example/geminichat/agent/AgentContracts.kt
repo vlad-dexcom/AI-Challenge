@@ -66,7 +66,16 @@ data class AgentRequest(
      * [LlmAgent] appends it to [AgentConfig.systemInstruction] alongside [userProfile] rather
      * than mixing it into the prompt body.
      */
-    val taskStageRules: String? = null
+    val taskStageRules: String? = null,
+    /**
+     * Optional Day 14 [com.example.geminichat.agent.invariant.InvariantRenderer.render] block:
+     * hard, non-negotiable rules (see
+     * [com.example.geminichat.agent.invariant.Invariant]) that must win any conflict with
+     * [userProfile], memory, or [taskStageRules]. Like [userProfile]/[taskStageRules], this is
+     * an instruction about how the agent must behave, not conversational context, so [LlmAgent]
+     * appends it to [AgentConfig.systemInstruction] — last, so it has the final word.
+     */
+    val invariants: String? = null
 )
 
 /** Successful output of [Agent.handle]. */
@@ -75,7 +84,15 @@ data class AgentResponse(
     val agentId: String,
     val model: String,
     val elapsedMs: Long,
-    val tokenUsage: TokenUsage
+    val tokenUsage: TokenUsage,
+    /**
+     * Day 14: non-empty when this response is a deterministic refusal produced by
+     * [com.example.geminichat.agent.invariant.InvariantGuard] — the model was never called at
+     * all (see [com.example.geminichat.agent.LlmAgent.handle]). Lists the id of every
+     * [com.example.geminichat.agent.invariant.Invariant] the request conflicted with, so the UI
+     * can badge the reply instead of treating it as an ordinary answer.
+     */
+    val refusedByInvariantIds: List<String> = emptyList()
 )
 
 /**
@@ -101,11 +118,18 @@ data class AgentResponse(
  *   [com.example.geminichat.agent.task.TaskStateRenderer.stageRules] text (see
  *   [AgentRequest.taskStageRules]), folded into the system instruction; zero when no task is
  *   active.
+ * - [invariantTokens] — the rendered Day 14
+ *   [com.example.geminichat.agent.invariant.InvariantRenderer.render] block (see
+ *   [AgentRequest.invariants]), folded into the system instruction; zero when no invariant is
+ *   enabled. On a refusal produced by
+ *   [com.example.geminichat.agent.invariant.InvariantGuard] (see [LlmAgent.handle]), every
+ *   other field here is zero — the refusal never reaches the model, so it costs nothing.
  * - [systemInstructionTokens] — the agent's persona/system instruction, sent separately from
  *   [LlmRequestSpec.input] but still counted against the model's context window.
  * - [promptTokens] — everything actually sent to the model for this call
  *   (`requestTokens + historyTokens + longTermMemoryTokens + workingMemoryTokens +
- *   profileTokens + taskStateTokens + taskStageRulesTokens + systemInstructionTokens`).
+ *   profileTokens + taskStateTokens + taskStageRulesTokens + invariantTokens +
+ *   systemInstructionTokens`).
  * - [completionTokens] — the model's reply.
  * - [totalTokens] — `promptTokens + completionTokens`, i.e. this call's full token cost.
  */
@@ -119,7 +143,8 @@ data class TokenUsage(
     val workingMemoryTokens: Int = 0,
     val profileTokens: Int = 0,
     val taskStateTokens: Int = 0,
-    val taskStageRulesTokens: Int = 0
+    val taskStageRulesTokens: Int = 0,
+    val invariantTokens: Int = 0
 ) {
     val totalTokens: Int get() = promptTokens + completionTokens
 }
