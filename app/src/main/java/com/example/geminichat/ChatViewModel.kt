@@ -12,6 +12,7 @@ import com.example.geminichat.agent.TokenUsage
 import com.example.geminichat.agent.invariant.Invariant
 import com.example.geminichat.agent.invariant.InvariantCategory
 import com.example.geminichat.agent.invariant.InvariantChangeResult
+import com.example.geminichat.agent.invariant.InvariantGuard
 import com.example.geminichat.agent.invariant.InvariantPreset
 import com.example.geminichat.agent.invariant.InvariantRenderer
 import com.example.geminichat.agent.invariant.InvariantRules
@@ -44,6 +45,8 @@ import com.example.geminichat.agent.task.TransitionResult
 import java.util.UUID
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.TimeoutCancellationException
+import kotlinx.coroutines.async
+import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.launch
@@ -825,8 +828,16 @@ class ChatViewModel(
                 // Hard safety net: no matter what the underlying HTTP client does, the user
                 // should never be stuck on the loading indicator forever.
                 withTimeout(125_000) {
-                    val context = prepareRequestContext(history, model, prompt)
-                    agent.handle(
+                    // Day 14: check invariants *before* spending three sequential LLM calls
+                    // (memory routing, preference advisor, task advisor) on context that would
+                    // just be thrown away by a refusal anyway. This restores the "medium"
+                    // enforcement guarantee — zero LLM calls, effectively instant — for a
+                    // conflicting request; [LlmAgent.handle] still re-checks internally as the
+                    // real enforcement point (this is only a fast-path skip).
+                    val request = if (InvariantGuard.check(invariants, prompt).isNotEmpty()) {
+                        AgentRequest(userMessage = prompt)
+                    } else {
+                        val context = prepareRequestContext(history, model, prompt)
                         AgentRequest(
                             userMessage = prompt,
                             history = context.history,
@@ -838,7 +849,8 @@ class ChatViewModel(
                             taskStageRules = context.taskStageRules,
                             invariants = context.invariants
                         )
-                    )
+                    }
+                    agent.handle(request)
                         .onSuccess { response ->
                             _uiState.value = _uiState.value.copy(
                                 messages = _uiState.value.messages + ChatMessage(
@@ -911,19 +923,42 @@ class ChatViewModel(
         history: List<AgentMessage>,
         model: String,
         prompt: String
-    ): RequestContext {
+    ): RequestContext = coroutineScope {
         val agentHistoryTail = history.takeLast(MemoryRouter.RECENT_CONTEXT_SIZE)
         val routerContext = history.takeLast(MemoryRouter.ROUTER_CONTEXT_SIZE)
         val state = _uiState.value
         val turn = history.count { it.role == AgentMessage.Role.USER } + 1
-        memoryRouter.route(
-            previousWorking = state.workingMemory,
-            previousLongTerm = state.longTermMemory,
-            recentContext = routerContext,
-            newUserMessage = prompt,
-            turn = turn,
-            model = model
-        ).onSuccess { outcome ->
+
+        // Perf: these three calls read disjoint slices of state (memory routing reads
+        // workingMemory/longTermMemory; the preference advisor reads userProfile; the task
+        // advisor reads taskState) and none of them depends on another's *result* — so they
+        // are independent LLM calls and can run concurrently instead of paying their latency
+        // three times in a row (~5s each, sequentially ~15s worst case).
+        val routeDeferred = async {
+            memoryRouter.route(
+                previousWorking = state.workingMemory,
+                previousLongTerm = state.longTermMemory,
+                recentContext = routerContext,
+                newUserMessage = prompt,
+                turn = turn,
+                model = model
+            )
+        }
+        // Day 12: a separate LLM call, independent of memory routing, checks whether this turn
+        // states a personalization preference. On failure or "no preference stated" it simply
+        // leaves [ChatUiState.pendingPreferenceSuggestion] as-is — never blocks the chat turn.
+        val preferenceDeferred = async {
+            preferenceAdvisor.suggest(profile = state.userProfile, newUserMessage = prompt, model = model)
+        }
+        // Day 13: another separate LLM call checks whether this turn indicates the task's
+        // expected next action just happened. Same fail-safe shape as the advisor above: on
+        // failure or "no transition indicated" it simply leaves
+        // [ChatUiState.pendingTaskTransitionSuggestion] as-is.
+        val taskAdvisorDeferred = async {
+            taskStateAdvisor.suggest(state = state.taskState, newUserMessage = prompt, model = model)
+        }
+
+        routeDeferred.await().onSuccess { outcome ->
             _uiState.value = _uiState.value.copy(
                 workingMemory = outcome.working,
                 longTermMemory = outcome.longTerm,
@@ -940,34 +975,25 @@ class ChatViewModel(
             working = latestMemoryState.workingMemory
         )
 
-        // Day 12: a separate LLM call, independent of memory routing, checks whether this turn
-        // states a personalization preference. On failure or "no preference stated" it simply
-        // leaves [ChatUiState.pendingPreferenceSuggestion] as-is — never blocks the chat turn.
-        preferenceAdvisor.suggest(profile = latestMemoryState.userProfile, newUserMessage = prompt, model = model)
-            .onSuccess { outcome ->
-                _uiState.value = _uiState.value.copy(
-                    personalizationTokensTotal = _uiState.value.personalizationTokensTotal + outcome.tokensUsed,
-                    pendingPreferenceSuggestion = outcome.suggestion ?: _uiState.value.pendingPreferenceSuggestion
-                )
-            }
+        preferenceDeferred.await().onSuccess { outcome ->
+            _uiState.value = _uiState.value.copy(
+                personalizationTokensTotal = _uiState.value.personalizationTokensTotal + outcome.tokensUsed,
+                pendingPreferenceSuggestion = outcome.suggestion ?: _uiState.value.pendingPreferenceSuggestion
+            )
+        }
 
-        // Day 13: another separate LLM call checks whether this turn indicates the task's
-        // expected next action just happened. Same fail-safe shape as the advisor above: on
-        // failure or "no transition indicated" it simply leaves
-        // [ChatUiState.pendingTaskTransitionSuggestion] as-is.
-        taskStateAdvisor.suggest(state = latestMemoryState.taskState, newUserMessage = prompt, model = model)
-            .onSuccess { outcome ->
-                _uiState.value = _uiState.value.copy(
-                    taskStateAdvisorTokensTotal = _uiState.value.taskStateAdvisorTokensTotal + outcome.tokensUsed,
-                    pendingTaskTransitionSuggestion = outcome.suggestion ?: _uiState.value.pendingTaskTransitionSuggestion
-                )
-            }
+        taskAdvisorDeferred.await().onSuccess { outcome ->
+            _uiState.value = _uiState.value.copy(
+                taskStateAdvisorTokensTotal = _uiState.value.taskStateAdvisorTokensTotal + outcome.tokensUsed,
+                pendingTaskTransitionSuggestion = outcome.suggestion ?: _uiState.value.pendingTaskTransitionSuggestion
+            )
+        }
 
         val profileBlock = ProfileRenderer.render(latestMemoryState.userProfile)
         val taskStateBlock = TaskStateRenderer.render(latestMemoryState.taskState)
         val taskStageRulesText = TaskStateRenderer.stageRules(latestMemoryState.taskState)
         val invariantsBlock = InvariantRenderer.render(latestMemoryState.invariants)
-        return RequestContext(
+        RequestContext(
             history = agentHistoryTail,
             longTermMemory = assembled.longTermBlock.ifEmpty { null },
             workingMemory = assembled.workingBlock.ifEmpty { null },
