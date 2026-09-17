@@ -9,6 +9,14 @@ import com.example.geminichat.agent.AgentMessage
 import com.example.geminichat.agent.AgentRequest
 import com.example.geminichat.agent.LlmAgent
 import com.example.geminichat.agent.TokenUsage
+import com.example.geminichat.agent.invariant.Invariant
+import com.example.geminichat.agent.invariant.InvariantCategory
+import com.example.geminichat.agent.invariant.InvariantChangeResult
+import com.example.geminichat.agent.invariant.InvariantPreset
+import com.example.geminichat.agent.invariant.InvariantRenderer
+import com.example.geminichat.agent.invariant.InvariantRules
+import com.example.geminichat.agent.invariant.InvariantSet
+import com.example.geminichat.agent.invariant.InvariantStore
 import com.example.geminichat.agent.memory.LongTermMemoryStore
 import com.example.geminichat.agent.memory.MemoryAssembler
 import com.example.geminichat.agent.memory.MemoryItem
@@ -54,7 +62,15 @@ data class ChatMessage(
      * comes back `null` for messages restored from a previous app run.
      */
     @Transient
-    val tokenUsage: TokenUsage? = null
+    val tokenUsage: TokenUsage? = null,
+    /**
+     * Day 14: non-empty when this reply is a deterministic refusal produced by
+     * [com.example.geminichat.agent.invariant.InvariantGuard] (see
+     * [com.example.geminichat.agent.AgentResponse.refusedByInvariantIds]). Unlike [tokenUsage]
+     * this *is* serialized, so the refusal badge survives a restore from
+     * [ChatHistoryStore] just like the message text does.
+     */
+    val refusedByInvariantIds: List<String> = emptyList()
 )
 
 /** One entry in the Day 10 branch selector — see [ChatViewModel.onBranchSelected]. */
@@ -129,7 +145,14 @@ data class ChatUiState(
     val pendingTaskTransitionSuggestion: TaskTransitionSuggestion? = null,
     /** Tokens spent on [TaskStateAdvisor] calls so far, tracked separately from the other
      * per-mechanism token totals above. */
-    val taskStateAdvisorTokensTotal: Int = 0
+    val taskStateAdvisorTokensTotal: Int = 0,
+    /**
+     * Day 14: hard, non-negotiable rules the agent enforces on every turn (see
+     * [com.example.geminichat.agent.invariant.Invariant]) — global across branches/agents, like
+     * [userProfile], and stored in its own file (see
+     * [com.example.geminichat.agent.invariant.InvariantStore]) completely outside the dialog.
+     */
+    val invariants: InvariantSet = InvariantSet.DEFAULTS
 ) {
     companion object {
         const val MAIN_BRANCH_ID = "main"
@@ -148,6 +171,7 @@ class ChatViewModel(
     private val workingMemoryStore: WorkingMemoryStore? = null,
     private val userProfileStore: UserProfileStore? = null,
     private val taskStateStore: TaskStateStore? = null,
+    private val invariantStore: InvariantStore? = null,
     debugContextWindowOverrideTokens: Int? = null,
 ) : ViewModel() {
 
@@ -161,7 +185,12 @@ class ChatViewModel(
     private val restored = historyStore?.load() ?: ChatHistorySnapshot()
     private val restoredAgentConfig = AgentCatalog.byId(restored.selectedAgentId)
 
-    private var agent: Agent = LlmAgent(config = restoredAgentConfig, client = geminiClient)
+    // Day 14: the single global set of invariants, loaded once — like [userProfile], but the
+    // agent needs it *at construction time* (see [rebuildAgent]) since [InvariantGuard] runs
+    // inside [LlmAgent.handle], not in the ViewModel.
+    private var invariants: InvariantSet = invariantStore?.load() ?: InvariantSet.DEFAULTS
+
+    private var agent: Agent = LlmAgent(config = restoredAgentConfig, client = geminiClient, invariants = invariants)
 
     // Day 10 branching bookkeeping: branches *other than* the currently active one (whose
     // state lives unpacked in [_uiState]), a pending checkpoint ready to be forked, and enough
@@ -217,7 +246,8 @@ class ChatViewModel(
             userProfile = userProfile,
             personalizationTokensTotal = 0,
             taskState = taskStateStore?.load(currentBranchId) ?: TaskState.NONE,
-            taskStateAdvisorTokensTotal = 0
+            taskStateAdvisorTokensTotal = 0,
+            invariants = invariants
         )
     )
     val uiState: StateFlow<ChatUiState> = _uiState
@@ -239,13 +269,97 @@ class ChatViewModel(
 
     fun onAgentSelected(agentId: String) {
         val config = AgentCatalog.byId(agentId)
-        agent = LlmAgent(config = config, client = geminiClient)
+        agent = LlmAgent(config = config, client = geminiClient, invariants = invariants)
         _uiState.value = _uiState.value.copy(
             selectedAgentId = config.id,
             agentName = config.displayName,
             agentDescription = config.description
         )
         persistHistory()
+    }
+
+    /** Day 14: rebuilds [agent] with the current [invariants] set, keeping its current persona —
+     * called after every change to the set (toggle/add/delete/preset/reset) since
+     * [com.example.geminichat.agent.invariant.InvariantGuard] runs *inside*
+     * [com.example.geminichat.agent.LlmAgent.handle], not in this ViewModel. Enforcement lives
+     * in the agent, per the Day 14 requirement, not in the UI layer. */
+    private fun rebuildAgent() {
+        agent = LlmAgent(config = agent.config, client = geminiClient, invariants = invariants)
+    }
+
+    /** Persists the current global [invariants] set to its own file, independent of every other
+     * store (see [InvariantStore]). */
+    private fun persistInvariants() {
+        invariantStore?.save(invariants)
+    }
+
+    /** Day 14: turns [id] on or off, unless it's [Invariant.locked] — routed through
+     * [InvariantRules] so a rejection (e.g. trying to disable a locked invariant) always
+     * explains why instead of silently doing nothing. */
+    fun onToggleInvariant(id: String, enabled: Boolean) {
+        applyInvariantChange(InvariantRules.setEnabled(invariants, id, enabled))
+    }
+
+    /** Day 14: adds a brand-new invariant defined in the UI. Rejected (with a reason) if [id]
+     * is blank/duplicate or [statement] is blank — see [InvariantRules.add]. */
+    fun onAddInvariant(
+        id: String,
+        category: InvariantCategory,
+        statement: String,
+        rationale: String,
+        alternative: String,
+        triggersCsv: String
+    ) {
+        val triggers = triggersCsv.split(",").map { it.trim() }.filter { it.isNotEmpty() }
+        applyInvariantChange(
+            InvariantRules.add(
+                invariants,
+                Invariant(
+                    id = id.trim(),
+                    category = category,
+                    statement = statement.trim(),
+                    rationale = rationale.trim(),
+                    alternative = alternative.trim(),
+                    triggers = triggers
+                )
+            )
+        )
+    }
+
+    /** Day 14: deletes an invariant by id, unless it's [Invariant.locked] — see
+     * [InvariantRules.remove]. */
+    fun onDeleteInvariant(id: String) {
+        applyInvariantChange(InvariantRules.remove(invariants, id))
+    }
+
+    /** Day 14: applies one of [InvariantSet.PRESETS] on top of the current set — never removes
+     * or disables an existing [Invariant.locked] entry (see [InvariantRules.applyPreset]). */
+    fun onApplyInvariantPreset(preset: InvariantPreset) {
+        applyInvariantChange(InvariantRules.applyPreset(invariants, preset))
+    }
+
+    /** Day 14: resets the whole set back to [InvariantSet.DEFAULTS], discarding any user-added
+     * invariants and any enabled/disabled overrides. */
+    fun onResetInvariants() {
+        applyInvariantChange(InvariantRules.reset())
+    }
+
+    /** Applies an [InvariantChangeResult]: [InvariantChangeResult.Applied] updates and persists
+     * [invariants] and rebuilds [agent]; [InvariantChangeResult.Rejected] surfaces its reason as
+     * [ChatUiState.errorMessage] instead of silently doing nothing — mirrors
+     * [applyTransition]'s Applied/Rejected handling for [TaskState]. */
+    private fun applyInvariantChange(result: InvariantChangeResult) {
+        when (result) {
+            is InvariantChangeResult.Applied -> {
+                invariants = result.set
+                rebuildAgent()
+                persistInvariants()
+                _uiState.value = _uiState.value.copy(invariants = invariants, errorMessage = null)
+            }
+            is InvariantChangeResult.Rejected -> {
+                _uiState.value = _uiState.value.copy(errorMessage = result.reason)
+            }
+        }
     }
 
     /**
@@ -721,7 +835,8 @@ class ChatViewModel(
                             workingMemory = context.workingMemory,
                             userProfile = context.userProfile,
                             taskState = context.taskState,
-                            taskStageRules = context.taskStageRules
+                            taskStageRules = context.taskStageRules,
+                            invariants = context.invariants
                         )
                     )
                         .onSuccess { response ->
@@ -729,7 +844,8 @@ class ChatViewModel(
                                 messages = _uiState.value.messages + ChatMessage(
                                     text = response.text,
                                     isFromUser = false,
-                                    tokenUsage = response.tokenUsage
+                                    tokenUsage = response.tokenUsage,
+                                    refusedByInvariantIds = response.refusedByInvariantIds
                                 ),
                                 isLoading = false,
                                 dialogTokenTotal = _uiState.value.dialogTokenTotal + response.tokenUsage.totalTokens
@@ -760,14 +876,16 @@ class ChatViewModel(
     }
 
     /** What actually gets sent to the agent for one turn: a recent raw tail plus both memory
-     * layers, the Day 12 profile block, and the Day 13 task state block/rules. */
+     * layers, the Day 12 profile block, the Day 13 task state block/rules, and the Day 14
+     * invariants block. */
     private data class RequestContext(
         val history: List<AgentMessage>,
         val longTermMemory: String? = null,
         val workingMemory: String? = null,
         val userProfile: String? = null,
         val taskState: String? = null,
-        val taskStageRules: String? = null
+        val taskStageRules: String? = null,
+        val invariants: String? = null
     )
 
     /**
@@ -848,13 +966,15 @@ class ChatViewModel(
         val profileBlock = ProfileRenderer.render(latestMemoryState.userProfile)
         val taskStateBlock = TaskStateRenderer.render(latestMemoryState.taskState)
         val taskStageRulesText = TaskStateRenderer.stageRules(latestMemoryState.taskState)
+        val invariantsBlock = InvariantRenderer.render(latestMemoryState.invariants)
         return RequestContext(
             history = agentHistoryTail,
             longTermMemory = assembled.longTermBlock.ifEmpty { null },
             workingMemory = assembled.workingBlock.ifEmpty { null },
             userProfile = profileBlock.ifEmpty { null },
             taskState = taskStateBlock.ifEmpty { null },
-            taskStageRules = taskStageRulesText.ifEmpty { null }
+            taskStageRules = taskStageRulesText.ifEmpty { null },
+            invariants = invariantsBlock.ifEmpty { null }
         )
     }
 

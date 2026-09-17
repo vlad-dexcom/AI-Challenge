@@ -179,6 +179,39 @@ different question than memory or profile: not *what do we know* or *how should 
   state (e.g. no "Next" while in `VALIDATION`); "End task" (Day 11) now also resets task state,
   while "Clear dialog" leaves it untouched.
 
+## Invariants (Day 14)
+
+`agent/invariant/` adds a fourth layer on top of memory (Day 11), profile (Day 12), and task
+state (Day 13): **invariants** — hard rules the agent is never allowed to violate, regardless of
+what the user asks, what the profile says, or what stage the task is in. See
+`docs/day14-invariants.md` for the full write-up (layer-boundary table, the three enforcement
+depths considered, why a refusal is `Result.success` not `failure`) and
+`docs/day14-invariants-test-scenario.md` for a manual walkthrough, including a locked-invariant
+UI check and a full app-restart persistence check.
+
+- **`agent/invariant/Invariant.kt` / `InvariantSet.kt`** — a rule (`statement`, `rationale`,
+  `alternative`, trigger regexes, `enabled`, `locked`). `InvariantSet.DEFAULTS` ships 4 locked
+  core rules (medical scope, no PEDs, no train-through-pain, a calorie floor) and 5 editable ones
+  (home-equipment-only, ≤3 sessions/week, warm-up/cool-down, ≤10% progression, fitness-only
+  scope); `InvariantSet.PRESETS` includes a non-fitness "Tech stack" bundle (Compose-only, no new
+  deps) to show the mechanism isn't training-specific. `InvariantRules` is the only code allowed
+  to mutate a set and always rejects touching a `locked` entry.
+- **`agent/invariant/InvariantRenderer.kt`** — renders enabled invariants into one
+  non-negotiable system-instruction block, appended *last* (after the profile and task-stage
+  rules) so it has the final say on any conflict.
+- **`agent/invariant/InvariantGuard.kt`** — the enforcement engine: a deterministic, code-only
+  pre-check of the user's newest message runs in `LlmAgent.handle()` **before** any prompt is
+  built or the model is called. A match refuses the request with `refusedByInvariantIds`
+  populated and zero token cost — the client is never invoked; this is a hard guarantee, not a
+  prompt suggestion.
+- **`agent/invariant/InvariantStore.kt`** — persists the set to `invariants.json`; `load()`
+  sanitizes a hand-edited file, re-inserting or re-enabling any locked invariant found missing or
+  disabled.
+- **UI** — an `InvariantPanel` on the Settings screen (presets, per-category list, an "Add
+  invariant" form, "Reset to defaults"); locked rows show 🔒 instead of a switch/delete button, so
+  there is no UI path to disable or remove them. A refused chat bubble is tinted and labeled
+  "⛔ Инвариант: <ids>"; unlike "Clear dialog"/"End task", neither resets the invariant set.
+
 ## Setup
 
 1. Get a Gemini API key from [Google AI Studio](https://aistudio.google.com/apikey).
@@ -210,6 +243,10 @@ different question than memory or profile: not *what do we know* or *how should 
   `MemoryRouter`, `MemoryAssembler`, `LongTermMemoryStore`/`WorkingMemoryStore`).
 - `agent/profile/` — the Day 12 personalization profile (`UserProfile`, `ProfileRenderer`,
   `UserProfileStore`, `PreferenceAdvisor`).
+- `agent/task/` — the Day 13 task state machine (`TaskState`, `TaskStateMachine`,
+  `TaskStateRenderer`, `TaskStateStore`, `TaskStateAdvisor`).
+- `agent/invariant/` — the Day 14 hard invariants (`Invariant`, `InvariantSet`/`InvariantRules`,
+  `InvariantRenderer`, `InvariantGuard`, `InvariantStore`).
 - `GeminiModels.kt` — kotlinx.serialization request/response DTOs for the Gemini Interactions
   API, including `system_instruction` and `generation_config`.
 - `GeminiApiClient.kt` — Ktor `HttpClient` wrapper implementing `LlmClient`; POSTs the request

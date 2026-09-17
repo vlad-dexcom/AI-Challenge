@@ -7,6 +7,7 @@ import androidx.activity.viewModels
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.ViewModelProvider
 import androidx.lifecycle.viewmodel.CreationExtras
+import com.example.geminichat.agent.invariant.InvariantStore
 import com.example.geminichat.agent.memory.LongTermMemoryStore
 import com.example.geminichat.agent.memory.WorkingMemoryStore
 import com.example.geminichat.agent.profile.UserProfileStore
@@ -34,6 +35,10 @@ class MainActivity : ComponentActivity() {
                     UserProfileStore(File(filesDir, UserProfileStore.FILE_NAME))
                 val taskStateStore =
                     TaskStateStore(File(filesDir, TaskStateStore.FILE_NAME))
+                // Day 14: invariants are global and stored in their own file too, entirely
+                // outside the dialog — see InvariantStore.
+                val invariantStore =
+                    InvariantStore(File(filesDir, InvariantStore.FILE_NAME))
                 @Suppress("UNCHECKED_CAST")
                 return ChatViewModel(
                     apiKey = BuildConfig.GEMINI_API_KEY,
@@ -41,7 +46,8 @@ class MainActivity : ComponentActivity() {
                     longTermMemoryStore = longTermMemoryStore,
                     workingMemoryStore = workingMemoryStore,
                     userProfileStore = userProfileStore,
-                    taskStateStore = taskStateStore
+                    taskStateStore = taskStateStore,
+                    invariantStore = invariantStore
                 ) as T
             }
         }
