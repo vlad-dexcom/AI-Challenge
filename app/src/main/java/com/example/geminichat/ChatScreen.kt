@@ -57,6 +57,10 @@ import com.example.geminichat.agent.profile.ExpertiseLevel
 import com.example.geminichat.agent.profile.PreferenceSuggestion
 import com.example.geminichat.agent.profile.ProfileField
 import com.example.geminichat.agent.profile.UserProfile
+import com.example.geminichat.agent.task.TaskStage
+import com.example.geminichat.agent.task.TaskState
+import com.example.geminichat.agent.task.TaskTransitionAction
+import com.example.geminichat.agent.task.TaskTransitionSuggestion
 import dev.jeziellago.compose.markdowntext.MarkdownText
 
 /**
@@ -138,11 +142,32 @@ fun ChatScreen(viewModel: ChatViewModel) {
                     onEndTask = viewModel::onEndTask,
                     onClearDialog = viewModel::onClearDialog
                 )
+                TaskPanel(
+                    taskState = uiState.taskState,
+                    enabled = !uiState.isLoading,
+                    onStartTask = viewModel::onStartTask,
+                    onApprovePlan = viewModel::onApprovePlan,
+                    onPreviousStep = viewModel::onPreviousStep,
+                    onNextStep = viewModel::onNextStep,
+                    onRequestValidation = viewModel::onRequestValidation,
+                    onSendBackToExecution = viewModel::onSendBackToExecution,
+                    onCompleteTask = viewModel::onCompleteTask,
+                    onPauseTask = viewModel::onPauseTask,
+                    onResumeTask = viewModel::onResumeTask,
+                    onResetTask = viewModel::onResetTask
+                )
                 uiState.pendingPreferenceSuggestion?.let { suggestion ->
                     SuggestionBanner(
                         suggestion = suggestion,
                         onApply = viewModel::onApplySuggestion,
                         onDismiss = viewModel::onDismissSuggestion
+                    )
+                }
+                uiState.pendingTaskTransitionSuggestion?.let { suggestion ->
+                    TaskTransitionBanner(
+                        suggestion = suggestion,
+                        onApply = viewModel::onApplyTaskTransitionSuggestion,
+                        onDismiss = viewModel::onDismissTaskTransitionSuggestion
                     )
                 }
             }
@@ -356,6 +381,205 @@ private fun MemoryPanel(
             }
             TextButton(onClick = onClearDialog, enabled = enabled) {
                 Text("Clear dialog")
+            }
+        }
+    }
+}
+
+/**
+ * Day 13 task panel: shows where the task currently is (stage, current step, expected next
+ * action, pause flag — see [TaskState]) and drives [TaskStateMachine] via
+ * [ChatViewModel]'s per-transition handlers. Only one button set is shown at a time, matching
+ * what [TaskStateMachine] actually allows from the current stage/pause combination, so a
+ * disabled/invalid transition is never even offered rather than being offered and rejected.
+ */
+@Composable
+private fun TaskPanel(
+    taskState: TaskState,
+    enabled: Boolean,
+    onStartTask: (String) -> Unit,
+    onApprovePlan: (String) -> Unit,
+    onPreviousStep: () -> Unit,
+    onNextStep: () -> Unit,
+    onRequestValidation: () -> Unit,
+    onSendBackToExecution: (String) -> Unit,
+    onCompleteTask: () -> Unit,
+    onPauseTask: () -> Unit,
+    onResumeTask: () -> Unit,
+    onResetTask: () -> Unit
+) {
+    var expanded by remember { mutableStateOf(false) }
+    var newTitle by remember { mutableStateOf("") }
+    var stepsText by remember { mutableStateOf("") }
+    var sendBackReason by remember { mutableStateOf("") }
+
+    Column(modifier = Modifier.padding(horizontal = 12.dp, vertical = 2.dp)) {
+        Row(
+            modifier = Modifier.fillMaxWidth(),
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            val summary = if (!taskState.isActive) {
+                "Task: none"
+            } else {
+                "Task: ${taskState.title} · ${taskState.stage}" +
+                    (taskState.progressLabel?.let { " ($it)" } ?: "") +
+                    if (taskState.paused) " · PAUSED" else ""
+            }
+            Text(
+                text = summary,
+                style = MaterialTheme.typography.labelSmall,
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
+                modifier = Modifier.weight(1f)
+            )
+            TextButton(onClick = { expanded = !expanded }) {
+                Text(if (expanded) "Hide" else "Show")
+            }
+        }
+        if (!expanded) return@Column
+
+        if (!taskState.isActive) {
+            Row(verticalAlignment = Alignment.CenterVertically, modifier = Modifier.fillMaxWidth()) {
+                OutlinedTextField(
+                    value = newTitle,
+                    onValueChange = { newTitle = it },
+                    placeholder = { Text("Task title") },
+                    singleLine = true,
+                    modifier = Modifier.weight(1f)
+                )
+                TextButton(
+                    onClick = { onStartTask(newTitle); newTitle = "" },
+                    enabled = enabled && newTitle.isNotBlank()
+                ) {
+                    Text("Start task")
+                }
+            }
+            return@Column
+        }
+
+        taskState.steps.forEachIndexed { index, step ->
+            Text(
+                text = (if (index == taskState.currentStepIndex) "→ " else "   ") + "${index + 1}. $step",
+                style = if (index == taskState.currentStepIndex) {
+                    MaterialTheme.typography.bodyMedium
+                } else {
+                    MaterialTheme.typography.bodySmall
+                },
+                color = if (index == taskState.currentStepIndex) {
+                    MaterialTheme.colorScheme.onSurface
+                } else {
+                    MaterialTheme.colorScheme.onSurfaceVariant
+                }
+            )
+        }
+        if (taskState.expectedAction.isNotBlank()) {
+            Text(
+                text = "Expected: ${taskState.expectedActor} — ${taskState.expectedAction}",
+                style = MaterialTheme.typography.labelSmall,
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
+                modifier = Modifier.padding(top = 4.dp)
+            )
+        }
+
+        if (taskState.paused) {
+            Row(modifier = Modifier.padding(top = 4.dp)) {
+                TextButton(onClick = onResumeTask, enabled = enabled) { Text("Resume") }
+                TextButton(onClick = onResetTask, enabled = enabled) { Text("Reset") }
+            }
+            return@Column
+        }
+
+        when (taskState.stage) {
+            TaskStage.PLANNING -> {
+                OutlinedTextField(
+                    value = stepsText,
+                    onValueChange = { stepsText = it },
+                    placeholder = { Text("One step per line") },
+                    modifier = Modifier.fillMaxWidth().padding(top = 4.dp)
+                )
+                Row(modifier = Modifier.padding(top = 4.dp)) {
+                    TextButton(
+                        onClick = { onApprovePlan(stepsText) },
+                        enabled = enabled && stepsText.isNotBlank()
+                    ) {
+                        Text("Approve plan")
+                    }
+                    TextButton(onClick = onCompleteTask, enabled = enabled) { Text("Cancel task") }
+                }
+            }
+            TaskStage.EXECUTION -> {
+                Row(modifier = Modifier.padding(top = 4.dp)) {
+                    TextButton(onClick = onPreviousStep, enabled = enabled) { Text("Back") }
+                    TextButton(onClick = onNextStep, enabled = enabled) { Text("Next") }
+                    TextButton(onClick = onRequestValidation, enabled = enabled) { Text("Send to validation") }
+                }
+            }
+            TaskStage.VALIDATION -> {
+                OutlinedTextField(
+                    value = sendBackReason,
+                    onValueChange = { sendBackReason = it },
+                    placeholder = { Text("Reason for rework (if any)") },
+                    singleLine = true,
+                    modifier = Modifier.fillMaxWidth().padding(top = 4.dp)
+                )
+                Row(modifier = Modifier.padding(top = 4.dp)) {
+                    TextButton(onClick = { onSendBackToExecution(sendBackReason) }, enabled = enabled) {
+                        Text("Send back")
+                    }
+                    TextButton(onClick = onCompleteTask, enabled = enabled) { Text("Mark done") }
+                }
+            }
+            TaskStage.DONE -> {
+                Text(
+                    text = "Task done.",
+                    style = MaterialTheme.typography.labelSmall,
+                    modifier = Modifier.padding(top = 4.dp)
+                )
+            }
+        }
+        Row(modifier = Modifier.padding(top = 4.dp)) {
+            if (taskState.stage != TaskStage.DONE) {
+                TextButton(onClick = onPauseTask, enabled = enabled) { Text("Pause") }
+            }
+            TextButton(onClick = onResetTask, enabled = enabled) { Text("Reset") }
+        }
+    }
+}
+
+/** Day 13: surfaces a pending [TaskTransitionSuggestion] for the user to approve or dismiss —
+ * mirrors [SuggestionBanner]'s "never applied automatically" shape. An
+ * [TaskTransitionAction.APPROVE_PLAN] suggestion isn't one-tap applicable (approving a plan
+ * needs its steps, which only [TaskPanel]'s own text field collects), so it's shown as a hint
+ * with only a dismiss action. */
+@Composable
+private fun TaskTransitionBanner(
+    suggestion: TaskTransitionSuggestion,
+    onApply: () -> Unit,
+    onDismiss: () -> Unit
+) {
+    Card(
+        modifier = Modifier
+            .fillMaxWidth()
+            .padding(horizontal = 12.dp, vertical = 4.dp),
+        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.secondaryContainer)
+    ) {
+        Column(modifier = Modifier.padding(12.dp)) {
+            Text(
+                text = "Assistant suggests advancing the task: ${suggestion.action.name.lowercase()}",
+                style = MaterialTheme.typography.bodySmall
+            )
+            if (suggestion.reason.isNotBlank()) {
+                Text(
+                    text = suggestion.reason,
+                    style = MaterialTheme.typography.labelSmall,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    modifier = Modifier.padding(top = 2.dp)
+                )
+            }
+            Row(modifier = Modifier.padding(top = 4.dp)) {
+                if (suggestion.action != TaskTransitionAction.APPROVE_PLAN) {
+                    TextButton(onClick = onApply) { Text("Apply") }
+                }
+                TextButton(onClick = onDismiss) { Text("Dismiss") }
             }
         }
     }

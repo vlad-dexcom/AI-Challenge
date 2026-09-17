@@ -146,6 +146,39 @@ pick between.
   suggestion banner still appears on the chat screen itself, above the input row, whenever
   `PreferenceAdvisor` has a pending proposal.
 
+## Task state machine (Day 13)
+
+`agent/task/` adds a formalized **task state machine** on top of Day 11/12's memory and profile —
+see `docs/day13-task-state.md` for the full write-up (transition table, the task-state-vs-working-
+memory boundary, why pause is a flag not a stage) and `docs/day13-task-state-test-scenario.md` for
+a manual walkthrough that explicitly proves pause survives a full app restart. It answers a
+different question than memory or profile: not *what do we know* or *how should we answer*, but
+*where are we in the task and whose turn is it*.
+
+- **`agent/task/TaskState.kt`** — `TaskStage` (`PLANNING` → `EXECUTION` → `VALIDATION` → `DONE`),
+  the step list/index, `expectedAction`/`expectedActor` (`USER`/`AGENT`), and a `paused` flag that
+  overlays any non-`DONE` stage instead of being a fifth stage — so `resume()` restores the exact
+  prior stage/step. `TaskState.NONE` renders to nothing, same convention as `UserProfile.EMPTY`.
+- **`agent/task/TaskStateMachine.kt`** — the only code allowed to mutate `TaskState`; every
+  operation returns `Applied`/`Rejected(reason)` instead of throwing or silently no-op'ing, so
+  invalid transitions (e.g. approving a plan mid-`EXECUTION`) surface a clear error in the UI.
+- **`agent/task/TaskStateRenderer.kt`** — deterministically renders two blocks: `render()` (task
+  context — stage/step/expected action — appended to the prompt body like Day 11 memory) and
+  `stageRules()` (a short behavioral rule per stage, appended to the system instruction like
+  Day 12's profile) — see `AgentRequest.taskState`/`taskStageRules` and the matching
+  `TokenUsage` fields.
+- **`agent/task/TaskStateStore.kt`** — persists one `TaskState` per branch to `task_state.json`,
+  mirroring `WorkingMemoryStore`'s per-branch model; a paused task survives a full app restart.
+- **`agent/task/TaskStateAdvisor.kt`** — optional hybrid update path, modeled on Day 12's
+  `PreferenceAdvisor`: after a turn that sounds like the expected action was completed, one LLM
+  call proposes a transition as an Apply/Dismiss banner; it is never applied automatically, and
+  the applied transition still goes through `TaskStateMachine`, so a stale suggestion is rejected
+  if the task already moved on.
+- **UI** — a "Task" panel in the chat screen's App Bar (next to the Day 11 memory panel) shows the
+  current stage/step/expected action and only the buttons the machine actually allows from that
+  state (e.g. no "Next" while in `VALIDATION`); "End task" (Day 11) now also resets task state,
+  while "Clear dialog" leaves it untouched.
+
 ## Setup
 
 1. Get a Gemini API key from [Google AI Studio](https://aistudio.google.com/apikey).

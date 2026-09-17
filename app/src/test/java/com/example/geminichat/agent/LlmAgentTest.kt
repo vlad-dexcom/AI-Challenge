@@ -193,4 +193,85 @@ class LlmAgentTest {
         val renderedInput = client.lastSpec?.input.orEmpty()
         assertTrue(!renderedInput.contains("injury_shoulder"))
     }
+
+    /**
+     * Day 13: [AgentRequest.taskState] is task context, so it belongs in the prompt body
+     * alongside working memory — not the system instruction, where [AgentRequest.userProfile]
+     * and [AgentRequest.taskStageRules] go.
+     */
+    @Test
+    fun `handle folds task state into the prompt body, right where working memory would go`() = runTest {
+        val client = FakeLlmClient(Result.success("ok"))
+        val agent = LlmAgent(config = testConfig, client = client)
+
+        agent.handle(
+            AgentRequest(
+                userMessage = "What's next?",
+                taskState = "Task state (follow it): Stage: EXECUTION (2 of 4)"
+            )
+        )
+
+        val renderedInput = client.lastSpec?.input.orEmpty()
+        assertTrue(renderedInput.contains("Stage: EXECUTION (2 of 4)"))
+        assertEquals(testConfig.systemInstruction, client.lastSpec?.systemInstruction)
+    }
+
+    /**
+     * Day 13: [AgentRequest.taskStageRules] is a behavioral directive, so — like Day 12's
+     * [AgentRequest.userProfile] — it's appended to the system instruction rather than mixed
+     * into the prompt body.
+     */
+    @Test
+    fun `handle appends task stage rules to the system instruction, not the prompt body`() = runTest {
+        val client = FakeLlmClient(Result.success("ok"))
+        val agent = LlmAgent(config = testConfig, client = client)
+
+        agent.handle(
+            AgentRequest(
+                userMessage = "What's next?",
+                taskStageRules = "Do not re-propose the already-approved plan."
+            )
+        )
+
+        val systemInstruction = client.lastSpec?.systemInstruction.orEmpty()
+        assertTrue(systemInstruction.contains("Do not re-propose the already-approved plan."))
+        assertEquals("What's next?", client.lastSpec?.input)
+    }
+
+    @Test
+    fun `handle counts taskState and taskStageRules tokens separately and includes them in promptTokens`() = runTest {
+        val client = FakeLlmClient(Result.success("ok"))
+        val agent = LlmAgent(config = testConfig, client = client)
+
+        val result = agent.handle(
+            AgentRequest(
+                userMessage = "What's next?",
+                taskState = "Task state: Stage: EXECUTION (2 of 4)",
+                taskStageRules = "Work on the current step only."
+            )
+        )
+
+        val usage = result.getOrThrow().tokenUsage
+        assertTrue(usage.taskStateTokens > 0)
+        assertTrue(usage.taskStageRulesTokens > 0)
+        assertEquals(
+            usage.requestTokens + usage.historyTokens + usage.longTermMemoryTokens +
+                usage.workingMemoryTokens + usage.profileTokens + usage.taskStateTokens +
+                usage.taskStageRulesTokens + usage.systemInstructionTokens,
+            usage.promptTokens
+        )
+    }
+
+    @Test
+    fun `handle behaves exactly as before Day 13 when taskState and taskStageRules are absent`() = runTest {
+        val client = FakeLlmClient(Result.success("ok"))
+        val agent = LlmAgent(config = testConfig, client = client)
+
+        val result = agent.handle(AgentRequest(userMessage = "Hi there"))
+
+        assertEquals("Hi there", client.lastSpec?.input)
+        assertEquals(testConfig.systemInstruction, client.lastSpec?.systemInstruction)
+        assertEquals(0, result.getOrThrow().tokenUsage.taskStateTokens)
+        assertEquals(0, result.getOrThrow().tokenUsage.taskStageRulesTokens)
+    }
 }
