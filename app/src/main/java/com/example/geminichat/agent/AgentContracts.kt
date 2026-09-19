@@ -75,7 +75,12 @@ data class AgentRequest(
      * an instruction about how the agent must behave, not conversational context, so [LlmAgent]
      * appends it to [AgentConfig.systemInstruction] — last, so it has the final word.
      */
-    val invariants: String? = null
+    val invariants: String? = null,
+    /**
+     * Day 15: optional raw [com.example.geminichat.agent.task.TaskState] snapshot for the
+     * deterministic [com.example.geminichat.agent.task.TaskStageGuard] pre-check.
+     */
+    val taskStateSnapshot: com.example.geminichat.agent.task.TaskState? = null
 )
 
 /** Successful output of [Agent.handle]. */
@@ -92,7 +97,12 @@ data class AgentResponse(
      * [com.example.geminichat.agent.invariant.Invariant] the request conflicted with, so the UI
      * can badge the reply instead of treating it as an ordinary answer.
      */
-    val refusedByInvariantIds: List<String> = emptyList()
+    val refusedByInvariantIds: List<String> = emptyList(),
+    /**
+     * Day 15: non-null when this response is a deterministic refusal produced by
+     * [com.example.geminichat.agent.task.TaskStageGuard] — the model was never called at all.
+     */
+    val blockedByStage: com.example.geminichat.agent.task.StageViolation? = null
 )
 
 /**
