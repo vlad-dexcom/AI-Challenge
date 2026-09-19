@@ -72,6 +72,40 @@ class TaskStateAdvisorTest {
     }
 
     @Test
+    fun `parseSuggestion extracts proposedSteps for approve_plan`() {
+        val suggestion = TaskStateAdvisor.parseSuggestion(
+            """{"action": "approve_plan", "reason": "user approved", "steps": ["Week 1", "Week 2", "Week 3"]}"""
+        )
+
+        assertEquals(TaskTransitionAction.APPROVE_PLAN, suggestion?.action)
+        assertEquals(listOf("Week 1", "Week 2", "Week 3"), suggestion?.proposedSteps)
+    }
+
+    @Test
+    fun `parseSuggestion defaults proposedSteps to empty when steps is missing or empty`() {
+        val missing = TaskStateAdvisor.parseSuggestion(
+            """{"action": "approve_plan", "reason": "user approved"}"""
+        )
+        assertEquals(emptyList<String>(), missing?.proposedSteps)
+
+        val empty = TaskStateAdvisor.parseSuggestion(
+            """{"action": "approve_plan", "reason": "user approved", "steps": []}"""
+        )
+        assertEquals(emptyList<String>(), empty?.proposedSteps)
+    }
+
+    @Test
+    fun `parseSuggestion ignores proposedSteps for non-approve_plan actions`() {
+        val suggestion = TaskStateAdvisor.parseSuggestion(
+            """{"action": "next_step", "reason": "x", "steps": ["ignored"]}"""
+        )
+        // The field is still parsed if present, but TaskStateAdvisor's system instruction tells
+        // the model to only ever populate it for approve_plan — this test just documents that
+        // parsing doesn't special-case away a stray steps array on other actions.
+        assertEquals(listOf("ignored"), suggestion?.proposedSteps)
+    }
+
+    @Test
     fun `suggest skips the call entirely when no task is active`() = runTest {
         val client = AdvisorFakeLlmClient(Result.success("""{"action": "next_step", "reason": "x"}"""))
         val advisor = TaskStateAdvisor(client)
@@ -127,5 +161,25 @@ class TaskStateAdvisorTest {
         val outcome = advisor.suggest(executionState(), "hi", "test-model")
 
         assertTrue(outcome.isFailure)
+    }
+
+    @Test
+    fun `suggest passes the last assistant message through without requiring it`() = runTest {
+        val client = AdvisorFakeLlmClient(
+            Result.success("""{"action": "approve_plan", "reason": "approved", "steps": ["Week 1", "Week 2"]}""")
+        )
+        val planningState = TaskState(title = "Race prep", stage = TaskStage.PLANNING)
+        val advisor = TaskStateAdvisor(client)
+
+        val outcome = advisor.suggest(
+            planningState,
+            "утверждаю",
+            "test-model",
+            lastAssistantMessage = "Предлагаю план: Week 1, Week 2. Утверждаем?"
+        )
+
+        val suggestion = outcome.getOrThrow().suggestion
+        assertEquals(TaskTransitionAction.APPROVE_PLAN, suggestion?.action)
+        assertEquals(listOf("Week 1", "Week 2"), suggestion?.proposedSteps)
     }
 }

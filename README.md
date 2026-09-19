@@ -212,6 +212,26 @@ UI check and a full app-restart persistence check.
   there is no UI path to disable or remove them. A refused chat bubble is tinted and labeled
   "⛔ Инвариант: <ids>"; unlike "Clear dialog"/"End task", neither resets the invariant set.
 
+## Controlled state transitions (Day 15)
+
+`agent/task/` expands Day 13's task state machine into a strictly controlled lifecycle where the
+assistant and user cannot bypass stages (e.g. executing before plan approval, or completing
+without validation). See `docs/day15-controlled-transitions.md` for the full write-up and
+`docs/day15-controlled-transitions-test-scenario.md` for a manual test walkthrough.
+
+- **`agent/task/TaskTransitionTable.kt`** — declarative state transition matrix with explicit
+  precondition guards (`NotPaused`, `PlanHasSteps`, `HasNextStep`, `HasPreviousStep`,
+  `ValidationPassed`, `NotTerminal`). The single source of truth for legal events and transitions.
+- **`agent/task/TaskStageGuard.kt`** — deterministic, zero-token pre-check inside `LlmAgent.handle()`.
+  Intercepts attempts to jump stages (demanding full workouts in `PLANNING` or marking done in
+  `EXECUTION`), refusing them immediately before LLM prompt assembly or network invocation.
+- **`agent/task/TaskTransitionLog.kt`** — persistent transition journal (`TaskTransitionRecord` /
+  `TaskTransitionLogStore`), tracking all applied transitions and rejected attempts per branch.
+- **`agent/task/TaskState.kt` & `TaskStateMachine.kt`** — added `CANCELLED` stage and
+  `ValidationOutcome` (`NOT_RUN`, `PASSED`, `FAILED`); `complete()` strictly requires `PASSED`.
+- **UI** — dynamic buttons rendered strictly per `allowedEvents()`, forbidden action hints,
+  expandable transition journal, and badged/tinted chat bubbles for stage refusals.
+
 ## Setup
 
 1. Get a Gemini API key from [Google AI Studio](https://aistudio.google.com/apikey).

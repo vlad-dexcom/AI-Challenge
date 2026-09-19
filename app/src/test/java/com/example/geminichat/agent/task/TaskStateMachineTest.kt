@@ -133,21 +133,37 @@ class TaskStateMachineTest {
     }
 
     @Test
-    fun `complete moves VALIDATION to DONE`() {
+    fun `complete moves VALIDATION to DONE when validation PASSED`() {
         val validation = applied(TaskStateMachine.requestValidation(executionState()))
+        val passed = applied(TaskStateMachine.recordValidation(validation, ValidationOutcome.PASSED, "All checks pass"))
 
-        val state = applied(TaskStateMachine.complete(validation))
+        val state = applied(TaskStateMachine.complete(passed))
 
         assertEquals(TaskStage.DONE, state.stage)
     }
 
     @Test
-    fun `complete moves PLANNING to DONE (cancelling before execution)`() {
+    fun `complete rejects from VALIDATION if validation is not PASSED`() {
+        val validation = applied(TaskStateMachine.requestValidation(executionState()))
+
+        rejected(TaskStateMachine.complete(validation))
+    }
+
+    @Test
+    fun `cancel moves PLANNING to CANCELLED`() {
         val planning = applied(TaskStateMachine.start("Race prep"))
 
-        val state = applied(TaskStateMachine.complete(planning))
+        val state = applied(TaskStateMachine.cancel(planning, "Plans changed"))
 
-        assertEquals(TaskStage.DONE, state.stage)
+        assertEquals(TaskStage.CANCELLED, state.stage)
+        assertEquals("Plans changed", state.cancellationReason)
+    }
+
+    @Test
+    fun `complete rejects from PLANNING`() {
+        val planning = applied(TaskStateMachine.start("Race prep"))
+
+        rejected(TaskStateMachine.complete(planning))
     }
 
     @Test
@@ -159,14 +175,18 @@ class TaskStateMachineTest {
 
     @Test
     fun `every mutating operation is rejected once DONE, except reset`() {
-        val done = applied(TaskStateMachine.complete(applied(TaskStateMachine.requestValidation(executionState()))))
+        val validation = applied(TaskStateMachine.requestValidation(executionState()))
+        val passed = applied(TaskStateMachine.recordValidation(validation, ValidationOutcome.PASSED))
+        val done = applied(TaskStateMachine.complete(passed))
 
         rejected(TaskStateMachine.approvePlan(done, listOf("x")))
         rejected(TaskStateMachine.nextStep(done))
         rejected(TaskStateMachine.previousStep(done))
         rejected(TaskStateMachine.requestValidation(done))
+        rejected(TaskStateMachine.recordValidation(done, ValidationOutcome.PASSED))
         rejected(TaskStateMachine.sendBackToExecution(done, "x"))
         rejected(TaskStateMachine.complete(done))
+        rejected(TaskStateMachine.cancel(done))
         rejected(TaskStateMachine.pause(done))
         rejected(TaskStateMachine.setExpectedAction(done, "x", ExpectedActor.USER))
         assertEquals(TaskState.NONE, applied(TaskStateMachine.reset()))
@@ -207,7 +227,9 @@ class TaskStateMachineTest {
 
     @Test
     fun `pause rejects on a DONE task`() {
-        val done = applied(TaskStateMachine.complete(applied(TaskStateMachine.requestValidation(executionState()))))
+        val validation = applied(TaskStateMachine.requestValidation(executionState()))
+        val passed = applied(TaskStateMachine.recordValidation(validation, ValidationOutcome.PASSED))
+        val done = applied(TaskStateMachine.complete(passed))
 
         rejected(TaskStateMachine.pause(done))
     }

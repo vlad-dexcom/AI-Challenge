@@ -7,231 +7,279 @@ package com.example.geminichat.agent.task
  * button did nothing (see [com.example.geminichat.ChatUiState.errorMessage]).
  */
 sealed class TransitionResult {
-    data class Applied(val state: TaskState) : TransitionResult()
-    data class Rejected(val reason: String) : TransitionResult()
+    data class Applied(val state: TaskState, val event: TaskEvent? = null) : TransitionResult()
+    data class Rejected(val reason: String, val rejection: TransitionRejection? = null) : TransitionResult()
 }
 
 /**
- * Day 13: the only code allowed to change a [TaskState] — mirrors how [MemoryRouter]/UI actions
- * are the only writers of memory layers, here made stricter by an explicit transition table
- * instead of "whatever the caller sets". No transition here calls the LLM; that's left to the
- * optional [TaskStateAdvisor], which only *suggests* — applying a suggestion still goes through
- * this same machine.
+ * Day 13 & 15: the only code allowed to change a [TaskState] — delegates legality and guards
+ * to [TaskTransitionTable] instead of scattered `if` checks.
  *
- * Stage graph (see [TaskStage] for what each stage means):
+ * Stage graph:
  * ```
- * PLANNING --> EXECUTION   (approvePlan)
- * PLANNING --> DONE        (complete, e.g. task cancelled/not needed)
- * EXECUTION --> VALIDATION (requestValidation)
- * VALIDATION --> EXECUTION (sendBackToExecution)
- * VALIDATION --> DONE      (complete)
+ * PLANNING ----(approvePlan)--------> EXECUTION
+ * PLANNING ----(cancel)-------------> CANCELLED
+ * EXECUTION ---(requestValidation)--> VALIDATION
+ * EXECUTION ---(cancel)-------------> CANCELLED
+ * VALIDATION --(sendBackToExecution)-> EXECUTION
+ * VALIDATION --(recordValidation)---> VALIDATION
+ * VALIDATION --(complete, PASSED)---> DONE
+ * VALIDATION --(cancel)-------------> CANCELLED
  * ```
- * [TaskStage.DONE] is terminal: every operation on it is [TransitionResult.Rejected] except
- * [reset]. [TaskState.paused] is a flag layered on top of any non-terminal stage rather than a
- * stage of its own (see [TaskState.paused]'s doc for why); while `paused`, every mutating
- * operation is rejected except [resume] and [reset], so "pause, then resume" always yields back
- * exactly the state that was paused (bar [TaskState.updatedAt]).
+ * [TaskStage.DONE] and [TaskStage.CANCELLED] are terminal.
+ * [TaskState.paused] is a flag layered on top of any non-terminal stage.
  */
 object TaskStateMachine {
 
     /** Starts a brand new task in [TaskStage.PLANNING], replacing whatever task was active. */
     fun start(title: String, now: Long = System.currentTimeMillis()): TransitionResult {
-        if (title.isBlank()) return TransitionResult.Rejected("Task title must not be blank.")
+        if (title.isBlank()) {
+            return TransitionResult.Rejected(
+                "Название задачи не может быть пустым.",
+                TransitionRejection(TaskEvent.START, TaskStage.PLANNING, "Название пустое", "Введите название задачи")
+            )
+        }
         return TransitionResult.Applied(
             TaskState(
                 title = title.trim(),
                 stage = TaskStage.PLANNING,
-                expectedAction = "propose a plan",
+                expectedAction = "предложить план",
                 expectedActor = ExpectedActor.AGENT,
+                stageEnteredAt = now,
                 updatedAt = now
-            )
+            ),
+            TaskEvent.START
         )
     }
 
     /**
      * [TaskStage.PLANNING] -> [TaskStage.EXECUTION]: fixes [steps] as the approved plan and
-     * moves to its first step. Requires at least one step — an empty plan can't be executed.
+     * moves to its first step.
      */
     fun approvePlan(
         state: TaskState,
         steps: List<String>,
         now: Long = System.currentTimeMillis()
     ): TransitionResult {
-        rejectIfPaused(state)?.let { return it }
-        if (state.stage != TaskStage.PLANNING) {
-            return rejectedStage(state, "approve the plan", TaskStage.PLANNING)
+        val rejection = TaskTransitionTable.check(state, TaskEvent.APPROVE_PLAN, steps)
+        if (rejection != null) {
+            return TransitionResult.Rejected(rejection.message, rejection)
         }
         val cleanSteps = steps.map { it.trim() }.filter { it.isNotEmpty() }
-        if (cleanSteps.isEmpty()) {
-            return TransitionResult.Rejected("A plan needs at least one step before it can be approved.")
-        }
         return TransitionResult.Applied(
             state.copy(
                 stage = TaskStage.EXECUTION,
                 steps = cleanSteps,
                 currentStepIndex = 0,
-                expectedAction = "work on: ${cleanSteps.first()}",
+                planApproved = true,
+                validationOutcome = ValidationOutcome.NOT_RUN,
+                expectedAction = "работа над: ${cleanSteps.first()}",
                 expectedActor = ExpectedActor.AGENT,
+                stageEnteredAt = now,
                 updatedAt = now
-            )
+            ),
+            TaskEvent.APPROVE_PLAN
         )
     }
 
-    /**
-     * Moves to the next step within [TaskStage.EXECUTION]. Rejected past the last step — the
-     * caller should [requestValidation] instead of silently wrapping around.
-     */
+    /** Moves to the next step within [TaskStage.EXECUTION]. */
     fun nextStep(state: TaskState, now: Long = System.currentTimeMillis()): TransitionResult {
-        rejectIfPaused(state)?.let { return it }
-        if (state.stage != TaskStage.EXECUTION) {
-            return rejectedStage(state, "advance to the next step", TaskStage.EXECUTION)
+        val rejection = TaskTransitionTable.check(state, TaskEvent.NEXT_STEP)
+        if (rejection != null) {
+            return TransitionResult.Rejected(rejection.message, rejection)
         }
         val next = state.currentStepIndex + 1
-        if (next >= state.steps.size) {
-            return TransitionResult.Rejected(
-                "Already on the last step (${state.progressLabel}); use \"Send to validation\" instead."
-            )
-        }
         return TransitionResult.Applied(
             state.copy(
                 currentStepIndex = next,
-                expectedAction = "work on: ${state.steps[next]}",
+                expectedAction = "работа над: ${state.steps[next]}",
                 updatedAt = now
-            )
+            ),
+            TaskEvent.NEXT_STEP
         )
     }
 
-    /** Moves back to the previous step within [TaskStage.EXECUTION]. Rejected before step 0. */
+    /** Moves back to the previous step within [TaskStage.EXECUTION]. */
     fun previousStep(state: TaskState, now: Long = System.currentTimeMillis()): TransitionResult {
-        rejectIfPaused(state)?.let { return it }
-        if (state.stage != TaskStage.EXECUTION) {
-            return rejectedStage(state, "go back a step", TaskStage.EXECUTION)
+        val rejection = TaskTransitionTable.check(state, TaskEvent.PREVIOUS_STEP)
+        if (rejection != null) {
+            return TransitionResult.Rejected(rejection.message, rejection)
         }
         val prev = state.currentStepIndex - 1
-        if (prev < 0) {
-            return TransitionResult.Rejected("Already on the first step (${state.progressLabel}).")
-        }
         return TransitionResult.Applied(
             state.copy(
                 currentStepIndex = prev,
-                expectedAction = "work on: ${state.steps[prev]}",
+                expectedAction = "работа над: ${state.steps[prev]}",
                 updatedAt = now
-            )
+            ),
+            TaskEvent.PREVIOUS_STEP
         )
     }
 
     /** [TaskStage.EXECUTION] -> [TaskStage.VALIDATION]: all steps are done, check the result. */
     fun requestValidation(state: TaskState, now: Long = System.currentTimeMillis()): TransitionResult {
-        rejectIfPaused(state)?.let { return it }
-        if (state.stage != TaskStage.EXECUTION) {
-            return rejectedStage(state, "send to validation", TaskStage.EXECUTION)
+        val rejection = TaskTransitionTable.check(state, TaskEvent.REQUEST_VALIDATION)
+        if (rejection != null) {
+            return TransitionResult.Rejected(rejection.message, rejection)
         }
         return TransitionResult.Applied(
             state.copy(
                 stage = TaskStage.VALIDATION,
-                expectedAction = "check the result against the goal",
+                validationOutcome = ValidationOutcome.NOT_RUN,
+                validationNote = "",
+                expectedAction = "проверить соответствие результата цели",
                 expectedActor = ExpectedActor.AGENT,
+                stageEnteredAt = now,
                 updatedAt = now
-            )
+            ),
+            TaskEvent.REQUEST_VALIDATION
         )
     }
 
-    /**
-     * [TaskStage.VALIDATION] -> [TaskStage.EXECUTION]: validation found the work isn't done yet.
-     * Stays on the current step by default; the caller can pass [backToStepIndex] to reopen an
-     * earlier one instead (e.g. the step whose result failed validation).
-     */
+    /** Records the outcome of validation while in [TaskStage.VALIDATION]. */
+    fun recordValidation(
+        state: TaskState,
+        outcome: ValidationOutcome,
+        note: String = "",
+        now: Long = System.currentTimeMillis()
+    ): TransitionResult {
+        val rejection = TaskTransitionTable.check(state, TaskEvent.RECORD_VALIDATION)
+        if (rejection != null) {
+            return TransitionResult.Rejected(rejection.message, rejection)
+        }
+        val expected = when (outcome) {
+            ValidationOutcome.PASSED -> "завершить задачу (валидация пройдена)"
+            ValidationOutcome.FAILED -> "отправить на доработку (найдены замечания)"
+            ValidationOutcome.NOT_RUN -> "проверить соответствие результата цели"
+        }
+        return TransitionResult.Applied(
+            state.copy(
+                validationOutcome = outcome,
+                validationNote = note.trim(),
+                expectedAction = expected,
+                expectedActor = ExpectedActor.USER,
+                updatedAt = now
+            ),
+            TaskEvent.RECORD_VALIDATION
+        )
+    }
+
+    /** [TaskStage.VALIDATION] -> [TaskStage.EXECUTION]: validation found the work isn't done yet. */
     fun sendBackToExecution(
         state: TaskState,
         reason: String,
         backToStepIndex: Int? = null,
         now: Long = System.currentTimeMillis()
     ): TransitionResult {
-        rejectIfPaused(state)?.let { return it }
-        if (state.stage != TaskStage.VALIDATION) {
-            return rejectedStage(state, "send back to execution", TaskStage.VALIDATION)
+        val rejection = TaskTransitionTable.check(state, TaskEvent.SEND_BACK_TO_EXECUTION)
+        if (rejection != null) {
+            return TransitionResult.Rejected(rejection.message, rejection)
         }
         val targetIndex = backToStepIndex ?: state.currentStepIndex.coerceIn(0, state.steps.lastIndex.coerceAtLeast(0))
         if (targetIndex !in state.steps.indices) {
-            return TransitionResult.Rejected("Step index $targetIndex is out of range for ${state.steps.size} steps.")
+            return TransitionResult.Rejected(
+                "Индекс шага $targetIndex выходит за границы (${state.steps.size} шагов).",
+                TransitionRejection(TaskEvent.SEND_BACK_TO_EXECUTION, state.stage, "Неверный шаг", "Выберите существующий шаг")
+            )
         }
         return TransitionResult.Applied(
             state.copy(
                 stage = TaskStage.EXECUTION,
                 currentStepIndex = targetIndex,
-                expectedAction = "rework: ${state.steps[targetIndex]} ($reason)",
+                validationOutcome = ValidationOutcome.NOT_RUN,
+                expectedAction = "доработка: ${state.steps[targetIndex]} ($reason)",
                 expectedActor = ExpectedActor.AGENT,
+                stageEnteredAt = now,
                 updatedAt = now
-            )
+            ),
+            TaskEvent.SEND_BACK_TO_EXECUTION
         )
     }
 
     /**
-     * [TaskStage.VALIDATION] -> [TaskStage.DONE], or [TaskStage.PLANNING] -> [TaskStage.DONE]
-     * (cancelling a task before it was ever executed). [TaskStage.EXECUTION] must go through
-     * [requestValidation] first.
+     * [TaskStage.VALIDATION] -> [TaskStage.DONE]: task is finished and passed validation.
      */
     fun complete(state: TaskState, now: Long = System.currentTimeMillis()): TransitionResult {
-        rejectIfPaused(state)?.let { return it }
-        if (state.stage != TaskStage.VALIDATION && state.stage != TaskStage.PLANNING) {
-            return rejectedStage(state, "mark done", TaskStage.VALIDATION, TaskStage.PLANNING)
+        val rejection = TaskTransitionTable.check(state, TaskEvent.COMPLETE)
+        if (rejection != null) {
+            return TransitionResult.Rejected(rejection.message, rejection)
         }
         return TransitionResult.Applied(
             state.copy(
                 stage = TaskStage.DONE,
                 expectedAction = "",
                 expectedActor = ExpectedActor.AGENT,
+                stageEnteredAt = now,
                 updatedAt = now
-            )
+            ),
+            TaskEvent.COMPLETE
         )
     }
 
-    /**
-     * Freezes the task exactly where it is. Idempotent (pausing an already-paused task just
-     * refreshes [TaskState.updatedAt]). Rejected on [TaskStage.DONE] — a finished task has
-     * nothing left to pause.
-     */
-    fun pause(state: TaskState, now: Long = System.currentTimeMillis()): TransitionResult {
-        if (state.stage == TaskStage.DONE) {
-            return TransitionResult.Rejected("The task is already done; there is nothing to pause.")
+    /** Cancels an active task from any non-terminal stage. */
+    fun cancel(state: TaskState, reason: String = "", now: Long = System.currentTimeMillis()): TransitionResult {
+        val rejection = TaskTransitionTable.check(state, TaskEvent.CANCEL)
+        if (rejection != null) {
+            return TransitionResult.Rejected(rejection.message, rejection)
         }
-        return TransitionResult.Applied(state.copy(paused = true, updatedAt = now))
+        return TransitionResult.Applied(
+            state.copy(
+                stage = TaskStage.CANCELLED,
+                cancellationReason = reason.trim(),
+                expectedAction = "",
+                expectedActor = ExpectedActor.AGENT,
+                stageEnteredAt = now,
+                updatedAt = now
+            ),
+            TaskEvent.CANCEL
+        )
     }
 
-    /**
-     * Lifts a pause, returning to exactly the stage/step/expected-action that was paused —
-     * this is the "continue without re-explaining" requirement made concrete. Idempotent
-     * (resuming a task that isn't paused is a no-op transition, not an error).
-     */
-    fun resume(state: TaskState, now: Long = System.currentTimeMillis()): TransitionResult =
-        TransitionResult.Applied(state.copy(paused = false, updatedAt = now))
+    /** Freezes the task where it is. */
+    fun pause(state: TaskState, now: Long = System.currentTimeMillis()): TransitionResult {
+        if (state.paused) {
+            return TransitionResult.Applied(state.copy(updatedAt = now), TaskEvent.PAUSE)
+        }
+        val rejection = TaskTransitionTable.check(state, TaskEvent.PAUSE)
+        if (rejection != null) {
+            return TransitionResult.Rejected(rejection.message, rejection)
+        }
+        return TransitionResult.Applied(
+            state.copy(paused = true, updatedAt = now),
+            TaskEvent.PAUSE
+        )
+    }
 
-    /** Overwrites who's expected to act next and what for — used after the agent replies. */
+    /** Lifts a pause. */
+    fun resume(state: TaskState, now: Long = System.currentTimeMillis()): TransitionResult {
+        if (!state.paused && state.isActive && !state.isTerminal) {
+            return TransitionResult.Applied(state.copy(updatedAt = now), TaskEvent.RESUME)
+        }
+        val rejection = TaskTransitionTable.check(state, TaskEvent.RESUME)
+        if (rejection != null) {
+            return TransitionResult.Rejected(rejection.message, rejection)
+        }
+        return TransitionResult.Applied(
+            state.copy(paused = false, updatedAt = now),
+            TaskEvent.RESUME
+        )
+    }
+
+    /** Overwrites expected action. */
     fun setExpectedAction(
         state: TaskState,
         action: String,
         actor: ExpectedActor,
         now: Long = System.currentTimeMillis()
     ): TransitionResult {
-        rejectIfPaused(state)?.let { return it }
-        if (state.stage == TaskStage.DONE) {
-            return TransitionResult.Rejected("The task is done; there is no next action to set.")
-        }
-        return TransitionResult.Applied(state.copy(expectedAction = action, expectedActor = actor, updatedAt = now))
+        if (!state.isActive) return TransitionResult.Rejected("Нет активной задачи.")
+        if (state.paused) return TransitionResult.Rejected("Задача на паузе.")
+        if (state.isTerminal) return TransitionResult.Rejected("Задача завершена.")
+        return TransitionResult.Applied(
+            state.copy(expectedAction = action, expectedActor = actor, updatedAt = now)
+        )
     }
 
-    /** Drops the task entirely, back to [TaskState.NONE] — always legal, from any stage. */
-    fun reset(): TransitionResult = TransitionResult.Applied(TaskState.NONE)
-
-    private fun rejectIfPaused(state: TaskState): TransitionResult.Rejected? =
-        if (state.paused) {
-            TransitionResult.Rejected("The task is paused; resume it first.")
-        } else {
-            null
-        }
-
-    private fun rejectedStage(state: TaskState, action: String, vararg allowed: TaskStage): TransitionResult.Rejected =
-        TransitionResult.Rejected(
-            "Cannot $action from stage ${state.stage} (requires ${allowed.joinToString(" or ")})."
-        )
+    /** Drops the task entirely, back to [TaskState.NONE]. */
+    fun reset(): TransitionResult = TransitionResult.Applied(TaskState.NONE, TaskEvent.RESET)
 }

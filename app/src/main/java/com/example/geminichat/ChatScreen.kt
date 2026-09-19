@@ -61,10 +61,13 @@ import com.example.geminichat.agent.profile.ExpertiseLevel
 import com.example.geminichat.agent.profile.PreferenceSuggestion
 import com.example.geminichat.agent.profile.ProfileField
 import com.example.geminichat.agent.profile.UserProfile
+import com.example.geminichat.agent.task.TaskEvent
 import com.example.geminichat.agent.task.TaskStage
 import com.example.geminichat.agent.task.TaskState
 import com.example.geminichat.agent.task.TaskTransitionAction
+import com.example.geminichat.agent.task.TaskTransitionRecord
 import com.example.geminichat.agent.task.TaskTransitionSuggestion
+import com.example.geminichat.agent.task.ValidationOutcome
 import dev.jeziellago.compose.markdowntext.MarkdownText
 
 /**
@@ -148,14 +151,18 @@ fun ChatScreen(viewModel: ChatViewModel) {
                 )
                 TaskPanel(
                     taskState = uiState.taskState,
+                    allowedEvents = uiState.allowedTaskEvents,
+                    transitionHistory = uiState.taskTransitionHistory,
                     enabled = !uiState.isLoading,
                     onStartTask = viewModel::onStartTask,
                     onApprovePlan = viewModel::onApprovePlan,
                     onPreviousStep = viewModel::onPreviousStep,
                     onNextStep = viewModel::onNextStep,
                     onRequestValidation = viewModel::onRequestValidation,
+                    onRecordValidation = viewModel::onRecordValidation,
                     onSendBackToExecution = viewModel::onSendBackToExecution,
                     onCompleteTask = viewModel::onCompleteTask,
+                    onCancelTask = viewModel::onCancelTask,
                     onPauseTask = viewModel::onPauseTask,
                     onResumeTask = viewModel::onResumeTask,
                     onResetTask = viewModel::onResetTask
@@ -397,22 +404,33 @@ private fun MemoryPanel(
  * what [TaskStateMachine] actually allows from the current stage/pause combination, so a
  * disabled/invalid transition is never even offered rather than being offered and rejected.
  */
+/**
+ * Day 13 & 15 task panel: shows where the task currently is (stage, current step, expected next
+ * action, validation outcome, pause flag — see [TaskState]) and drives [TaskStateMachine] via
+ * [ChatViewModel]'s per-transition handlers. Buttons are rendered strictly according to
+ * [allowedEvents] computed by [TaskTransitionTable], preventing illegal transitions.
+ */
 @Composable
 private fun TaskPanel(
     taskState: TaskState,
+    allowedEvents: Set<TaskEvent>,
+    transitionHistory: List<TaskTransitionRecord>,
     enabled: Boolean,
     onStartTask: (String) -> Unit,
     onApprovePlan: (String) -> Unit,
     onPreviousStep: () -> Unit,
     onNextStep: () -> Unit,
     onRequestValidation: () -> Unit,
+    onRecordValidation: (ValidationOutcome, String) -> Unit,
     onSendBackToExecution: (String) -> Unit,
     onCompleteTask: () -> Unit,
+    onCancelTask: (String) -> Unit,
     onPauseTask: () -> Unit,
     onResumeTask: () -> Unit,
     onResetTask: () -> Unit
 ) {
     var expanded by remember { mutableStateOf(false) }
+    var showHistory by remember { mutableStateOf(false) }
     var newTitle by remember { mutableStateOf("") }
     var stepsText by remember { mutableStateOf("") }
     var sendBackReason by remember { mutableStateOf("") }
@@ -423,11 +441,12 @@ private fun TaskPanel(
             verticalAlignment = Alignment.CenterVertically
         ) {
             val summary = if (!taskState.isActive) {
-                "Task: none"
+                "Задача: не начата"
             } else {
-                "Task: ${taskState.title} · ${taskState.stage}" +
+                "Задача: ${taskState.title} · ${taskState.stage}" +
                     (taskState.progressLabel?.let { " ($it)" } ?: "") +
-                    if (taskState.paused) " · PAUSED" else ""
+                    (if (taskState.validationOutcome != ValidationOutcome.NOT_RUN) " · Валидация: ${taskState.validationOutcome}" else "") +
+                    if (taskState.paused) " · НА ПАУЗЕ" else ""
             }
             Text(
                 text = summary,
@@ -436,7 +455,7 @@ private fun TaskPanel(
                 modifier = Modifier.weight(1f)
             )
             TextButton(onClick = { expanded = !expanded }) {
-                Text(if (expanded) "Hide" else "Show")
+                Text(if (expanded) "Скрыть" else "Показать")
             }
         }
         if (!expanded) return@Column
@@ -446,7 +465,7 @@ private fun TaskPanel(
                 OutlinedTextField(
                     value = newTitle,
                     onValueChange = { newTitle = it },
-                    placeholder = { Text("Task title") },
+                    placeholder = { Text("Название задачи") },
                     singleLine = true,
                     modifier = Modifier.weight(1f)
                 )
@@ -454,112 +473,229 @@ private fun TaskPanel(
                     onClick = { onStartTask(newTitle); newTitle = "" },
                     enabled = enabled && newTitle.isNotBlank()
                 ) {
-                    Text("Start task")
+                    Text("Начать задачу")
                 }
             }
             return@Column
         }
 
-        taskState.steps.forEachIndexed { index, step ->
-            Text(
-                text = (if (index == taskState.currentStepIndex) "→ " else "   ") + "${index + 1}. $step",
-                style = if (index == taskState.currentStepIndex) {
-                    MaterialTheme.typography.bodyMedium
-                } else {
-                    MaterialTheme.typography.bodySmall
-                },
-                color = if (index == taskState.currentStepIndex) {
-                    MaterialTheme.colorScheme.onSurface
-                } else {
-                    MaterialTheme.colorScheme.onSurfaceVariant
-                }
-            )
+        // Display current steps
+        if (taskState.steps.isNotEmpty()) {
+            taskState.steps.forEachIndexed { index, step ->
+                Text(
+                    text = (if (index == taskState.currentStepIndex) "→ " else "   ") + "${index + 1}. $step",
+                    style = if (index == taskState.currentStepIndex) {
+                        MaterialTheme.typography.bodyMedium
+                    } else {
+                        MaterialTheme.typography.bodySmall
+                    },
+                    color = if (index == taskState.currentStepIndex) {
+                        MaterialTheme.colorScheme.onSurface
+                    } else {
+                        MaterialTheme.colorScheme.onSurfaceVariant
+                    }
+                )
+            }
         }
+
         if (taskState.expectedAction.isNotBlank()) {
             Text(
-                text = "Expected: ${taskState.expectedActor} — ${taskState.expectedAction}",
+                text = "Ожидается: ${taskState.expectedActor} — ${taskState.expectedAction}",
                 style = MaterialTheme.typography.labelSmall,
                 color = MaterialTheme.colorScheme.onSurfaceVariant,
                 modifier = Modifier.padding(top = 4.dp)
             )
         }
 
-        if (taskState.paused) {
-            Row(modifier = Modifier.padding(top = 4.dp)) {
-                TextButton(onClick = onResumeTask, enabled = enabled) { Text("Resume") }
-                TextButton(onClick = onResetTask, enabled = enabled) { Text("Reset") }
-            }
-            return@Column
+        if (taskState.validationOutcome != ValidationOutcome.NOT_RUN) {
+            Text(
+                text = "Результат валидации: ${taskState.validationOutcome}" +
+                    if (taskState.validationNote.isNotBlank()) " (${taskState.validationNote})" else "",
+                style = MaterialTheme.typography.labelSmall,
+                color = if (taskState.validationOutcome == ValidationOutcome.PASSED) {
+                    MaterialTheme.colorScheme.primary
+                } else {
+                    MaterialTheme.colorScheme.error
+                },
+                modifier = Modifier.padding(top = 2.dp)
+            )
         }
 
-        when (taskState.stage) {
-            TaskStage.PLANNING -> {
-                OutlinedTextField(
-                    value = stepsText,
-                    onValueChange = { stepsText = it },
-                    placeholder = { Text("One step per line") },
-                    modifier = Modifier.fillMaxWidth().padding(top = 4.dp)
-                )
-                Row(modifier = Modifier.padding(top = 4.dp)) {
-                    TextButton(
-                        onClick = { onApprovePlan(stepsText) },
-                        enabled = enabled && stepsText.isNotBlank()
-                    ) {
-                        Text("Approve plan")
-                    }
-                    TextButton(onClick = onCompleteTask, enabled = enabled) { Text("Cancel task") }
+        if (taskState.stage == TaskStage.CANCELLED) {
+            Text(
+                text = "Задача отменена" + if (taskState.cancellationReason.isNotBlank()) ": ${taskState.cancellationReason}" else "",
+                style = MaterialTheme.typography.labelSmall,
+                color = MaterialTheme.colorScheme.error,
+                modifier = Modifier.padding(top = 2.dp)
+            )
+        }
+
+        // Actions: Approve plan
+        if (TaskEvent.APPROVE_PLAN in allowedEvents) {
+            OutlinedTextField(
+                value = stepsText,
+                onValueChange = { stepsText = it },
+                placeholder = { Text("По одному шагу на строку") },
+                modifier = Modifier.fillMaxWidth().padding(top = 4.dp)
+            )
+            Row(modifier = Modifier.padding(top = 4.dp)) {
+                TextButton(
+                    onClick = { onApprovePlan(stepsText); stepsText = "" },
+                    enabled = enabled && stepsText.isNotBlank()
+                ) {
+                    Text("Утвердить план")
                 }
-            }
-            TaskStage.EXECUTION -> {
-                Row(modifier = Modifier.padding(top = 4.dp)) {
-                    TextButton(onClick = onPreviousStep, enabled = enabled) { Text("Back") }
-                    TextButton(onClick = onNextStep, enabled = enabled) { Text("Next") }
-                    TextButton(onClick = onRequestValidation, enabled = enabled) { Text("Send to validation") }
-                }
-            }
-            TaskStage.VALIDATION -> {
-                OutlinedTextField(
-                    value = sendBackReason,
-                    onValueChange = { sendBackReason = it },
-                    placeholder = { Text("Reason for rework (if any)") },
-                    singleLine = true,
-                    modifier = Modifier.fillMaxWidth().padding(top = 4.dp)
-                )
-                Row(modifier = Modifier.padding(top = 4.dp)) {
-                    TextButton(onClick = { onSendBackToExecution(sendBackReason) }, enabled = enabled) {
-                        Text("Send back")
-                    }
-                    TextButton(onClick = onCompleteTask, enabled = enabled) { Text("Mark done") }
-                }
-            }
-            TaskStage.DONE -> {
-                Text(
-                    text = "Task done.",
-                    style = MaterialTheme.typography.labelSmall,
-                    modifier = Modifier.padding(top = 4.dp)
-                )
             }
         }
-        Row(modifier = Modifier.padding(top = 4.dp)) {
-            if (taskState.stage != TaskStage.DONE) {
-                TextButton(onClick = onPauseTask, enabled = enabled) { Text("Pause") }
+
+        // Actions: Record validation outcome
+        if (TaskEvent.RECORD_VALIDATION in allowedEvents) {
+            Text(
+                text = "Фиксация результата валидации:",
+                style = MaterialTheme.typography.labelMedium,
+                modifier = Modifier.padding(top = 4.dp)
+            )
+            Row(modifier = Modifier.padding(top = 2.dp)) {
+                TextButton(
+                    onClick = { onRecordValidation(ValidationOutcome.PASSED, "Проверка пройдена") },
+                    enabled = enabled
+                ) {
+                    Text("✅ Валидация пройдена (PASSED)")
+                }
+                TextButton(
+                    onClick = { onRecordValidation(ValidationOutcome.FAILED, "Требуется доработка") },
+                    enabled = enabled
+                ) {
+                    Text("❌ Не пройдена (FAILED)")
+                }
             }
-            TextButton(onClick = onResetTask, enabled = enabled) { Text("Reset") }
+        }
+
+        // Actions: Send back to execution
+        if (TaskEvent.SEND_BACK_TO_EXECUTION in allowedEvents) {
+            OutlinedTextField(
+                value = sendBackReason,
+                onValueChange = { sendBackReason = it },
+                placeholder = { Text("Причина доработки") },
+                singleLine = true,
+                modifier = Modifier.fillMaxWidth().padding(top = 4.dp)
+            )
+            Row(modifier = Modifier.padding(top = 4.dp)) {
+                TextButton(
+                    onClick = { onSendBackToExecution(sendBackReason); sendBackReason = "" },
+                    enabled = enabled && sendBackReason.isNotBlank()
+                ) {
+                    Text("Вернуть на доработку")
+                }
+            }
+        }
+
+        // Actions: Stepping & validation request & complete
+        Row(modifier = Modifier.padding(top = 4.dp)) {
+            if (TaskEvent.PREVIOUS_STEP in allowedEvents) {
+                TextButton(onClick = onPreviousStep, enabled = enabled) { Text("Назад") }
+            }
+            if (TaskEvent.NEXT_STEP in allowedEvents) {
+                TextButton(onClick = onNextStep, enabled = enabled) { Text("Вперед") }
+            }
+            if (TaskEvent.REQUEST_VALIDATION in allowedEvents) {
+                TextButton(onClick = onRequestValidation, enabled = enabled) { Text("На валидацию") }
+            }
+            if (TaskEvent.COMPLETE in allowedEvents) {
+                TextButton(onClick = onCompleteTask, enabled = enabled) { Text("Завершить задачу") }
+            }
+        }
+
+        // Global status controls: Pause, Resume, Cancel, Reset
+        Row(modifier = Modifier.padding(top = 4.dp)) {
+            if (TaskEvent.PAUSE in allowedEvents) {
+                TextButton(onClick = onPauseTask, enabled = enabled) { Text("Приостановить") }
+            }
+            if (TaskEvent.RESUME in allowedEvents) {
+                TextButton(onClick = onResumeTask, enabled = enabled) { Text("Возобновить") }
+            }
+            if (TaskEvent.CANCEL in allowedEvents) {
+                TextButton(onClick = { onCancelTask("Отменено пользователем") }, enabled = enabled) {
+                    Text("Отменить задачу")
+                }
+            }
+            if (TaskEvent.RESET in allowedEvents) {
+                TextButton(onClick = onResetTask, enabled = enabled) { Text("Сбросить") }
+            }
+        }
+
+        // Explanatory line for what is currently forbidden
+        val forbiddenRule = when {
+            taskState.paused -> "⛔ Запрещено: выполнение и валидация до возобновления задачи."
+            taskState.stage == TaskStage.PLANNING -> "⛔ Запрещено: выполнение шагов и завершение до утверждения плана."
+            taskState.stage == TaskStage.EXECUTION -> "⛔ Запрещено: завершение без прохождения этапа валидации."
+            taskState.stage == TaskStage.VALIDATION && taskState.validationOutcome != ValidationOutcome.PASSED ->
+                "⛔ Запрещено: завершение без зафиксированного успешного результата валидации (PASSED)."
+            taskState.isTerminal -> "⛔ Задача завершена: дальнейшие переходы невозможны (используйте Сброс)."
+            else -> null
+        }
+        if (forbiddenRule != null) {
+            Text(
+                text = forbiddenRule,
+                style = MaterialTheme.typography.labelSmall,
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
+                modifier = Modifier.padding(top = 4.dp)
+            )
+        }
+
+        // Transition history journal
+        if (transitionHistory.isNotEmpty()) {
+            Row(
+                modifier = Modifier.fillMaxWidth().padding(top = 6.dp),
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                Text(
+                    text = "Журнал переходов (${transitionHistory.size})",
+                    style = MaterialTheme.typography.labelSmall,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    modifier = Modifier.weight(1f)
+                )
+                TextButton(onClick = { showHistory = !showHistory }) {
+                    Text(if (showHistory) "Скрыть" else "Показать")
+                }
+            }
+            if (showHistory) {
+                Column(modifier = Modifier.padding(top = 2.dp)) {
+                    transitionHistory.takeLast(10).reversed().forEach { record ->
+                        val status = if (record.applied) "✅" else "❌"
+                        val transition = if (record.toStage != null) {
+                            "${record.fromStage} → ${record.toStage}"
+                        } else {
+                            "${record.fromStage} (отклонен)"
+                        }
+                        val note = if (record.note.isNotBlank()) " · ${record.note}" else ""
+                        Text(
+                            text = "$status ${record.event.name}: $transition$note",
+                            style = MaterialTheme.typography.labelSmall,
+                            color = if (record.applied) MaterialTheme.colorScheme.onSurface else MaterialTheme.colorScheme.error,
+                            modifier = Modifier.padding(vertical = 1.dp)
+                        )
+                    }
+                }
+            }
         }
     }
 }
 
-/** Day 13: surfaces a pending [TaskTransitionSuggestion] for the user to approve or dismiss —
+/** Day 13/15: surfaces a pending [TaskTransitionSuggestion] for the user to approve or dismiss —
  * mirrors [SuggestionBanner]'s "never applied automatically" shape. An
- * [TaskTransitionAction.APPROVE_PLAN] suggestion isn't one-tap applicable (approving a plan
- * needs its steps, which only [TaskPanel]'s own text field collects), so it's shown as a hint
- * with only a dismiss action. */
+ * [TaskTransitionAction.APPROVE_PLAN] suggestion is one-tap applicable only when the advisor
+ * managed to extract the plan's step list from the assistant's last message (see
+ * [TaskTransitionSuggestion.proposedSteps]); if it couldn't, "Apply" is hidden and the banner
+ * is shown only as a hint that the user should approve the plan via [TaskPanel]'s own field. */
 @Composable
 private fun TaskTransitionBanner(
     suggestion: TaskTransitionSuggestion,
     onApply: () -> Unit,
     onDismiss: () -> Unit
 ) {
+    val isApprovePlan = suggestion.action == TaskTransitionAction.APPROVE_PLAN
+    val canApply = !isApprovePlan || suggestion.proposedSteps.isNotEmpty()
     Card(
         modifier = Modifier
             .fillMaxWidth()
@@ -579,8 +715,16 @@ private fun TaskTransitionBanner(
                     modifier = Modifier.padding(top = 2.dp)
                 )
             }
+            if (isApprovePlan && suggestion.proposedSteps.isNotEmpty()) {
+                Text(
+                    text = "Шаги: " + suggestion.proposedSteps.joinToString(" → "),
+                    style = MaterialTheme.typography.labelSmall,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    modifier = Modifier.padding(top = 2.dp)
+                )
+            }
             Row(modifier = Modifier.padding(top = 4.dp)) {
-                if (suggestion.action != TaskTransitionAction.APPROVE_PLAN) {
+                if (canApply) {
                     TextButton(onClick = onApply) { Text("Apply") }
                 }
                 TextButton(onClick = onDismiss) { Text("Dismiss") }
@@ -1211,7 +1355,7 @@ private fun MessageBubble(message: ChatMessage) {
             colors = CardDefaults.cardColors(
                 containerColor = if (message.isFromUser) {
                     MaterialTheme.colorScheme.primaryContainer
-                } else if (message.refusedByInvariantIds.isNotEmpty()) {
+                } else if (message.refusedByInvariantIds.isNotEmpty() || message.blockedByStageName != null) {
                     MaterialTheme.colorScheme.errorContainer
                 } else {
                     MaterialTheme.colorScheme.secondaryContainer
@@ -1233,6 +1377,15 @@ private fun MessageBubble(message: ChatMessage) {
                         // an ordinary answer.
                         Text(
                             text = "⛔ Инвариант: ${message.refusedByInvariantIds.joinToString(", ")}",
+                            style = MaterialTheme.typography.labelMedium,
+                            color = MaterialTheme.colorScheme.onErrorContainer,
+                            modifier = Modifier.padding(bottom = 4.dp)
+                        )
+                    }
+                    if (message.blockedByStageName != null) {
+                        // Day 15: deterministic refusal when user requests an action out of stage lifecycle
+                        Text(
+                            text = "⛔ Этап задачи: ${message.blockedByStageName}",
                             style = MaterialTheme.typography.labelMedium,
                             color = MaterialTheme.colorScheme.onErrorContainer,
                             modifier = Modifier.padding(bottom = 4.dp)

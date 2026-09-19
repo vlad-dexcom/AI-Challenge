@@ -3,6 +3,7 @@ package com.example.geminichat.agent
 import com.example.geminichat.agent.invariant.InvariantGuard
 import com.example.geminichat.agent.invariant.InvariantRenderer
 import com.example.geminichat.agent.invariant.InvariantSet
+import com.example.geminichat.agent.task.TaskStageGuard
 
 /**
  * The default [Agent] implementation: a single persona ([config]) backed by any [LlmClient].
@@ -75,6 +76,30 @@ class LlmAgent(
                         completionTokens = 0
                     ),
                     refusedByInvariantIds = conflicts.map { it.invariant.id }
+                )
+            )
+        }
+
+        // Day 15: the deterministic task-stage pre-check runs before prompt assembly.
+        // If the user's message attempts to illegally bypass stages (e.g., execute without an approved
+        // plan, or finalize without validation), code refuses it immediately with 0 prompt tokens.
+        val stageViolation = request.taskStateSnapshot?.let { TaskStageGuard.check(it, userMessage) }
+        if (stageViolation != null) {
+            val requestTokens = TokenEstimator.estimate(userMessage)
+            return Result.success(
+                AgentResponse(
+                    text = TaskStageGuard.refusalText(stageViolation),
+                    agentId = config.id,
+                    model = request.modelOverride ?: config.model,
+                    elapsedMs = 0,
+                    tokenUsage = TokenUsage(
+                        requestTokens = requestTokens,
+                        historyTokens = 0,
+                        systemInstructionTokens = 0,
+                        promptTokens = 0,
+                        completionTokens = 0
+                    ),
+                    blockedByStage = stageViolation
                 )
             )
         }

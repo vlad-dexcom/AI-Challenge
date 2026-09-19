@@ -28,11 +28,19 @@ object TaskStateRenderer {
         lines += "- Task: ${state.title}"
         lines += "- Stage: ${state.stage}" + (state.progressLabel?.let { " ($it)" } ?: "")
         state.currentStep?.let { lines += "- Current step: $it" }
+        if (state.validationOutcome != ValidationOutcome.NOT_RUN) {
+            val noteSuffix = if (state.validationNote.isNotBlank()) " (${state.validationNote})" else ""
+            lines += "- Validation outcome: ${state.validationOutcome}$noteSuffix"
+        }
         if (state.expectedAction.isNotBlank()) {
             lines += "- Expected next action: ${state.expectedActor} — ${state.expectedAction}"
         }
         if (state.paused) {
             lines += "- Status: PAUSED — resume exactly here; do not re-explain earlier stages"
+        }
+        if (state.stage == TaskStage.CANCELLED) {
+            val reasonSuffix = if (state.cancellationReason.isNotBlank()) " (Reason: ${state.cancellationReason})" else ""
+            lines += "- Cancellation: Task was cancelled$reasonSuffix"
         }
         return "$HEADER\n${lines.joinToString("\n")}"
     }
@@ -50,15 +58,17 @@ object TaskStateRenderer {
         return when (state.stage) {
             TaskStage.PLANNING ->
                 "The task above is in the PLANNING stage: propose and refine the plan; do not start " +
-                    "executing steps yet."
+                    "executing steps, generating workout programs, or skipping ahead to execution until the plan is approved."
             TaskStage.EXECUTION ->
                 "The task above is in the EXECUTION stage: work on the current step only; do not " +
-                    "re-explain or re-propose the already-approved plan."
+                    "re-explain or re-propose the already-approved plan; do not finalize or mark the task complete without validation."
             TaskStage.VALIDATION ->
                 "The task above is in the VALIDATION stage: check the result against the goal; do not " +
-                    "add new steps or new work here."
+                    "add new steps or new work here; do not finalize or complete the task until validation outcome is PASSED."
             TaskStage.DONE ->
                 "The task above is DONE. Do not resume work on it unless the user explicitly starts a new task."
+            TaskStage.CANCELLED ->
+                "The task above was CANCELLED. Do not continue work on it unless the user explicitly starts a new task."
         }
     }
 }
