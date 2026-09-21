@@ -12,6 +12,7 @@ import com.example.geminichat.agent.memory.LongTermMemoryStore
 import com.example.geminichat.agent.memory.WorkingMemoryStore
 import com.example.geminichat.agent.profile.UserProfileStore
 import com.example.geminichat.agent.task.TaskStateStore
+import com.example.geminichat.agent.task.TaskTransitionLogStore
 import java.io.File
 
 class MainActivity : ComponentActivity() {
@@ -39,6 +40,9 @@ class MainActivity : ComponentActivity() {
                 // outside the dialog — see InvariantStore.
                 val invariantStore =
                     InvariantStore(File(filesDir, InvariantStore.FILE_NAME))
+                // Day 15: transition log per branch.
+                val taskTransitionLogStore =
+                    TaskTransitionLogStore(File(filesDir, TaskTransitionLogStore.FILE_NAME))
                 @Suppress("UNCHECKED_CAST")
                 return ChatViewModel(
                     apiKey = BuildConfig.GEMINI_API_KEY,
@@ -47,7 +51,8 @@ class MainActivity : ComponentActivity() {
                     workingMemoryStore = workingMemoryStore,
                     userProfileStore = userProfileStore,
                     taskStateStore = taskStateStore,
-                    invariantStore = invariantStore
+                    invariantStore = invariantStore,
+                    taskTransitionLogStore = taskTransitionLogStore
                 ) as T
             }
         }

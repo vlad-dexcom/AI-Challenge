@@ -33,15 +33,21 @@ import com.example.geminichat.agent.profile.ProfileField
 import com.example.geminichat.agent.profile.ProfileRenderer
 import com.example.geminichat.agent.profile.UserProfile
 import com.example.geminichat.agent.profile.UserProfileStore
+import com.example.geminichat.agent.task.TaskEvent
 import com.example.geminichat.agent.task.TaskStage
+import com.example.geminichat.agent.task.TaskStageGuard
 import com.example.geminichat.agent.task.TaskState
 import com.example.geminichat.agent.task.TaskStateAdvisor
 import com.example.geminichat.agent.task.TaskStateMachine
 import com.example.geminichat.agent.task.TaskStateRenderer
 import com.example.geminichat.agent.task.TaskStateStore
 import com.example.geminichat.agent.task.TaskTransitionAction
+import com.example.geminichat.agent.task.TaskTransitionLogStore
+import com.example.geminichat.agent.task.TaskTransitionRecord
 import com.example.geminichat.agent.task.TaskTransitionSuggestion
+import com.example.geminichat.agent.task.TaskTransitionTable
 import com.example.geminichat.agent.task.TransitionResult
+import com.example.geminichat.agent.task.ValidationOutcome
 import java.util.UUID
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.TimeoutCancellationException
@@ -73,7 +79,12 @@ data class ChatMessage(
      * this *is* serialized, so the refusal badge survives a restore from
      * [ChatHistoryStore] just like the message text does.
      */
-    val refusedByInvariantIds: List<String> = emptyList()
+    val refusedByInvariantIds: List<String> = emptyList(),
+    /**
+     * Day 15: non-null when this reply is a deterministic refusal produced by
+     * [com.example.geminichat.agent.task.TaskStageGuard]. Serialized so it survives a restore.
+     */
+    val blockedByStageName: String? = null
 )
 
 /** One entry in the Day 10 branch selector — see [ChatViewModel.onBranchSelected]. */
@@ -155,7 +166,15 @@ data class ChatUiState(
      * [userProfile], and stored in its own file (see
      * [com.example.geminichat.agent.invariant.InvariantStore]) completely outside the dialog.
      */
-    val invariants: InvariantSet = InvariantSet.DEFAULTS
+    val invariants: InvariantSet = InvariantSet.DEFAULTS,
+    /**
+     * Day 15: transition journal entries for the current branch.
+     */
+    val taskTransitionHistory: List<TaskTransitionRecord> = emptyList(),
+    /**
+     * Day 15: set of valid actions allowed by the state machine given [taskState].
+     */
+    val allowedTaskEvents: Set<TaskEvent> = emptySet()
 ) {
     companion object {
         const val MAIN_BRANCH_ID = "main"
@@ -175,6 +194,7 @@ class ChatViewModel(
     private val userProfileStore: UserProfileStore? = null,
     private val taskStateStore: TaskStateStore? = null,
     private val invariantStore: InvariantStore? = null,
+    private val taskTransitionLogStore: TaskTransitionLogStore? = null,
     debugContextWindowOverrideTokens: Int? = null,
 ) : ViewModel() {
 
@@ -232,6 +252,8 @@ class ChatViewModel(
     // [longTermMemory]'s "one global value" shape).
     private var userProfile: UserProfile = userProfileStore?.load() ?: UserProfile.EMPTY
 
+    private val initialTaskState = taskStateStore?.load(currentBranchId) ?: TaskState.NONE
+
     private val _uiState = MutableStateFlow(
         ChatUiState(
             messages = restored.messages,
@@ -248,9 +270,11 @@ class ChatViewModel(
             memoryRoutingTokensTotal = 0,
             userProfile = userProfile,
             personalizationTokensTotal = 0,
-            taskState = taskStateStore?.load(currentBranchId) ?: TaskState.NONE,
+            taskState = initialTaskState,
             taskStateAdvisorTokensTotal = 0,
-            invariants = invariants
+            invariants = invariants,
+            taskTransitionHistory = taskTransitionLogStore?.load(currentBranchId) ?: emptyList(),
+            allowedTaskEvents = TaskTransitionTable.allowedEvents(initialTaskState)
         )
     )
     val uiState: StateFlow<ChatUiState> = _uiState
@@ -379,6 +403,8 @@ class ChatViewModel(
         checkpointTaskState = _uiState.value.taskState
         workingMemoryStore?.save(CHECKPOINT_WORKING_MEMORY_KEY, checkpointWorkingMemory)
         taskStateStore?.save(CHECKPOINT_WORKING_MEMORY_KEY, checkpointTaskState)
+        val currentHistory = taskTransitionLogStore?.load(currentBranchId) ?: emptyList()
+        taskTransitionLogStore?.save(CHECKPOINT_WORKING_MEMORY_KEY, currentHistory)
         _uiState.value = _uiState.value.copy(hasCheckpoint = true)
         persistHistory()
     }
@@ -403,6 +429,8 @@ class ChatViewModel(
         otherBranches[currentBranchId] = currentBranchSnapshot()
         persistWorkingMemory(newBranch.id, checkpointWorkingMemory)
         persistTaskState(newBranch.id, checkpointTaskState)
+        val checkpointHistory = taskTransitionLogStore?.load(CHECKPOINT_WORKING_MEMORY_KEY) ?: emptyList()
+        taskTransitionLogStore?.save(newBranch.id, checkpointHistory)
         loadBranch(newBranch, workingMemoryOverride = checkpointWorkingMemory, taskStateOverride = checkpointTaskState)
         persistHistory()
     }
@@ -451,6 +479,7 @@ class ChatViewModel(
         val task = taskStateOverride
             ?: taskStateStore?.load(snapshot.id)
             ?: TaskState.NONE
+        val transitionHistory = taskTransitionLogStore?.load(snapshot.id) ?: emptyList()
         _uiState.value = _uiState.value.copy(
             messages = snapshot.messages,
             dialogTokenTotal = snapshot.dialogTokenTotal,
@@ -461,7 +490,9 @@ class ChatViewModel(
             branches = branchOptions(snapshot.id, snapshot.name),
             errorMessage = null,
             taskState = task,
-            pendingTaskTransitionSuggestion = null
+            pendingTaskTransitionSuggestion = null,
+            taskTransitionHistory = transitionHistory,
+            allowedTaskEvents = TaskTransitionTable.allowedEvents(task)
         )
     }
 
@@ -490,6 +521,11 @@ class ChatViewModel(
      * [ChatHistoryStore] and the memory layers — see [TaskStateStore]. */
     private fun persistTaskState(branchId: String, state: TaskState) {
         taskStateStore?.save(branchId, state)
+    }
+
+    /** Persists a [record] into [branchId]'s transition journal (Day 15). */
+    private fun persistTransitionLog(branchId: String, record: TaskTransitionRecord) {
+        taskTransitionLogStore?.append(branchId, record)
     }
 
     /** Persists both Day 11 memory layers for the *active* branch: long-term globally (see
@@ -554,14 +590,27 @@ class ChatViewModel(
      * paused, so there is nothing left to resume.
      */
     fun onEndTask() {
+        val fromStage = _uiState.value.taskState.stage
+        val record = TaskTransitionRecord(
+            timestamp = System.currentTimeMillis(),
+            event = TaskEvent.RESET,
+            fromStage = fromStage,
+            toStage = TaskStage.PLANNING,
+            applied = true,
+            note = "End task"
+        )
+        val newHistory = _uiState.value.taskTransitionHistory + record
         _uiState.value = _uiState.value.copy(
             workingMemory = MemorySnapshot.EMPTY,
             lastMemoryDecisions = emptyList(),
             taskState = TaskState.NONE,
-            pendingTaskTransitionSuggestion = null
+            pendingTaskTransitionSuggestion = null,
+            taskTransitionHistory = newHistory,
+            allowedTaskEvents = TaskTransitionTable.allowedEvents(TaskState.NONE)
         )
         persistMemoryLayers()
         persistTaskState(currentBranchId, TaskState.NONE)
+        persistTransitionLog(currentBranchId, record)
     }
 
     /**
@@ -657,7 +706,7 @@ class ChatViewModel(
      * whatever task was active before. [rawTitle] must not be blank.
      */
     fun onStartTask(rawTitle: String) {
-        applyTransition(TaskStateMachine.start(rawTitle))
+        applyTransition(TaskStateMachine.start(rawTitle), TaskEvent.START)
     }
 
     /**
@@ -666,49 +715,61 @@ class ChatViewModel(
      */
     fun onApprovePlan(rawSteps: String) {
         val steps = rawSteps.lines()
-        applyTransition(TaskStateMachine.approvePlan(_uiState.value.taskState, steps))
+        applyTransition(TaskStateMachine.approvePlan(_uiState.value.taskState, steps), TaskEvent.APPROVE_PLAN)
     }
 
     /** Day 13: moves to the next step within [TaskStage.EXECUTION]. */
     fun onNextStep() {
-        applyTransition(TaskStateMachine.nextStep(_uiState.value.taskState))
+        applyTransition(TaskStateMachine.nextStep(_uiState.value.taskState), TaskEvent.NEXT_STEP)
     }
 
     /** Day 13: moves back to the previous step within [TaskStage.EXECUTION]. */
     fun onPreviousStep() {
-        applyTransition(TaskStateMachine.previousStep(_uiState.value.taskState))
+        applyTransition(TaskStateMachine.previousStep(_uiState.value.taskState), TaskEvent.PREVIOUS_STEP)
     }
 
     /** Day 13 [TaskStage.EXECUTION] -> [TaskStage.VALIDATION]: all steps are done, check the result. */
     fun onRequestValidation() {
-        applyTransition(TaskStateMachine.requestValidation(_uiState.value.taskState))
+        applyTransition(TaskStateMachine.requestValidation(_uiState.value.taskState), TaskEvent.REQUEST_VALIDATION)
+    }
+
+    /** Day 15: records the outcome of validation check (PASSED / FAILED). */
+    fun onRecordValidation(outcome: ValidationOutcome, note: String = "") {
+        applyTransition(
+            TaskStateMachine.recordValidation(_uiState.value.taskState, outcome, note),
+            TaskEvent.RECORD_VALIDATION
+        )
     }
 
     /** Day 13 [TaskStage.VALIDATION] -> [TaskStage.EXECUTION]: send the task back for rework. */
     fun onSendBackToExecution(reason: String) {
-        applyTransition(TaskStateMachine.sendBackToExecution(_uiState.value.taskState, reason))
+        applyTransition(TaskStateMachine.sendBackToExecution(_uiState.value.taskState, reason), TaskEvent.SEND_BACK_TO_EXECUTION)
     }
 
-    /** Day 13: marks the task [TaskStage.DONE] — from [TaskStage.VALIDATION] (finished) or
-     * [TaskStage.PLANNING] (cancelled before ever being executed). */
+    /** Day 13 & 15: marks the task [TaskStage.DONE] — from [TaskStage.VALIDATION] after passing validation. */
     fun onCompleteTask() {
-        applyTransition(TaskStateMachine.complete(_uiState.value.taskState))
+        applyTransition(TaskStateMachine.complete(_uiState.value.taskState), TaskEvent.COMPLETE)
+    }
+
+    /** Day 15: cancels an active task from any non-terminal stage. */
+    fun onCancelTask(reason: String = "") {
+        applyTransition(TaskStateMachine.cancel(_uiState.value.taskState, reason), TaskEvent.CANCEL)
     }
 
     /** Day 13: freezes the task exactly where it is, so resuming continues without
      * re-explaining anything (see [TaskState.paused]). */
     fun onPauseTask() {
-        applyTransition(TaskStateMachine.pause(_uiState.value.taskState))
+        applyTransition(TaskStateMachine.pause(_uiState.value.taskState), TaskEvent.PAUSE)
     }
 
     /** Day 13: lifts a pause, returning to exactly the stage/step that was paused. */
     fun onResumeTask() {
-        applyTransition(TaskStateMachine.resume(_uiState.value.taskState))
+        applyTransition(TaskStateMachine.resume(_uiState.value.taskState), TaskEvent.RESUME)
     }
 
     /** Day 13: drops the task entirely, back to [TaskState.NONE]. */
     fun onResetTask() {
-        applyTransition(TaskStateMachine.reset())
+        applyTransition(TaskStateMachine.reset(), TaskEvent.RESET)
     }
 
     /**
@@ -720,17 +781,22 @@ class ChatViewModel(
     fun onApplyTaskTransitionSuggestion() {
         val suggestion = _uiState.value.pendingTaskTransitionSuggestion ?: return
         val state = _uiState.value.taskState
-        val result = when (suggestion.action) {
-            TaskTransitionAction.APPROVE_PLAN -> return // needs steps text; the UI collects
-            // those separately, so an approve-plan suggestion just surfaces the reason as a
-            // hint rather than being one-tap applicable.
-            TaskTransitionAction.NEXT_STEP -> TaskStateMachine.nextStep(state)
-            TaskTransitionAction.REQUEST_VALIDATION -> TaskStateMachine.requestValidation(state)
-            TaskTransitionAction.SEND_BACK_TO_EXECUTION -> TaskStateMachine.sendBackToExecution(state, suggestion.reason)
-            TaskTransitionAction.COMPLETE -> TaskStateMachine.complete(state)
+        val (result, event) = when (suggestion.action) {
+            TaskTransitionAction.APPROVE_PLAN -> {
+                // Day 15: one-tap applicable only when the advisor actually extracted a step
+                // list from the assistant's last message; otherwise there is nothing to
+                // approve yet, so the suggestion stays a hint (the banner already hides "Apply"
+                // in that case — see [ChatScreen]'s TaskTransitionBanner).
+                if (suggestion.proposedSteps.isEmpty()) return
+                TaskStateMachine.approvePlan(state, suggestion.proposedSteps) to TaskEvent.APPROVE_PLAN
+            }
+            TaskTransitionAction.NEXT_STEP -> TaskStateMachine.nextStep(state) to TaskEvent.NEXT_STEP
+            TaskTransitionAction.REQUEST_VALIDATION -> TaskStateMachine.requestValidation(state) to TaskEvent.REQUEST_VALIDATION
+            TaskTransitionAction.SEND_BACK_TO_EXECUTION -> TaskStateMachine.sendBackToExecution(state, suggestion.reason) to TaskEvent.SEND_BACK_TO_EXECUTION
+            TaskTransitionAction.COMPLETE -> TaskStateMachine.complete(state) to TaskEvent.COMPLETE
         }
         _uiState.value = _uiState.value.copy(pendingTaskTransitionSuggestion = null)
-        applyTransition(result)
+        applyTransition(result, event)
     }
 
     /** Day 13: discards the pending transition suggestion without changing the task. */
@@ -741,14 +807,49 @@ class ChatViewModel(
     /** Applies a [TransitionResult] from [TaskStateMachine]: an [TransitionResult.Applied]
      * result updates and persists [TaskState]; a [TransitionResult.Rejected] one surfaces its
      * reason as [ChatUiState.errorMessage] instead of silently doing nothing. */
-    private fun applyTransition(result: TransitionResult) {
+    private fun applyTransition(result: TransitionResult, attemptedEvent: TaskEvent? = null) {
+        val fromStage = _uiState.value.taskState.stage
         when (result) {
             is TransitionResult.Applied -> {
-                _uiState.value = _uiState.value.copy(taskState = result.state, errorMessage = null)
+                val event = result.event ?: attemptedEvent ?: TaskEvent.RESET
+                val record = TaskTransitionRecord(
+                    timestamp = System.currentTimeMillis(),
+                    event = event,
+                    fromStage = fromStage,
+                    toStage = result.state.stage,
+                    applied = true,
+                    note = when (result.state.stage) {
+                        TaskStage.CANCELLED -> result.state.cancellationReason
+                        TaskStage.VALIDATION -> if (result.state.validationOutcome != ValidationOutcome.NOT_RUN) result.state.validationOutcome.name else ""
+                        else -> ""
+                    }
+                )
+                val newHistory = _uiState.value.taskTransitionHistory + record
+                _uiState.value = _uiState.value.copy(
+                    taskState = result.state,
+                    errorMessage = null,
+                    taskTransitionHistory = newHistory,
+                    allowedTaskEvents = TaskTransitionTable.allowedEvents(result.state)
+                )
                 persistTaskState(currentBranchId, result.state)
+                persistTransitionLog(currentBranchId, record)
             }
             is TransitionResult.Rejected -> {
-                _uiState.value = _uiState.value.copy(errorMessage = result.reason)
+                val event = attemptedEvent ?: result.rejection?.event ?: TaskEvent.RESET
+                val record = TaskTransitionRecord(
+                    timestamp = System.currentTimeMillis(),
+                    event = event,
+                    fromStage = fromStage,
+                    toStage = null,
+                    applied = false,
+                    note = result.reason
+                )
+                val newHistory = _uiState.value.taskTransitionHistory + record
+                _uiState.value = _uiState.value.copy(
+                    errorMessage = result.reason,
+                    taskTransitionHistory = newHistory
+                )
+                persistTransitionLog(currentBranchId, record)
             }
         }
     }
@@ -830,12 +931,17 @@ class ChatViewModel(
                 withTimeout(125_000) {
                     // Day 14: check invariants *before* spending three sequential LLM calls
                     // (memory routing, preference advisor, task advisor) on context that would
-                    // just be thrown away by a refusal anyway. This restores the "medium"
-                    // enforcement guarantee — zero LLM calls, effectively instant — for a
-                    // conflicting request; [LlmAgent.handle] still re-checks internally as the
-                    // real enforcement point (this is only a fast-path skip).
-                    val request = if (InvariantGuard.check(invariants, prompt).isNotEmpty()) {
+                    // just be thrown away by a refusal anyway.
+                    // Day 15: also check task stage guard *before* spending three sequential LLM calls.
+                    val isInvariantConflict = InvariantGuard.check(invariants, prompt).isNotEmpty()
+                    val stageViolation = TaskStageGuard.check(_uiState.value.taskState, prompt)
+                    val request = if (isInvariantConflict) {
                         AgentRequest(userMessage = prompt)
+                    } else if (stageViolation != null) {
+                        AgentRequest(
+                            userMessage = prompt,
+                            taskStateSnapshot = _uiState.value.taskState
+                        )
                     } else {
                         val context = prepareRequestContext(history, model, prompt)
                         AgentRequest(
@@ -847,18 +953,36 @@ class ChatViewModel(
                             userProfile = context.userProfile,
                             taskState = context.taskState,
                             taskStageRules = context.taskStageRules,
-                            invariants = context.invariants
+                            invariants = context.invariants,
+                            taskStateSnapshot = _uiState.value.taskState
                         )
                     }
                     agent.handle(request)
                         .onSuccess { response ->
+                            val stageBlocked = response.blockedByStage
+                            val newHistory = if (stageBlocked != null) {
+                                val record = TaskTransitionRecord(
+                                    timestamp = System.currentTimeMillis(),
+                                    event = TaskEvent.APPROVE_PLAN,
+                                    fromStage = stageBlocked.currentStage,
+                                    toStage = null,
+                                    applied = false,
+                                    note = stageBlocked.reason
+                                )
+                                persistTransitionLog(currentBranchId, record)
+                                _uiState.value.taskTransitionHistory + record
+                            } else {
+                                _uiState.value.taskTransitionHistory
+                            }
                             _uiState.value = _uiState.value.copy(
                                 messages = _uiState.value.messages + ChatMessage(
                                     text = response.text,
                                     isFromUser = false,
                                     tokenUsage = response.tokenUsage,
-                                    refusedByInvariantIds = response.refusedByInvariantIds
+                                    refusedByInvariantIds = response.refusedByInvariantIds,
+                                    blockedByStageName = stageBlocked?.currentStage?.name
                                 ),
+                                taskTransitionHistory = newHistory,
                                 isLoading = false,
                                 dialogTokenTotal = _uiState.value.dialogTokenTotal + response.tokenUsage.totalTokens
                             )
@@ -953,9 +1077,17 @@ class ChatViewModel(
         // Day 13: another separate LLM call checks whether this turn indicates the task's
         // expected next action just happened. Same fail-safe shape as the advisor above: on
         // failure or "no transition indicated" it simply leaves
-        // [ChatUiState.pendingTaskTransitionSuggestion] as-is.
+        // [ChatUiState.pendingTaskTransitionSuggestion] as-is. Day 15: also passes the last
+        // assistant turn so an approve_plan suggestion can extract the proposed step list for
+        // a one-tap Apply (see [TaskTransitionSuggestion.proposedSteps]).
+        val lastAssistantMessage = history.lastOrNull { it.role == AgentMessage.Role.AGENT }?.text
         val taskAdvisorDeferred = async {
-            taskStateAdvisor.suggest(state = state.taskState, newUserMessage = prompt, model = model)
+            taskStateAdvisor.suggest(
+                state = state.taskState,
+                newUserMessage = prompt,
+                model = model,
+                lastAssistantMessage = lastAssistantMessage
+            )
         }
 
         routeDeferred.await().onSuccess { outcome ->
