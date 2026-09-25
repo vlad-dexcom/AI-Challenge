@@ -13,6 +13,9 @@ import com.example.geminichat.agent.memory.WorkingMemoryStore
 import com.example.geminichat.agent.profile.UserProfileStore
 import com.example.geminichat.agent.task.TaskStateStore
 import com.example.geminichat.agent.task.TaskTransitionLogStore
+import com.example.geminichat.agent.workout.WorkoutDigestScheduler
+import com.example.geminichat.agent.workout.WorkoutLogStore
+import com.example.geminichat.agent.workout.WorkoutSummaryStore
 import java.io.File
 
 class MainActivity : ComponentActivity() {
@@ -43,6 +46,12 @@ class MainActivity : ComponentActivity() {
                 // Day 15: transition log per branch.
                 val taskTransitionLogStore =
                     TaskTransitionLogStore(File(filesDir, TaskTransitionLogStore.FILE_NAME))
+                // Day 18: workout log + its periodically-aggregated summary — see
+                // WorkoutDigestWorker/WorkoutDigestScheduler for the background job that keeps
+                // the summary fresh.
+                val workoutLogStore = WorkoutLogStore(File(filesDir, WorkoutLogStore.FILE_NAME))
+                val workoutSummaryStore =
+                    WorkoutSummaryStore(File(filesDir, WorkoutSummaryStore.FILE_NAME))
                 @Suppress("UNCHECKED_CAST")
                 return ChatViewModel(
                     apiKey = BuildConfig.GEMINI_API_KEY,
@@ -52,7 +61,9 @@ class MainActivity : ComponentActivity() {
                     userProfileStore = userProfileStore,
                     taskStateStore = taskStateStore,
                     invariantStore = invariantStore,
-                    taskTransitionLogStore = taskTransitionLogStore
+                    taskTransitionLogStore = taskTransitionLogStore,
+                    workoutLogStore = workoutLogStore,
+                    workoutSummaryStore = workoutSummaryStore
                 ) as T
             }
         }
@@ -60,6 +71,10 @@ class MainActivity : ComponentActivity() {
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
+        // Day 18: registers the periodic workout-digest aggregation once per process — WorkManager
+        // persists the schedule itself, so this is safe/idempotent to call on every launch (see
+        // WorkoutDigestScheduler's use of ExistingPeriodicWorkPolicy.KEEP).
+        WorkoutDigestScheduler.schedule(applicationContext)
         setContent {
             ChatScreen(viewModel = viewModel)
         }
