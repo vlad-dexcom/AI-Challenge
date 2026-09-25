@@ -26,6 +26,7 @@ import androidx.compose.material3.TopAppBar
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.unit.dp
@@ -108,6 +109,52 @@ fun McpScreen(viewModel: McpViewModel, onBack: () -> Unit) {
 
                 is McpStatus.Connected -> McpConnectedContent(status.snapshot)
             }
+
+            Spacer(modifier = Modifier.height(24.dp))
+            McpCallLogContent()
+        }
+    }
+}
+
+/**
+ * Day 17: brief, timestamped log of every MCP call made by any [KotlinSdkMcpGateway] — both
+ * ones made from this screen (connect/list tools) and ones made while chatting with the
+ * "Fitness Coach (MCP tools)" persona ([com.example.geminichat.agent.mcp.McpToolCallingAgent]).
+ * Backed by [McpCallLog], an app-wide singleton, so calls made elsewhere still show up here.
+ */
+@Composable
+private fun McpCallLogContent() {
+    val entries by McpCallLog.entries.collectAsState()
+    val timeFormat = remember { java.text.SimpleDateFormat("HH:mm:ss", java.util.Locale.getDefault()) }
+
+    Row(
+        modifier = Modifier.fillMaxWidth(),
+        verticalAlignment = androidx.compose.ui.Alignment.CenterVertically
+    ) {
+        Text(
+            "Call log (${entries.size})",
+            style = MaterialTheme.typography.titleMedium,
+            modifier = Modifier.weight(1f)
+        )
+        OutlinedButton(onClick = McpCallLog::clear, enabled = entries.isNotEmpty()) {
+            Text("Clear")
+        }
+    }
+    Spacer(modifier = Modifier.height(8.dp))
+
+    if (entries.isEmpty()) {
+        Text(
+            "No MCP calls yet. Connect above, or chat with the \"Fitness Coach (MCP tools)\" agent.",
+            style = MaterialTheme.typography.bodyMedium
+        )
+    } else {
+        entries.asReversed().forEach { entry ->
+            Text(
+                "${timeFormat.format(java.util.Date(entry.timestampMs))}  ${entry.summary}",
+                style = MaterialTheme.typography.bodySmall,
+                color = if (entry.isError) MaterialTheme.colorScheme.error else MaterialTheme.colorScheme.onSurface,
+                modifier = Modifier.padding(vertical = 2.dp)
+            )
         }
     }
 }

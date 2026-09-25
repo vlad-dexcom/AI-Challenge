@@ -45,14 +45,20 @@ class KotlinSdkMcpGateway : McpGateway {
         } catch (e: CancellationException) {
             throw e
         } catch (e: Exception) {
+            McpCallLog.record("connect($serverUrl) → FAILED: ${e.message}", isError = true)
             throw McpConnectionException("Failed to connect to MCP server at $serverUrl: ${e.message}", e)
         }
 
         client = mcpClient
 
         val serverInfo = mcpClient.serverVersion
-            ?: throw McpConnectionException("MCP server at $serverUrl did not report its identity.")
+            ?: run {
+                McpCallLog.record("connect($serverUrl) → FAILED: server did not report its identity", isError = true)
+                throw McpConnectionException("MCP server at $serverUrl did not report its identity.")
+            }
         val capabilities = mcpClient.serverCapabilities
+
+        McpCallLog.record("connect($serverUrl) → ${serverInfo.name} ${serverInfo.version}")
 
         return McpServerInfo(
             name = serverInfo.name,
@@ -84,8 +90,10 @@ class KotlinSdkMcpGateway : McpGateway {
         } catch (e: CancellationException) {
             throw e
         } catch (e: Exception) {
+            McpCallLog.record("listTools() → FAILED: ${e.message}", isError = true)
             throw McpConnectionException("Failed to list tools: ${e.message}", e)
         }
+        McpCallLog.record("listTools() → ${tools.size} tool(s): ${tools.joinToString(", ") { it.name }}")
         return tools
     }
 
@@ -97,14 +105,21 @@ class KotlinSdkMcpGateway : McpGateway {
         } catch (e: CancellationException) {
             throw e
         } catch (e: Exception) {
+            McpCallLog.record("callTool($name, $arguments) → FAILED: ${e.message}", isError = true)
             throw McpToolCallException("Failed to call tool '$name': ${e.message}", e)
         }
 
         val text = result.content
             .filterIsInstance<TextContent>()
             .joinToString("\n") { it.text }
+        val isError = result.isError ?: false
 
-        return McpToolCallResult(text = text, isError = result.isError ?: false)
+        McpCallLog.record(
+            "callTool($name, $arguments) → ${if (isError) "ERROR" else "ok"}: ${text.take(120)}${if (text.length > 120) "…" else ""}",
+            isError = isError
+        )
+
+        return McpToolCallResult(text = text, isError = isError)
     }
 
     override suspend fun close() {
