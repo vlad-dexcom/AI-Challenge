@@ -102,7 +102,14 @@ data class AgentResponse(
      * Day 15: non-null when this response is a deterministic refusal produced by
      * [com.example.geminichat.agent.task.TaskStageGuard] — the model was never called at all.
      */
-    val blockedByStage: com.example.geminichat.agent.task.StageViolation? = null
+    val blockedByStage: com.example.geminichat.agent.task.StageViolation? = null,
+    /**
+     * Day 17: every MCP tool call made by [com.example.geminichat.agent.mcp.McpToolCallingAgent]
+     * while producing this response, in call order — empty for every other [Agent], and for a
+     * turn where the model answered without needing a tool. Lets the UI show *which* tool ran
+     * and what it returned, not just the final text.
+     */
+    val toolCalls: List<com.example.geminichat.agent.mcp.ToolInvocation> = emptyList()
 )
 
 /**

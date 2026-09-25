@@ -240,18 +240,43 @@ exposes. See `docs/day16-mcp-connection.md` for the full write-up (including why
 toolchain was upgraded to Kotlin 2.4.0/Ktor 3.5.1) and
 `docs/day16-mcp-connection-test-scenario.md` for a manual test walkthrough.
 
-- **`mcp/McpGateway.kt`** — abstraction (`connect`/`listTools`/`close`) keeping MCP SDK types out
-  of the rest of the app.
+- **`mcp/McpGateway.kt`** — abstraction (`connect`/`listTools`/`callTool`/`close`) keeping MCP SDK
+  types out of the rest of the app.
 - **`mcp/KotlinSdkMcpGateway.kt`** — real implementation on top of the official
   `io.modelcontextprotocol:kotlin-sdk-client:0.15.0`, using `StreamableHttpClientTransport` +
-  `Client`; connects, by default, to the public [DeepWiki MCP server](https://mcp.deepwiki.com/mcp)
-  (a local/custom server is planned for Day 17).
+  `Client`; connects, by default, to our own MCP server (Day 17, see below) — Day 16 originally
+  defaulted this to the public [DeepWiki MCP server](https://mcp.deepwiki.com/mcp) just to learn
+  the protocol against a third-party example.
 - **`mcp/McpToolMapper.kt`** — maps the SDK's JSON-Schema tool definitions into plain
   `McpToolInfo`/`McpToolParam` domain models.
-- **`mcp/McpConnectionController.kt`** — plain, Android-free state machine
-  (`Idle`/`Connecting`/`Connected`/`Error`) driving the gateway, fully unit-testable.
-- **`mcp/McpViewModel.kt` & `mcp/McpScreen.kt`** — thin `ViewModel` wrapper (adds Logcat + coroutine
-  scope) and the new full-screen Compose UI, reachable from `ChatScreen`'s app bar.
+- **`mcp/McpCallLog.kt` & `mcp/McpScreen.kt`** — an app-wide log of every MCP call (`connect`/
+  `listTools`/`callTool`), recorded by `KotlinSdkMcpGateway` and rendered by a plain,
+  `ViewModel`-free Compose screen reachable from `ChatScreen`'s app bar. Day 16 originally gave
+  this screen its own connection (server-URL field, Connect/Disconnect buttons, server identity +
+  tool list) to demonstrate connect/list-tools in isolation; that connection was redundant with
+  the one the chat's tool-calling agent already opens when it needs a tool, so it was dropped —
+  this screen is now purely a log viewer.
+
+## Custom MCP tool + agent tool-calling (Day 17)
+
+Built a brand-new MCP server (`mcp-server/`, deployed as a Firebase Cloud Function wrapping the
+public [wger.de](https://wger.de) fitness API) and wired **client-side function-calling** into the
+Android agent, so it actually calls the tool and uses the result — not just lists tools. See
+`docs/day17-mcp-tool.md` for the full write-up and
+`docs/day17-mcp-tool-test-scenario.md` for a manual test walkthrough.
+
+- **`mcp-server/functions/`** — a Node/TypeScript Cloud Function (`@modelcontextprotocol/sdk`)
+  exposing `get_exercise_info` and `suggest_workout` tools backed by wger.de. Live at
+  `https://us-central1-ai-challenge-mcp.cloudfunctions.net/mcp`.
+- **`mcp/McpGateway.kt`/`KotlinSdkMcpGateway.kt`** — gained `callTool(name, arguments)`.
+- **`GeminiModels.kt`/`GeminiApiClient.kt`** — gained `tools`, `previous_interaction_id`,
+  `function_call`/`function_result` step support and a new `createInteraction(...)` entry point
+  that returns the raw `InteractionResponse` (needed to see a `"requires_action"` status).
+- **`agent/mcp/McpToolCallingAgent.kt`** — a new `Agent` that declares the connected MCP server's
+  tools to Gemini, executes any `function_call` it requests against the real server, and
+  resubmits the result so the model can finish its answer.
+- **`agent/AgentCatalog.kt`** — new **"Fitness Coach (MCP tools)"** persona, selectable in the
+  existing agent picker, backed by `McpToolCallingAgent` instead of the plain `LlmAgent`.
 
 ## Setup
 
@@ -289,7 +314,9 @@ toolchain was upgraded to Kotlin 2.4.0/Ktor 3.5.1) and
 - `agent/invariant/` — the Day 14 hard invariants (`Invariant`, `InvariantSet`/`InvariantRules`,
   `InvariantRenderer`, `InvariantGuard`, `InvariantStore`).
 - `mcp/` — the Day 16 MCP client (`McpGateway`/`KotlinSdkMcpGateway`, `McpToolMapper`,
-  `McpConnectionController`, `McpViewModel`, `McpScreen`).
+  `McpConnectionController`, `McpViewModel`, `McpScreen`), extended in Day 17 with
+  `McpGateway.callTool`.
+- `agent/mcp/` — Day 17 client-side tool-calling: `ToolCallingLlmClient`, `McpToolCallingAgent`.
 - `GeminiModels.kt` — kotlinx.serialization request/response DTOs for the Gemini Interactions
   API, including `system_instruction` and `generation_config`.
 - `GeminiApiClient.kt` — Ktor `HttpClient` wrapper implementing `LlmClient`; POSTs the request

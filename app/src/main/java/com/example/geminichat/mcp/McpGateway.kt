@@ -20,6 +20,13 @@ interface McpGateway {
      */
     suspend fun listTools(): List<McpToolInfo>
 
+    /**
+     * Day 17: invokes tool [name] on the connected server (`tools/call`) with [arguments],
+     * returning its result as plain text. Must be called after a successful [connect].
+     * @throws McpToolCallException on any network/protocol failure.
+     */
+    suspend fun callTool(name: String, arguments: Map<String, Any?>): McpToolCallResult
+
     /** Closes the underlying connection, if any. Safe to call multiple times. */
     suspend fun close()
 }

@@ -70,7 +70,6 @@ import com.example.geminichat.agent.task.TaskTransitionRecord
 import com.example.geminichat.agent.task.TaskTransitionSuggestion
 import com.example.geminichat.agent.task.ValidationOutcome
 import com.example.geminichat.mcp.McpScreen
-import com.example.geminichat.mcp.McpViewModel
 import dev.jeziellago.compose.markdowntext.MarkdownText
 
 /**
@@ -81,7 +80,7 @@ import dev.jeziellago.compose.markdowntext.MarkdownText
  */
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun ChatScreen(viewModel: ChatViewModel, mcpViewModel: McpViewModel) {
+fun ChatScreen(viewModel: ChatViewModel) {
     val uiState by viewModel.uiState.collectAsState()
     val listState = rememberLazyListState()
     var showSettings by remember { mutableStateOf(false) }
@@ -100,7 +99,7 @@ fun ChatScreen(viewModel: ChatViewModel, mcpViewModel: McpViewModel) {
     }
 
     if (showMcp) {
-        McpScreen(viewModel = mcpViewModel, onBack = { showMcp = false })
+        McpScreen(onBack = { showMcp = false })
         return
     }
 
@@ -1295,6 +1294,28 @@ private fun SettingsScreen(uiState: ChatUiState, viewModel: ChatViewModel, onBac
                 verticalAlignment = Alignment.CenterVertically
             ) {
                 Text(
+                    text = "Agent",
+                    style = MaterialTheme.typography.labelLarge,
+                    modifier = Modifier.weight(1f)
+                )
+                AgentSelector(
+                    selectedAgentId = uiState.selectedAgentId,
+                    availableAgents = uiState.availableAgents,
+                    enabled = !uiState.isLoading,
+                    onAgentSelected = viewModel::onAgentSelected
+                )
+            }
+            Text(
+                text = uiState.agentDescription,
+                style = MaterialTheme.typography.bodySmall,
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
+                modifier = Modifier.padding(horizontal = 12.dp)
+            )
+            Row(
+                modifier = Modifier.fillMaxWidth().padding(horizontal = 12.dp, vertical = 8.dp),
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                Text(
                     text = "Model",
                     style = MaterialTheme.typography.labelLarge,
                     modifier = Modifier.weight(1f)
@@ -1325,6 +1346,39 @@ private fun SettingsScreen(uiState: ChatUiState, viewModel: ChatViewModel, onBac
                 onApplyPreset = viewModel::onApplyInvariantPreset,
                 onReset = viewModel::onResetInvariants
             )
+        }
+    }
+}
+
+@Composable
+private fun AgentSelector(
+    selectedAgentId: String,
+    availableAgents: List<com.example.geminichat.agent.AgentConfig>,
+    enabled: Boolean,
+    onAgentSelected: (String) -> Unit
+) {
+    var expanded by remember { mutableStateOf(false) }
+    val selectedName = availableAgents.firstOrNull { it.id == selectedAgentId }?.displayName
+        ?: selectedAgentId
+
+    Box {
+        TextButton(onClick = { if (enabled) expanded = true }, enabled = enabled) {
+            Text(selectedName)
+            Icon(Icons.Filled.ArrowDropDown, contentDescription = "Select agent")
+        }
+        DropdownMenu(
+            expanded = expanded,
+            onDismissRequest = { expanded = false }
+        ) {
+            availableAgents.forEach { agentConfig ->
+                DropdownMenuItem(
+                    text = { Text(agentConfig.displayName) },
+                    onClick = {
+                        onAgentSelected(agentConfig.id)
+                        expanded = false
+                    }
+                )
+            }
         }
     }
 }

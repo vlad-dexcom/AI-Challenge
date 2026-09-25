@@ -46,7 +46,27 @@ object AgentCatalog {
         systemInstruction = "You are a helpful, concise general-purpose assistant."
     )
 
-    val ALL = listOf(PERSONAL_TRAINER, GENERAL_ASSISTANT)
+    /**
+     * Day 17: same persona as [PERSONAL_TRAINER], but handled by
+     * [com.example.geminichat.agent.mcp.McpToolCallingAgent] instead of [LlmAgent] — it has
+     * real function-calling tools (`get_exercise_info`, `suggest_workout`) backed by our own
+     * MCP server (a Firebase Cloud Function wrapping the wger.de fitness API, see
+     * `mcp-server/functions`), so it can look up real exercises/build real workout plans
+     * instead of relying only on the model's own knowledge. See [ChatViewModel]'s agent
+     * construction for where the [id] is used to pick [McpToolCallingAgent] over [LlmAgent].
+     */
+    val FITNESS_MCP_COACH = AgentConfig(
+        id = "fitness-mcp-coach",
+        displayName = "Fitness Coach (MCP tools)",
+        description = "Personal Trainer with live tool access: looks up real exercises and " +
+            "builds real workout plans via our MCP fitness server.",
+        systemInstruction = "You are a Personal Trainer with access to tools that look up real " +
+            "exercises and build workout plans from a live fitness database. Prefer calling " +
+            "get_exercise_info or suggest_workout over guessing when the user asks about a " +
+            "specific exercise or wants a workout plan. Keep answers concise and actionable."
+    )
+
+    val ALL = listOf(PERSONAL_TRAINER, GENERAL_ASSISTANT, FITNESS_MCP_COACH)
     val DEFAULT = PERSONAL_TRAINER
 
     fun byId(id: String): AgentConfig = ALL.firstOrNull { it.id == id } ?: DEFAULT

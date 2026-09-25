@@ -9,13 +9,14 @@ import io.modelcontextprotocol.kotlin.sdk.client.StreamableHttpClientTransport
 import io.modelcontextprotocol.kotlin.sdk.types.Implementation
 import io.modelcontextprotocol.kotlin.sdk.types.ListToolsRequest
 import io.modelcontextprotocol.kotlin.sdk.types.PaginatedRequestParams
+import io.modelcontextprotocol.kotlin.sdk.types.TextContent
 import kotlinx.coroutines.CancellationException
 
 /**
  * [McpGateway] implementation on top of the official MCP Kotlin SDK
  * (`io.modelcontextprotocol:kotlin-sdk-client`), using the Streamable HTTP transport (the SDK's
  * recommended network transport — stdio only makes sense for a locally-spawned server process,
- * which an Android app cannot do for a remote MCP server like DeepWiki).
+ * which an Android app cannot do for a remote MCP server).
  *
  * One instance owns exactly one connection: call [connect] once, then [listTools] any number of
  * times, and [close] when done (or before reconnecting to a different URL).
@@ -44,14 +45,20 @@ class KotlinSdkMcpGateway : McpGateway {
         } catch (e: CancellationException) {
             throw e
         } catch (e: Exception) {
+            McpCallLog.record("connect($serverUrl) → FAILED: ${e.message}", isError = true)
             throw McpConnectionException("Failed to connect to MCP server at $serverUrl: ${e.message}", e)
         }
 
         client = mcpClient
 
         val serverInfo = mcpClient.serverVersion
-            ?: throw McpConnectionException("MCP server at $serverUrl did not report its identity.")
+            ?: run {
+                McpCallLog.record("connect($serverUrl) → FAILED: server did not report its identity", isError = true)
+                throw McpConnectionException("MCP server at $serverUrl did not report its identity.")
+            }
         val capabilities = mcpClient.serverCapabilities
+
+        McpCallLog.record("connect($serverUrl) → ${serverInfo.name} ${serverInfo.version}")
 
         return McpServerInfo(
             name = serverInfo.name,
@@ -83,9 +90,36 @@ class KotlinSdkMcpGateway : McpGateway {
         } catch (e: CancellationException) {
             throw e
         } catch (e: Exception) {
+            McpCallLog.record("listTools() → FAILED: ${e.message}", isError = true)
             throw McpConnectionException("Failed to list tools: ${e.message}", e)
         }
+        McpCallLog.record("listTools() → ${tools.size} tool(s): ${tools.joinToString(", ") { it.name }}")
         return tools
+    }
+
+    override suspend fun callTool(name: String, arguments: Map<String, Any?>): McpToolCallResult {
+        val mcpClient = client ?: throw McpConnectionException("Not connected: call connect() first.")
+
+        val result = try {
+            mcpClient.callTool(name = name, arguments = arguments)
+        } catch (e: CancellationException) {
+            throw e
+        } catch (e: Exception) {
+            McpCallLog.record("callTool($name, $arguments) → FAILED: ${e.message}", isError = true)
+            throw McpToolCallException("Failed to call tool '$name': ${e.message}", e)
+        }
+
+        val text = result.content
+            .filterIsInstance<TextContent>()
+            .joinToString("\n") { it.text }
+        val isError = result.isError ?: false
+
+        McpCallLog.record(
+            "callTool($name, $arguments) → ${if (isError) "ERROR" else "ok"}: ${text.take(120)}${if (text.length > 120) "…" else ""}",
+            isError = isError
+        )
+
+        return McpToolCallResult(text = text, isError = isError)
     }
 
     override suspend fun close() {
