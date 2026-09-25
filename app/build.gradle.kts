@@ -98,4 +98,10 @@ dependencies {
     // Unit tests for the agent layer (plain JVM, no Android/network dependency needed).
     testImplementation("junit:junit:4.13.2")
     testImplementation("org.jetbrains.kotlinx:kotlinx-coroutines-test:1.9.0")
+
+    // Day 16 MCP integration test only: an embedded MCP *server* (kotlin-sdk-server + the
+    // lightweight CIO engine) so KotlinSdkMcpGateway can be exercised end-to-end deterministically
+    // against a real (if minimal) local server instead of the public DeepWiki endpoint.
+    testImplementation("io.modelcontextprotocol:kotlin-sdk-server:0.15.0")
+    testImplementation("io.ktor:ktor-server-cio:3.5.1")
 }
