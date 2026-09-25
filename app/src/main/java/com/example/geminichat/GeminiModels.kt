@@ -1,5 +1,6 @@
 package com.example.geminichat
 
+import kotlinx.serialization.EncodeDefault
 import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
 import kotlinx.serialization.json.JsonElement
@@ -55,7 +56,7 @@ data class GenerationConfig(
  */
 @Serializable
 data class GeminiFunctionTool(
-    val type: String = "function",
+    @EncodeDefault val type: String = "function",
     val name: String,
     val description: String? = null,
     val parameters: JsonObject? = null
@@ -68,7 +69,7 @@ data class GeminiFunctionTool(
  */
 @Serializable
 data class FunctionResultInput(
-    val type: String = "function_result",
+    @EncodeDefault val type: String = "function_result",
     @SerialName("call_id") val callId: String,
     val name: String? = null,
     val result: JsonElement,
