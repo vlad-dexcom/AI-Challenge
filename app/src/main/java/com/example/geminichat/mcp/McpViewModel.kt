@@ -13,6 +13,10 @@ private const val LOG_TAG = "MCP"
  * runs its suspend functions on [viewModelScope], logging every step to Logcat (tag "MCP") so
  * the connection/tool-list can be verified without the UI (`adb logcat -s MCP`). All actual
  * state-machine logic lives in [McpConnectionController], which is unit-tested directly.
+ *
+ * Auto-connects to [McpConfig.FITNESS_SERVER_URL] as soon as the ViewModel is created — the "MCP"
+ * screen has no server-URL field or Connect/Disconnect buttons (Day 17: we only ever talk to our
+ * own fitness MCP server now), so [retry] is the only way left to re-attempt a failed connection.
  */
 class McpViewModel(gateway: McpGateway) : ViewModel() {
 
@@ -24,19 +28,20 @@ class McpViewModel(gateway: McpGateway) : ViewModel() {
 
     val uiState: StateFlow<McpUiState> = controller.state
 
-    fun onUrlChange(url: String) = controller.onUrlChange(url)
-
-    fun connect() {
-        viewModelScope.launch { controller.connect() }
+    init {
+        connect()
     }
 
-    fun disconnect() {
-        viewModelScope.launch { controller.disconnect() }
+    /** Re-attempts the connection, e.g. after [McpStatus.Error]. */
+    fun retry() = connect()
+
+    private fun connect() {
+        viewModelScope.launch { controller.connect() }
     }
 
     // Not closing the gateway in onCleared(): viewModelScope is already cancelled by the time
     // ViewModel.onCleared() runs, so a coroutine launched here would never execute. connect()
-    // always closes any prior connection first, and disconnect() closes explicitly, which
-    // covers Day 16's scope; a more thorough teardown (e.g. Activity-scoped cleanup) is a
-    // later-day concern once callTool()/background work make an open connection more expensive.
+    // always closes any prior connection first, which covers Day 16/17's scope; a more thorough
+    // teardown (e.g. Activity-scoped cleanup) is a later-day concern once background work makes
+    // an open connection more expensive.
 }

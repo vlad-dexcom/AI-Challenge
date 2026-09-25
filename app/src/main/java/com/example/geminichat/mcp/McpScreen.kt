@@ -11,7 +11,6 @@ import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
-import androidx.compose.material3.Button
 import androidx.compose.material3.Card
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.ExperimentalMaterial3Api
@@ -19,7 +18,6 @@ import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedButton
-import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.material3.TopAppBar
@@ -32,9 +30,11 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.unit.dp
 
 /**
- * Day 16 "MCP" screen: lets the user pick a server URL, connect, and see the resulting server
- * identity and tool list (or the connection error). Reached from [com.example.geminichat.ChatScreen]'s
- * app bar, following the same full-screen pattern as its Settings screen.
+ * "MCP" screen: shows the (auto-established) connection to our own fitness MCP server — its
+ * identity and tool list, or the connection error — plus a log of every MCP call made anywhere
+ * in the app. Reached from [com.example.geminichat.ChatScreen]'s app bar. No server-URL field or
+ * Connect/Disconnect buttons: [McpViewModel] connects automatically on creation, since Day 17 we
+ * only ever talk to our own server.
  */
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -61,32 +61,6 @@ fun McpScreen(viewModel: McpViewModel, onBack: () -> Unit) {
                 .padding(16.dp)
                 .verticalScroll(rememberScrollState())
         ) {
-            OutlinedTextField(
-                value = uiState.serverUrl,
-                onValueChange = viewModel::onUrlChange,
-                label = { Text("MCP server URL") },
-                enabled = status !is McpStatus.Connecting,
-                modifier = Modifier.fillMaxWidth()
-            )
-            Spacer(modifier = Modifier.height(12.dp))
-            Row(modifier = Modifier.fillMaxWidth()) {
-                Button(
-                    onClick = viewModel::connect,
-                    enabled = status !is McpStatus.Connecting
-                ) {
-                    Text(if (status is McpStatus.Connected) "Reconnect" else "Connect")
-                }
-                if (status is McpStatus.Connected) {
-                    OutlinedButton(
-                        onClick = viewModel::disconnect,
-                        modifier = Modifier.padding(start = 8.dp)
-                    ) {
-                        Text("Disconnect")
-                    }
-                }
-            }
-            Spacer(modifier = Modifier.height(16.dp))
-
             when (status) {
                 is McpStatus.Idle -> Text(
                     "Not connected.",
@@ -101,11 +75,17 @@ fun McpScreen(viewModel: McpViewModel, onBack: () -> Unit) {
                     )
                 }
 
-                is McpStatus.Error -> Text(
-                    "❌ ${status.message}",
-                    style = MaterialTheme.typography.bodyMedium,
-                    color = MaterialTheme.colorScheme.error
-                )
+                is McpStatus.Error -> Column {
+                    Text(
+                        "❌ ${status.message}",
+                        style = MaterialTheme.typography.bodyMedium,
+                        color = MaterialTheme.colorScheme.error
+                    )
+                    Spacer(modifier = Modifier.height(8.dp))
+                    OutlinedButton(onClick = viewModel::retry) {
+                        Text("Retry")
+                    }
+                }
 
                 is McpStatus.Connected -> McpConnectedContent(status.snapshot)
             }
