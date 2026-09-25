@@ -203,6 +203,28 @@ class ChatViewModel(
     private val preferenceAdvisor = PreferenceAdvisor(client = geminiClient)
     private val taskStateAdvisor = TaskStateAdvisor(client = geminiClient)
 
+    // Day 17: one long-lived gateway to our own fitness MCP server, reused across turns/agent
+    // switches (see [McpToolCallingAgent], which connects it lazily and caches the tool list).
+    private val fitnessMcpGateway = com.example.geminichat.mcp.KotlinSdkMcpGateway()
+
+    /**
+     * Builds the [Agent] behavior for [config]: every persona uses the plain [LlmAgent] except
+     * [AgentCatalog.FITNESS_MCP_COACH] (Day 17), which needs [McpToolCallingAgent] instead so it
+     * can call real tools on [fitnessMcpGateway]. Centralized here so every construction site
+     * below (initial state, [onAgentSelected], [rebuildAgent]) picks the right behavior.
+     */
+    private fun buildAgent(config: AgentConfig): Agent =
+        if (config.id == AgentCatalog.FITNESS_MCP_COACH.id) {
+            com.example.geminichat.agent.mcp.McpToolCallingAgent(
+                config = config,
+                client = geminiClient,
+                mcpGateway = fitnessMcpGateway,
+                serverUrl = com.example.geminichat.mcp.McpConfig.FITNESS_SERVER_URL
+            )
+        } else {
+            LlmAgent(config = config, client = geminiClient, invariants = invariants)
+        }
+
     // Restore whatever was last saved so a fresh process picks the conversation back up —
     // the ViewModel no longer starts every run from a blank slate.
     private val restored = historyStore?.load() ?: ChatHistorySnapshot()
@@ -213,7 +235,7 @@ class ChatViewModel(
     // inside [LlmAgent.handle], not in the ViewModel.
     private var invariants: InvariantSet = invariantStore?.load() ?: InvariantSet.DEFAULTS
 
-    private var agent: Agent = LlmAgent(config = restoredAgentConfig, client = geminiClient, invariants = invariants)
+    private var agent: Agent = buildAgent(restoredAgentConfig)
 
     // Day 10 branching bookkeeping: branches *other than* the currently active one (whose
     // state lives unpacked in [_uiState]), a pending checkpoint ready to be forked, and enough
@@ -296,7 +318,7 @@ class ChatViewModel(
 
     fun onAgentSelected(agentId: String) {
         val config = AgentCatalog.byId(agentId)
-        agent = LlmAgent(config = config, client = geminiClient, invariants = invariants)
+        agent = buildAgent(config)
         _uiState.value = _uiState.value.copy(
             selectedAgentId = config.id,
             agentName = config.displayName,
@@ -311,7 +333,7 @@ class ChatViewModel(
      * [com.example.geminichat.agent.LlmAgent.handle], not in this ViewModel. Enforcement lives
      * in the agent, per the Day 14 requirement, not in the UI layer. */
     private fun rebuildAgent() {
-        agent = LlmAgent(config = agent.config, client = geminiClient, invariants = invariants)
+        agent = buildAgent(agent.config)
     }
 
     /** Persists the current global [invariants] set to its own file, independent of every other
@@ -1139,5 +1161,6 @@ class ChatViewModel(
     override fun onCleared() {
         super.onCleared()
         geminiClient.close()
+        kotlinx.coroutines.CoroutineScope(Dispatchers.IO).launch { fitnessMcpGateway.close() }
     }
 }

@@ -9,6 +9,7 @@ import io.modelcontextprotocol.kotlin.sdk.client.StreamableHttpClientTransport
 import io.modelcontextprotocol.kotlin.sdk.types.Implementation
 import io.modelcontextprotocol.kotlin.sdk.types.ListToolsRequest
 import io.modelcontextprotocol.kotlin.sdk.types.PaginatedRequestParams
+import io.modelcontextprotocol.kotlin.sdk.types.TextContent
 import kotlinx.coroutines.CancellationException
 
 /**
@@ -86,6 +87,24 @@ class KotlinSdkMcpGateway : McpGateway {
             throw McpConnectionException("Failed to list tools: ${e.message}", e)
         }
         return tools
+    }
+
+    override suspend fun callTool(name: String, arguments: Map<String, Any?>): McpToolCallResult {
+        val mcpClient = client ?: throw McpConnectionException("Not connected: call connect() first.")
+
+        val result = try {
+            mcpClient.callTool(name = name, arguments = arguments)
+        } catch (e: CancellationException) {
+            throw e
+        } catch (e: Exception) {
+            throw McpToolCallException("Failed to call tool '$name': ${e.message}", e)
+        }
+
+        val text = result.content
+            .filterIsInstance<TextContent>()
+            .joinToString("\n") { it.text }
+
+        return McpToolCallResult(text = text, isError = result.isError ?: false)
     }
 
     override suspend fun close() {

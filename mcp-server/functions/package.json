@@ -1,0 +1,32 @@
+{
+  "name": "mcp-server-functions",
+  "version": "1.0.0",
+  "private": true,
+  "type": "module",
+  "description": "Firebase Cloud Function exposing an MCP server that wraps the wger.de exercise API.",
+  "engines": {
+    "node": "22"
+  },
+  "main": "lib/index.js",
+  "scripts": {
+    "build": "tsc",
+    "build:watch": "tsc --watch",
+    "serve": "npm run build && firebase emulators:start --only functions",
+    "shell": "npm run build && firebase functions:shell",
+    "start": "npm run shell",
+    "deploy": "firebase deploy --only functions",
+    "logs": "firebase functions:log"
+  },
+  "dependencies": {
+    "@modelcontextprotocol/sdk": "^1.30.1",
+    "firebase-functions": "^7.4.0",
+    "zod": "^4.6.5"
+  },
+  "devDependencies": {
+    "typescript": "^5.6.3"
+  },
+  "overrides": {
+    "jose": "^5.9.6"
+  }
+}
+

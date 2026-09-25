@@ -12,6 +12,15 @@ object McpConfig {
      */
     const val DEFAULT_SERVER_URL = "https://mcp.deepwiki.com/mcp"
 
+    /**
+     * Day 17: our own MCP server — a Firebase Cloud Function wrapping the public wger.de
+     * fitness-exercise API, exposing `get_exercise_info` and `suggest_workout` tools (see
+     * `mcp-server/functions/src/index.ts`). Used by [com.example.geminichat.agent.mcp.McpToolCallingAgent]
+     * so the "Fitness Coach (MCP)" persona in [com.example.geminichat.agent.AgentCatalog] calls
+     * real tools instead of just talking about exercises from the model's own knowledge.
+     */
+    const val FITNESS_SERVER_URL = "https://us-central1-ai-challenge-mcp.cloudfunctions.net/mcp"
+
     const val CLIENT_NAME = "personal-trainer-android"
     val CLIENT_VERSION: String = BuildConfig.VERSION_NAME
 

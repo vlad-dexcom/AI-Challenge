@@ -20,6 +20,8 @@ import com.example.geminichat.agent.LlmClient
 import com.example.geminichat.agent.LlmRequestSpec
 import kotlinx.serialization.SerializationException
 import kotlinx.serialization.json.Json
+import kotlinx.serialization.json.JsonElement
+import kotlinx.serialization.json.JsonPrimitive
 import java.io.IOException
 import java.net.UnknownHostException
 import java.nio.channels.UnresolvedAddressException
@@ -48,7 +50,7 @@ class GeminiApiClient(
      * See `README.md` for how to use it in the running app.
      */
     private val debugContextWindowOverrideTokens: Int? = null,
-) : LlmClient {
+) : LlmClient, com.example.geminichat.agent.mcp.ToolCallingLlmClient {
     companion object {
         /**
          * Curated list of Gemini models selectable in the UI. Useful when a specific model
@@ -123,14 +125,16 @@ class GeminiApiClient(
                 setBody(
                     InteractionRequest(
                         model = spec.model,
-                        input = spec.input,
+                        input = JsonPrimitive(spec.input),
                         systemInstruction = spec.systemInstruction,
                         generationConfig = generationConfig
                     )
                 )
             }
 
-            parseResponse(httpResponse)
+            parseResponse(httpResponse).mapCatching { response ->
+                extractAnswer(response).getOrThrow()
+            }
         } catch (e: HttpRequestTimeoutException) {
             Result.failure(Exception("Request timed out. Please try again."))
         } catch (e: UnresolvedAddressException) {
@@ -146,7 +150,7 @@ class GeminiApiClient(
         }
     }
 
-    private suspend fun parseResponse(httpResponse: HttpResponse): Result<String> {
+    private suspend fun parseResponse(httpResponse: HttpResponse): Result<InteractionResponse> {
         val bodyText = try {
             httpResponse.bodyAsText()
         } catch (e: Exception) {
@@ -179,6 +183,17 @@ class GeminiApiClient(
             return Result.failure(Exception("Received an unexpected response from Gemini."))
         }
 
+        return Result.success(response)
+    }
+
+    /**
+     * Extracts the final model-authored text from a **completed** [response] (see
+     * [InteractionStep] of `type == "model_output"`). Used by [complete] and, once
+     * [InteractionResponse.status] is `"completed"`, by the Day 17 tool-calling loop (see
+     * `agent/mcp/McpToolCallingAgent`) — a `"requires_action"` status means the caller must
+     * inspect `response.steps` for `function_call` steps instead of calling this.
+     */
+    private fun extractAnswer(response: InteractionResponse): Result<String> {
         if (response.status != null && response.status != "completed") {
             return Result.failure(Exception("Gemini did not complete the request (status: ${response.status})."))
         }
@@ -194,6 +209,58 @@ class GeminiApiClient(
             Result.failure(Exception("Gemini returned an empty response."))
         } else {
             Result.success(answer)
+        }
+    }
+
+    /**
+     * Day 17: low-level entry point used by the tool-calling loop
+     * (`agent/mcp/McpToolCallingAgent`) — unlike [complete], it returns the raw
+     * [InteractionResponse] (so a `"requires_action"` status and its `function_call` steps are
+     * visible to the caller) and accepts [tools] plus [previousInteractionId] to continue an
+     * interaction after answering a tool call.
+     */
+    override suspend fun createInteraction(
+        model: String,
+        input: JsonElement,
+        systemInstruction: String?,
+        tools: List<GeminiFunctionTool>?,
+        previousInteractionId: String?
+    ): Result<InteractionResponse> {
+        if (apiKey.isBlank()) {
+            return Result.failure(
+                Exception("No Gemini API key configured. Set GEMINI_API_KEY in local.properties.")
+            )
+        }
+
+        return try {
+            val httpResponse: HttpResponse = client.post {
+                url(endpoint)
+                header("x-goog-api-key", apiKey)
+                contentType(ContentType.Application.Json)
+                setBody(
+                    InteractionRequest(
+                        model = model,
+                        input = input,
+                        systemInstruction = systemInstruction,
+                        tools = tools,
+                        previousInteractionId = previousInteractionId
+                    )
+                )
+            }
+
+            parseResponse(httpResponse)
+        } catch (e: HttpRequestTimeoutException) {
+            Result.failure(Exception("Request timed out. Please try again."))
+        } catch (e: UnresolvedAddressException) {
+            Result.failure(Exception("No internet connection. Please check your network and try again."))
+        } catch (e: UnknownHostException) {
+            Result.failure(Exception("No internet connection. Please check your network and try again."))
+        } catch (e: SerializationException) {
+            Result.failure(Exception("Received an unexpected response from Gemini. Please try again."))
+        } catch (e: IOException) {
+            Result.failure(Exception("Network error: ${e.message ?: "please check your connection and try again."}"))
+        } catch (e: Exception) {
+            Result.failure(Exception(e.message ?: "Something went wrong. Please try again."))
         }
     }
 

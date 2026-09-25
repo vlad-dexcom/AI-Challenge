@@ -27,6 +27,9 @@ private class FakeMcpGateway(
 
     override suspend fun listTools(): List<McpToolInfo> = tools
 
+    override suspend fun callTool(name: String, arguments: Map<String, Any?>): McpToolCallResult =
+        error("callTool not used by these tests")
+
     override suspend fun close() {
         closeCallCount++
     }

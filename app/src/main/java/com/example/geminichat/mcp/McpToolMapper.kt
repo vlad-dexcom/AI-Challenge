@@ -1,8 +1,10 @@
 package com.example.geminichat.mcp
 
 import io.modelcontextprotocol.kotlin.sdk.types.Tool
+import kotlinx.serialization.json.JsonArray
 import kotlinx.serialization.json.JsonObject
 import kotlinx.serialization.json.JsonPrimitive
+import kotlinx.serialization.json.buildJsonObject
 import kotlinx.serialization.json.contentOrNull
 
 /**
@@ -16,7 +18,14 @@ object McpToolMapper {
         name = tool.name,
         title = tool.title ?: tool.annotations?.title,
         description = tool.description,
-        parameters = parseParams(tool.inputSchema.properties, tool.inputSchema.required.orEmpty())
+        parameters = parseParams(tool.inputSchema.properties, tool.inputSchema.required.orEmpty()),
+        rawInputSchema = buildJsonObject {
+            put("type", JsonPrimitive("object"))
+            tool.inputSchema.properties?.let { put("properties", it) }
+            tool.inputSchema.required?.let { required ->
+                put("required", JsonArray(required.map { JsonPrimitive(it) }))
+            }
+        }
     )
 
     private fun parseParams(properties: JsonObject?, required: List<String>): List<McpToolParam> {
