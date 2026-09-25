@@ -249,10 +249,13 @@ toolchain was upgraded to Kotlin 2.4.0/Ktor 3.5.1) and
   the protocol against a third-party example.
 - **`mcp/McpToolMapper.kt`** — maps the SDK's JSON-Schema tool definitions into plain
   `McpToolInfo`/`McpToolParam` domain models.
-- **`mcp/McpConnectionController.kt`** — plain, Android-free state machine
-  (`Idle`/`Connecting`/`Connected`/`Error`) driving the gateway, fully unit-testable.
-- **`mcp/McpViewModel.kt` & `mcp/McpScreen.kt`** — thin `ViewModel` wrapper (adds Logcat + coroutine
-  scope) and the new full-screen Compose UI, reachable from `ChatScreen`'s app bar.
+- **`mcp/McpCallLog.kt` & `mcp/McpScreen.kt`** — an app-wide log of every MCP call (`connect`/
+  `listTools`/`callTool`), recorded by `KotlinSdkMcpGateway` and rendered by a plain,
+  `ViewModel`-free Compose screen reachable from `ChatScreen`'s app bar. Day 16 originally gave
+  this screen its own connection (server-URL field, Connect/Disconnect buttons, server identity +
+  tool list) to demonstrate connect/list-tools in isolation; that connection was redundant with
+  the one the chat's tool-calling agent already opens when it needs a tool, so it was dropped —
+  this screen is now purely a log viewer.
 
 ## Custom MCP tool + agent tool-calling (Day 17)
 

@@ -11,8 +11,6 @@ import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
-import androidx.compose.material3.Card
-import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
@@ -25,23 +23,28 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.unit.dp
+import java.text.SimpleDateFormat
+import java.util.Date
+import java.util.Locale
 
 /**
- * "MCP" screen: shows the (auto-established) connection to our own fitness MCP server — its
- * identity and tool list, or the connection error — plus a log of every MCP call made anywhere
- * in the app. Reached from [com.example.geminichat.ChatScreen]'s app bar. No server-URL field or
- * Connect/Disconnect buttons: [McpViewModel] connects automatically on creation, since Day 17 we
- * only ever talk to our own server.
+ * "MCP" screen: a plain log of every MCP call made anywhere in the app, backed by the app-wide
+ * [McpCallLog] singleton — both calls made while chatting with the "Fitness Coach (MCP tools)"
+ * persona ([com.example.geminichat.agent.mcp.McpToolCallingAgent]) and any other
+ * [KotlinSdkMcpGateway] call, show up here. Reached from [com.example.geminichat.ChatScreen]'s
+ * app bar.
+ *
+ * Day 16 originally had this screen own its own MCP connection (server-URL field,
+ * Connect/Disconnect buttons, server identity + tool list) to demonstrate the connect/list-tools
+ * flow in isolation. That connection was redundant with the one the chat's tool-calling agent
+ * already makes when it needs a tool, so it was dropped: this screen is now display-only.
  */
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun McpScreen(viewModel: McpViewModel, onBack: () -> Unit) {
-    val uiState by viewModel.uiState.collectAsState()
-    val status = uiState.status
-
+fun McpScreen(onBack: () -> Unit) {
     Scaffold(
         topBar = {
             TopAppBar(
@@ -61,55 +64,19 @@ fun McpScreen(viewModel: McpViewModel, onBack: () -> Unit) {
                 .padding(16.dp)
                 .verticalScroll(rememberScrollState())
         ) {
-            when (status) {
-                is McpStatus.Idle -> Text(
-                    "Not connected.",
-                    style = MaterialTheme.typography.bodyMedium
-                )
-
-                is McpStatus.Connecting -> Row {
-                    CircularProgressIndicator(modifier = Modifier.height(20.dp))
-                    Text(
-                        "  Connecting...",
-                        style = MaterialTheme.typography.bodyMedium
-                    )
-                }
-
-                is McpStatus.Error -> Column {
-                    Text(
-                        "❌ ${status.message}",
-                        style = MaterialTheme.typography.bodyMedium,
-                        color = MaterialTheme.colorScheme.error
-                    )
-                    Spacer(modifier = Modifier.height(8.dp))
-                    OutlinedButton(onClick = viewModel::retry) {
-                        Text("Retry")
-                    }
-                }
-
-                is McpStatus.Connected -> McpConnectedContent(status.snapshot)
-            }
-
-            Spacer(modifier = Modifier.height(24.dp))
             McpCallLogContent()
         }
     }
 }
 
-/**
- * Day 17: brief, timestamped log of every MCP call made by any [KotlinSdkMcpGateway] — both
- * ones made from this screen (connect/list tools) and ones made while chatting with the
- * "Fitness Coach (MCP tools)" persona ([com.example.geminichat.agent.mcp.McpToolCallingAgent]).
- * Backed by [McpCallLog], an app-wide singleton, so calls made elsewhere still show up here.
- */
 @Composable
 private fun McpCallLogContent() {
     val entries by McpCallLog.entries.collectAsState()
-    val timeFormat = remember { java.text.SimpleDateFormat("HH:mm:ss", java.util.Locale.getDefault()) }
+    val timeFormat = remember { SimpleDateFormat("HH:mm:ss", Locale.getDefault()) }
 
     Row(
         modifier = Modifier.fillMaxWidth(),
-        verticalAlignment = androidx.compose.ui.Alignment.CenterVertically
+        verticalAlignment = Alignment.CenterVertically
     ) {
         Text(
             "Call log (${entries.size})",
@@ -124,68 +91,17 @@ private fun McpCallLogContent() {
 
     if (entries.isEmpty()) {
         Text(
-            "No MCP calls yet. Connect above, or chat with the \"Fitness Coach (MCP tools)\" agent.",
+            "No MCP calls yet. Chat with the \"Fitness Coach (MCP tools)\" agent to trigger one.",
             style = MaterialTheme.typography.bodyMedium
         )
     } else {
         entries.asReversed().forEach { entry ->
             Text(
-                "${timeFormat.format(java.util.Date(entry.timestampMs))}  ${entry.summary}",
+                "${timeFormat.format(Date(entry.timestampMs))}  ${entry.summary}",
                 style = MaterialTheme.typography.bodySmall,
                 color = if (entry.isError) MaterialTheme.colorScheme.error else MaterialTheme.colorScheme.onSurface,
                 modifier = Modifier.padding(vertical = 2.dp)
             )
-        }
-    }
-}
-
-@Composable
-private fun McpConnectedContent(snapshot: McpConnectionSnapshot) {
-    Card(modifier = Modifier.fillMaxWidth()) {
-        Column(modifier = Modifier.padding(12.dp)) {
-            Text("✅ Connected", color = Color(0xFF2E7D32), style = MaterialTheme.typography.titleMedium)
-            Text("Server: ${snapshot.server.name} ${snapshot.server.version}")
-            Text("Capabilities: ${snapshot.server.capabilities.ifEmpty { listOf("(none)") }.joinToString()}")
-            snapshot.server.instructions?.takeIf { it.isNotBlank() }?.let {
-                Text("Instructions: $it", style = MaterialTheme.typography.bodySmall)
-            }
-            Text("Latency: ${snapshot.latencyMs} ms", style = MaterialTheme.typography.bodySmall)
-        }
-    }
-
-    Spacer(modifier = Modifier.height(16.dp))
-    Text(
-        "Tools (${snapshot.tools.size})",
-        style = MaterialTheme.typography.titleMedium
-    )
-    Spacer(modifier = Modifier.height(8.dp))
-
-    if (snapshot.tools.isEmpty()) {
-        Text("Server exposes no tools.", style = MaterialTheme.typography.bodyMedium)
-    } else {
-        snapshot.tools.forEach { tool ->
-            Card(modifier = Modifier.fillMaxWidth().padding(vertical = 4.dp)) {
-                Column(modifier = Modifier.padding(12.dp)) {
-                    Text(tool.title ?: tool.name, style = MaterialTheme.typography.titleSmall)
-                    if (tool.title != null) {
-                        Text(tool.name, style = MaterialTheme.typography.labelSmall)
-                    }
-                    tool.description?.let {
-                        Text(it, style = MaterialTheme.typography.bodySmall)
-                    }
-                    if (tool.parameters.isNotEmpty()) {
-                        Spacer(modifier = Modifier.height(4.dp))
-                        tool.parameters.forEach { param ->
-                            val marker = if (param.required) "*" else ""
-                            Text(
-                                "• ${param.name}$marker: ${param.type ?: "any"}" +
-                                    (param.description?.let { " — $it" } ?: ""),
-                                style = MaterialTheme.typography.labelSmall
-                            )
-                        }
-                    }
-                }
-            }
         }
     }
 }

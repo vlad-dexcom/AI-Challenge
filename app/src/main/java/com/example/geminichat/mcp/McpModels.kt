@@ -44,14 +44,6 @@ data class McpServerInfo(
     val instructions: String?
 )
 
-/** Successful outcome of [McpGateway.connect] + [McpGateway.listTools]: what the UI renders. */
-data class McpConnectionSnapshot(
-    val serverUrl: String,
-    val server: McpServerInfo,
-    val tools: List<McpToolInfo>,
-    val latencyMs: Long
-)
-
 /** Thrown by [McpGateway] implementations for any connection/handshake/listing failure. */
 class McpConnectionException(message: String, cause: Throwable? = null) : Exception(message, cause)
 

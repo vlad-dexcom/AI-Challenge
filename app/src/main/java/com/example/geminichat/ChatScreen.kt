@@ -70,7 +70,6 @@ import com.example.geminichat.agent.task.TaskTransitionRecord
 import com.example.geminichat.agent.task.TaskTransitionSuggestion
 import com.example.geminichat.agent.task.ValidationOutcome
 import com.example.geminichat.mcp.McpScreen
-import com.example.geminichat.mcp.McpViewModel
 import dev.jeziellago.compose.markdowntext.MarkdownText
 
 /**
@@ -81,7 +80,7 @@ import dev.jeziellago.compose.markdowntext.MarkdownText
  */
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun ChatScreen(viewModel: ChatViewModel, mcpViewModel: McpViewModel) {
+fun ChatScreen(viewModel: ChatViewModel) {
     val uiState by viewModel.uiState.collectAsState()
     val listState = rememberLazyListState()
     var showSettings by remember { mutableStateOf(false) }
@@ -100,7 +99,7 @@ fun ChatScreen(viewModel: ChatViewModel, mcpViewModel: McpViewModel) {
     }
 
     if (showMcp) {
-        McpScreen(viewModel = mcpViewModel, onBack = { showMcp = false })
+        McpScreen(onBack = { showMcp = false })
         return
     }
 
