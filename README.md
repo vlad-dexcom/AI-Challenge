@@ -232,6 +232,27 @@ without validation). See `docs/day15-controlled-transitions.md` for the full wri
 - **UI** — dynamic buttons rendered strictly per `allowedEvents()`, forbidden action hints,
   expandable transition journal, and badged/tinted chat bubbles for stage refusals.
 
+## MCP connection (Day 16)
+
+The app is now also an **MCP client/host**: it can open a Streamable HTTP connection to an
+external [Model Context Protocol](https://modelcontextprotocol.io/) server and list the tools it
+exposes. See `docs/day16-mcp-connection.md` for the full write-up (including why the whole
+toolchain was upgraded to Kotlin 2.4.0/Ktor 3.5.1) and
+`docs/day16-mcp-connection-test-scenario.md` for a manual test walkthrough.
+
+- **`mcp/McpGateway.kt`** — abstraction (`connect`/`listTools`/`close`) keeping MCP SDK types out
+  of the rest of the app.
+- **`mcp/KotlinSdkMcpGateway.kt`** — real implementation on top of the official
+  `io.modelcontextprotocol:kotlin-sdk-client:0.15.0`, using `StreamableHttpClientTransport` +
+  `Client`; connects, by default, to the public [DeepWiki MCP server](https://mcp.deepwiki.com/mcp)
+  (a local/custom server is planned for Day 17).
+- **`mcp/McpToolMapper.kt`** — maps the SDK's JSON-Schema tool definitions into plain
+  `McpToolInfo`/`McpToolParam` domain models.
+- **`mcp/McpConnectionController.kt`** — plain, Android-free state machine
+  (`Idle`/`Connecting`/`Connected`/`Error`) driving the gateway, fully unit-testable.
+- **`mcp/McpViewModel.kt` & `mcp/McpScreen.kt`** — thin `ViewModel` wrapper (adds Logcat + coroutine
+  scope) and the new full-screen Compose UI, reachable from `ChatScreen`'s app bar.
+
 ## Setup
 
 1. Get a Gemini API key from [Google AI Studio](https://aistudio.google.com/apikey).
@@ -267,6 +288,8 @@ without validation). See `docs/day15-controlled-transitions.md` for the full wri
   `TaskStateRenderer`, `TaskStateStore`, `TaskStateAdvisor`).
 - `agent/invariant/` — the Day 14 hard invariants (`Invariant`, `InvariantSet`/`InvariantRules`,
   `InvariantRenderer`, `InvariantGuard`, `InvariantStore`).
+- `mcp/` — the Day 16 MCP client (`McpGateway`/`KotlinSdkMcpGateway`, `McpToolMapper`,
+  `McpConnectionController`, `McpViewModel`, `McpScreen`).
 - `GeminiModels.kt` — kotlinx.serialization request/response DTOs for the Gemini Interactions
   API, including `system_instruction` and `generation_config`.
 - `GeminiApiClient.kt` — Ktor `HttpClient` wrapper implementing `LlmClient`; POSTs the request

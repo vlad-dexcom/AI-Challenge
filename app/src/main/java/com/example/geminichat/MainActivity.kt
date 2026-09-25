@@ -13,6 +13,8 @@ import com.example.geminichat.agent.memory.WorkingMemoryStore
 import com.example.geminichat.agent.profile.UserProfileStore
 import com.example.geminichat.agent.task.TaskStateStore
 import com.example.geminichat.agent.task.TaskTransitionLogStore
+import com.example.geminichat.mcp.KotlinSdkMcpGateway
+import com.example.geminichat.mcp.McpViewModel
 import java.io.File
 
 class MainActivity : ComponentActivity() {
@@ -58,10 +60,21 @@ class MainActivity : ComponentActivity() {
         }
     }
 
+    // Day 16: MCP client ViewModel. Uses its own simple factory (no persisted stores yet) since
+    // it only needs a fresh McpGateway per app process.
+    private val mcpViewModel: McpViewModel by viewModels {
+        object : ViewModelProvider.Factory {
+            override fun <T : ViewModel> create(modelClass: Class<T>, extras: CreationExtras): T {
+                @Suppress("UNCHECKED_CAST")
+                return McpViewModel(gateway = KotlinSdkMcpGateway()) as T
+            }
+        }
+    }
+
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContent {
-            ChatScreen(viewModel = viewModel)
+            ChatScreen(viewModel = viewModel, mcpViewModel = mcpViewModel)
         }
     }
 }

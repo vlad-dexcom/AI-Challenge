@@ -38,6 +38,7 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.automirrored.filled.Send
 import androidx.compose.material.icons.filled.ArrowDropDown
+import androidx.compose.material.icons.filled.Build
 import androidx.compose.material.icons.filled.Settings
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
@@ -68,6 +69,8 @@ import com.example.geminichat.agent.task.TaskTransitionAction
 import com.example.geminichat.agent.task.TaskTransitionRecord
 import com.example.geminichat.agent.task.TaskTransitionSuggestion
 import com.example.geminichat.agent.task.ValidationOutcome
+import com.example.geminichat.mcp.McpScreen
+import com.example.geminichat.mcp.McpViewModel
 import dev.jeziellago.compose.markdowntext.MarkdownText
 
 /**
@@ -78,11 +81,12 @@ import dev.jeziellago.compose.markdowntext.MarkdownText
  */
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun ChatScreen(viewModel: ChatViewModel) {
+fun ChatScreen(viewModel: ChatViewModel, mcpViewModel: McpViewModel) {
     val uiState by viewModel.uiState.collectAsState()
     val listState = rememberLazyListState()
     var showSettings by remember { mutableStateOf(false) }
     var showBranchSheet by remember { mutableStateOf(false) }
+    var showMcp by remember { mutableStateOf(false) }
 
     LaunchedEffect(uiState.messages.size) {
         if (uiState.messages.isNotEmpty()) {
@@ -92,6 +96,11 @@ fun ChatScreen(viewModel: ChatViewModel) {
 
     if (showSettings) {
         SettingsScreen(uiState = uiState, viewModel = viewModel, onBack = { showSettings = false })
+        return
+    }
+
+    if (showMcp) {
+        McpScreen(viewModel = mcpViewModel, onBack = { showMcp = false })
         return
     }
 
@@ -118,6 +127,12 @@ fun ChatScreen(viewModel: ChatViewModel) {
                             Icon(
                                 imageVector = ImageVector.vectorResource(R.drawable.ic_branch),
                                 contentDescription = "Branch"
+                            )
+                        }
+                        IconButton(onClick = { showMcp = true }) {
+                            Icon(
+                                Icons.Filled.Build,
+                                contentDescription = "MCP"
                             )
                         }
                         IconButton(onClick = { showSettings = true }) {

@@ -4,6 +4,7 @@ plugins {
     id("com.android.application")
     id("org.jetbrains.kotlin.android")
     id("org.jetbrains.kotlin.plugin.serialization")
+    id("org.jetbrains.kotlin.plugin.compose")
 }
 
 val localProperties = Properties().apply {
@@ -42,16 +43,19 @@ android {
         buildConfig = true
     }
 
-    composeOptions {
-        kotlinCompilerExtensionVersion = "1.5.14"
-    }
+    // The Compose compiler version is now driven by the org.jetbrains.kotlin.plugin.compose
+    // Gradle plugin (applied above), which pins it to the Kotlin version automatically —
+    // composeOptions.kotlinCompilerExtensionVersion is no longer needed/used.
 
     compileOptions {
         sourceCompatibility = JavaVersion.VERSION_17
         targetCompatibility = JavaVersion.VERSION_17
     }
-    kotlinOptions {
-        jvmTarget = "17"
+}
+
+kotlin {
+    compilerOptions {
+        jvmTarget.set(org.jetbrains.kotlin.gradle.dsl.JvmTarget.JVM_17)
     }
 }
 
@@ -71,18 +75,33 @@ dependencies {
     // Ktor client (plain REST calls, no Gemini SDK). Uses the OkHttp engine — the
     // legacy Android engine has known issues where timeouts aren't reliably enforced,
     // which can cause a stalled connection to hang forever instead of failing.
-    implementation("io.ktor:ktor-client-core:2.3.12")
-    implementation("io.ktor:ktor-client-okhttp:2.3.12")
-    implementation("io.ktor:ktor-client-content-negotiation:2.3.12")
-    implementation("io.ktor:ktor-serialization-kotlinx-json:2.3.12")
-    implementation("org.jetbrains.kotlinx:kotlinx-serialization-json:1.6.3")
+    // Ktor 3.5.1 (bumped from 2.3.12 on Day 16) is the version the MCP Kotlin SDK
+    // (io.modelcontextprotocol:kotlin-sdk-client) is compiled against.
+    implementation("io.ktor:ktor-client-core:3.5.1")
+    implementation("io.ktor:ktor-client-okhttp:3.5.1")
+    implementation("io.ktor:ktor-client-content-negotiation:3.5.1")
+    implementation("io.ktor:ktor-serialization-kotlinx-json:3.5.1")
+    // Server-Sent Events plugin, required by the MCP SDK's StreamableHttpClientTransport.
+    implementation("io.ktor:ktor-sse:3.5.1")
+    implementation("org.jetbrains.kotlinx:kotlinx-serialization-json:1.7.3")
 
     implementation("androidx.core:core-ktx:1.13.1")
 
     // Markdown rendering for chat messages (wraps Markwon via an AndroidView TextView).
     implementation("com.github.jeziellago:compose-markdown:0.7.2")
 
+    // Day 16: MCP Kotlin SDK, used as an MCP *client* to connect to remote MCP servers
+    // (see app/src/main/java/com/example/geminichat/mcp/). Client-only artifact — no
+    // server-side APIs are pulled in.
+    implementation("io.modelcontextprotocol:kotlin-sdk-client:0.15.0")
+
     // Unit tests for the agent layer (plain JVM, no Android/network dependency needed).
     testImplementation("junit:junit:4.13.2")
-    testImplementation("org.jetbrains.kotlinx:kotlinx-coroutines-test:1.8.1")
+    testImplementation("org.jetbrains.kotlinx:kotlinx-coroutines-test:1.9.0")
+
+    // Day 16 MCP integration test only: an embedded MCP *server* (kotlin-sdk-server + the
+    // lightweight CIO engine) so KotlinSdkMcpGateway can be exercised end-to-end deterministically
+    // against a real (if minimal) local server instead of the public DeepWiki endpoint.
+    testImplementation("io.modelcontextprotocol:kotlin-sdk-server:0.15.0")
+    testImplementation("io.ktor:ktor-server-cio:3.5.1")
 }
