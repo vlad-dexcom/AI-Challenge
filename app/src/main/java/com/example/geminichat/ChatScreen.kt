@@ -1295,6 +1295,28 @@ private fun SettingsScreen(uiState: ChatUiState, viewModel: ChatViewModel, onBac
                 verticalAlignment = Alignment.CenterVertically
             ) {
                 Text(
+                    text = "Agent",
+                    style = MaterialTheme.typography.labelLarge,
+                    modifier = Modifier.weight(1f)
+                )
+                AgentSelector(
+                    selectedAgentId = uiState.selectedAgentId,
+                    availableAgents = uiState.availableAgents,
+                    enabled = !uiState.isLoading,
+                    onAgentSelected = viewModel::onAgentSelected
+                )
+            }
+            Text(
+                text = uiState.agentDescription,
+                style = MaterialTheme.typography.bodySmall,
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
+                modifier = Modifier.padding(horizontal = 12.dp)
+            )
+            Row(
+                modifier = Modifier.fillMaxWidth().padding(horizontal = 12.dp, vertical = 8.dp),
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                Text(
                     text = "Model",
                     style = MaterialTheme.typography.labelLarge,
                     modifier = Modifier.weight(1f)
@@ -1325,6 +1347,39 @@ private fun SettingsScreen(uiState: ChatUiState, viewModel: ChatViewModel, onBac
                 onApplyPreset = viewModel::onApplyInvariantPreset,
                 onReset = viewModel::onResetInvariants
             )
+        }
+    }
+}
+
+@Composable
+private fun AgentSelector(
+    selectedAgentId: String,
+    availableAgents: List<com.example.geminichat.agent.AgentConfig>,
+    enabled: Boolean,
+    onAgentSelected: (String) -> Unit
+) {
+    var expanded by remember { mutableStateOf(false) }
+    val selectedName = availableAgents.firstOrNull { it.id == selectedAgentId }?.displayName
+        ?: selectedAgentId
+
+    Box {
+        TextButton(onClick = { if (enabled) expanded = true }, enabled = enabled) {
+            Text(selectedName)
+            Icon(Icons.Filled.ArrowDropDown, contentDescription = "Select agent")
+        }
+        DropdownMenu(
+            expanded = expanded,
+            onDismissRequest = { expanded = false }
+        ) {
+            availableAgents.forEach { agentConfig ->
+                DropdownMenuItem(
+                    text = { Text(agentConfig.displayName) },
+                    onClick = {
+                        onAgentSelected(agentConfig.id)
+                        expanded = false
+                    }
+                )
+            }
         }
     }
 }
