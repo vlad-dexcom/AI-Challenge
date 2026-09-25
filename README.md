@@ -244,7 +244,9 @@ toolchain was upgraded to Kotlin 2.4.0/Ktor 3.5.1) and
   types out of the rest of the app.
 - **`mcp/KotlinSdkMcpGateway.kt`** — real implementation on top of the official
   `io.modelcontextprotocol:kotlin-sdk-client:0.15.0`, using `StreamableHttpClientTransport` +
-  `Client`; connects, by default, to the public [DeepWiki MCP server](https://mcp.deepwiki.com/mcp).
+  `Client`; connects, by default, to our own MCP server (Day 17, see below) — Day 16 originally
+  defaulted this to the public [DeepWiki MCP server](https://mcp.deepwiki.com/mcp) just to learn
+  the protocol against a third-party example.
 - **`mcp/McpToolMapper.kt`** — maps the SDK's JSON-Schema tool definitions into plain
   `McpToolInfo`/`McpToolParam` domain models.
 - **`mcp/McpConnectionController.kt`** — plain, Android-free state machine

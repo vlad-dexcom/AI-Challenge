@@ -38,14 +38,14 @@ private class FakeMcpGateway(
 class McpConnectionControllerTest {
 
     private val fakeServer = McpServerInfo(
-        name = "deepwiki",
+        name = "fitness-mcp",
         version = "1.0.0",
         capabilities = listOf("tools"),
-        instructions = "Ask about a repo."
+        instructions = "Ask about exercises and workouts."
     )
     private val fakeTools = listOf(
-        McpToolInfo("read_wiki_structure", title = null, description = "List wiki sections", parameters = emptyList()),
-        McpToolInfo("ask_question", title = "Ask a question", description = "Ask about a repo", parameters = emptyList())
+        McpToolInfo("get_exercise_info", title = null, description = "Look up an exercise", parameters = emptyList()),
+        McpToolInfo("suggest_workout", title = "Suggest a workout", description = "Suggest a workout plan", parameters = emptyList())
     )
 
     @Test
@@ -54,7 +54,7 @@ class McpConnectionControllerTest {
 
         val state = controller.state.value
 
-        assertEquals(McpConfig.DEFAULT_SERVER_URL, state.serverUrl)
+        assertEquals(McpConfig.FITNESS_SERVER_URL, state.serverUrl)
         assertEquals(McpStatus.Idle, state.status)
     }
 
@@ -62,7 +62,7 @@ class McpConnectionControllerTest {
     fun `connect transitions to Connected with server info and tools on success`() = runTest {
         val gateway = FakeMcpGateway(serverInfo = fakeServer, tools = fakeTools)
         val controller = McpConnectionController(gateway)
-        controller.onUrlChange("https://mcp.deepwiki.com/mcp")
+        controller.onUrlChange("https://example.com/mcp")
 
         controller.connect()
 
@@ -71,7 +71,7 @@ class McpConnectionControllerTest {
         val connected = status as McpStatus.Connected
         assertEquals(fakeServer, connected.snapshot.server)
         assertEquals(fakeTools, connected.snapshot.tools)
-        assertEquals("https://mcp.deepwiki.com/mcp", gateway.lastConnectedUrl)
+        assertEquals("https://example.com/mcp", gateway.lastConnectedUrl)
     }
 
     @Test

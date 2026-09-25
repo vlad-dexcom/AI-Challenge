@@ -12,7 +12,7 @@ sealed class McpStatus {
 }
 
 data class McpUiState(
-    val serverUrl: String = McpConfig.DEFAULT_SERVER_URL,
+    val serverUrl: String = McpConfig.FITNESS_SERVER_URL,
     val status: McpStatus = McpStatus.Idle
 )
 

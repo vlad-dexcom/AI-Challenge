@@ -16,7 +16,7 @@ import kotlinx.coroutines.CancellationException
  * [McpGateway] implementation on top of the official MCP Kotlin SDK
  * (`io.modelcontextprotocol:kotlin-sdk-client`), using the Streamable HTTP transport (the SDK's
  * recommended network transport — stdio only makes sense for a locally-spawned server process,
- * which an Android app cannot do for a remote MCP server like DeepWiki).
+ * which an Android app cannot do for a remote MCP server).
  *
  * One instance owns exactly one connection: call [connect] once, then [listTools] any number of
  * times, and [close] when done (or before reconnecting to a different URL).
