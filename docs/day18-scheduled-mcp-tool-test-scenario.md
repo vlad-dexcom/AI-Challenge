@@ -83,32 +83,59 @@
 
 ---
 
-## Шаг 4 — Проверка фонового выполнения напрямую (adb)
+## Шаг 4 — Принудительный запуск для теста (adb)
 
-Расписание — минимум 15 минут (ограничение `WorkManager`), ждать вручную неудобно. Приложение само
-пишет в Logcat `job-id` этой периодической работы сразу после запуска (`WorkoutDigestScheduler`,
-тег `WorkoutDigestScheduler`) — так надёжнее, чем парсить `dumpsys` вручную или искать кнопку
-"Run now" в Background Task Inspector (она есть не во всех версиях Android Studio).
+Расписание — минимум 15 минут (ограничение `WorkManager`), ждать вручную неудобно.
+`adb shell cmd jobscheduler run -f ...` (даже зная правильный `job-id`) не всегда реально
+доводит выполнение до `WorkoutDigestWorker.doWork()` — это системный джоб-шедулер, а не сам
+воркер, и на части эмуляторов/версий Android форс-запуск джобы либо тихо не срабатывает, либо
+джоб уже находится в другом внутреннем состоянии (например, backoff после предыдущей попытки) и
+команда молча ничего не делает. Поэтому самый надёжный способ — специальный debug-триггер в
+приложении (`WorkoutDigestDebugReceiver`), который ставит **тот же воркер** в очередь напрямую
+через `WorkManager.enqueue(...)`, вообще не трогая системный `JobScheduler`:
 
-1. Откройте (или перезапустите) приложение — в Logcat появится строка вида:
-   ```
-   I/WorkoutDigestScheduler: Workout digest job id=42 - run it now with: adb shell cmd jobscheduler run -f com.example.geminichat 42
-   ```
-2. Скопируйте и выполните одну команду ниже — она сама находит эту строку в Logcat и сразу
-   запускает задачу, игнорируя ограничения (`-f`):
-   ```bash
-   JOB_ID=$(adb logcat -d -s WorkoutDigestScheduler:I | grep -o 'job id=[0-9]*' | tail -1 | grep -o '[0-9]*') && adb shell cmd jobscheduler run -f com.example.geminichat "$JOB_ID"
-   ```
+```bash
+adb shell am broadcast -a com.example.geminichat.RUN_WORKOUT_DIGEST_NOW
+```
 
-Если `JOB_ID` пустой — приложение ещё не успело залогировать id (подождите секунду после запуска
-и повторите) либо Logcat уже был очищен раньше, чем появилась нужная строка; перезапустите
-приложение и выполните команду снова.
+Эта команда работает только в debug-сборке (`BuildConfig.DEBUG`), достаточно одной команды, id
+джобы искать не нужно.
+
+Проверьте в Logcat, что воркер реально отработал и что он видит записанные тренировки:
+
+```bash
+adb logcat -d -s WorkoutDigestWorker:I WorkoutDigestWorker:E
+```
+
+Ожидаемая строка при успехе (число тренировок и минут должно быть больше нуля, если вы уже
+логировали тренировки на Шаге 2):
+
+```
+I/WorkoutDigestWorker: doWork succeeded: 3 logged workout(s) read, summary=totalWorkouts=3 totalMinutes=95
+```
+
+Если вместо этого видно `doWork failed, will retry` со стектрейсом — это и есть причина, по
+которой сводка не появляется; пришлите этот стектрейс для диагностики.
+
+<details>
+<summary>Альтернатива: через системный JobScheduler (менее надёжно)</summary>
+
+Приложение также логирует `job-id` реальной периодической задачи (`WorkoutDigestScheduler`,
+тег `WorkoutDigestScheduler`) сразу после запуска — на случай, если хочется протестировать именно
+системный форс-запуск джобы, а не путь через `enqueue(...)`:
+
+```bash
+JOB_ID=$(adb logcat -d -s WorkoutDigestScheduler:I | grep -o 'job id=[0-9]*' | tail -1 | grep -o '[0-9]*') && adb shell cmd jobscheduler run -f com.example.geminichat "$JOB_ID"
+```
+
+Как показала практика, этот путь не всегда доходит до `doWork()` — предпочитайте команду
+`am broadcast` выше.
+
+</details>
 
 Также можно временно уменьшить интервал в `WorkoutDigestScheduler.schedule(context,
 repeatIntervalMinutes = ...)` только для локальной отладки (не коммитить) — минимум, который
 реально примет `WorkManager`, всё равно 15 минут.
-
-
 
 ---
 

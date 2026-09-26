@@ -1,6 +1,7 @@
 package com.example.geminichat.agent.workout
 
 import android.content.Context
+import android.util.Log
 import androidx.work.CoroutineWorker
 import androidx.work.WorkerParameters
 import java.io.File
@@ -27,6 +28,7 @@ class WorkoutDigestWorker(
 ) : CoroutineWorker(context, params) {
 
     override suspend fun doWork(): Result = withContext(Dispatchers.IO) {
+        Log.i(TAG, "doWork started (runAttemptCount=$runAttemptCount)")
         try {
             val logStore = WorkoutLogStore(File(applicationContext.filesDir, WorkoutLogStore.FILE_NAME))
             val summaryStore =
@@ -38,11 +40,22 @@ class WorkoutDigestWorker(
                 nowEpochMillis = System.currentTimeMillis()
             )
             summaryStore.save(summary)
+            Log.i(
+                TAG,
+                "doWork succeeded: ${logs.size} logged workout(s) read, " +
+                    "summary=totalWorkouts=${summary.totalWorkouts} totalMinutes=${summary.totalMinutes}"
+            )
             Result.success()
         } catch (e: Exception) {
             // Transient failure (e.g. disk I/O) — let WorkManager retry on its own schedule
             // rather than surfacing a crash; the previous summary just stays stale until then.
+            Log.e(TAG, "doWork failed, will retry", e)
             Result.retry()
         }
     }
+
+    companion object {
+        private const val TAG = "WorkoutDigestWorker"
+    }
 }
+
