@@ -29,20 +29,33 @@ private val plannerJson = Json { ignoreUnknownKeys = true }
  * calls [SAVE_WORKOUT_PLAN] with that plan JSON. Each step's *input* is the previous step's
  * *output*, verbatim — this is what proves automatic chaining with correct data hand-off (see
  * `McpToolCallingAgentPipelineTest`).
+ *
+ * Every `connect`/`listTools`/`callTool` also records a [McpCallLog] entry, exactly like
+ * [KotlinSdkMcpGateway] — so the 3-step chain is visible live on [McpScreen]'s "Call log", not
+ * just in unit tests.
  */
 class LocalWorkoutPlannerMcpGateway(
     private val planStore: SavedWorkoutPlanStore
 ) : McpGateway {
 
-    override suspend fun connect(serverUrl: String): McpServerInfo =
-        McpServerInfo(
+    override suspend fun connect(serverUrl: String): McpServerInfo {
+        val info = McpServerInfo(
             name = "workout-plan-builder-local",
             version = "1.0.0",
             capabilities = listOf("tools"),
             instructions = null
         )
+        McpCallLog.record("connect($serverUrl) → ${info.name} ${info.version}")
+        return info
+    }
 
-    override suspend fun listTools(): List<McpToolInfo> = listOf(
+    override suspend fun listTools(): List<McpToolInfo> {
+        val tools = buildToolList()
+        McpCallLog.record("listTools() → ${tools.size} tool(s): ${tools.joinToString(", ") { it.name }}")
+        return tools
+    }
+
+    private fun buildToolList(): List<McpToolInfo> = listOf(
         McpToolInfo(
             name = FIND_EXERCISES,
             title = "Find exercises",
@@ -128,13 +141,20 @@ class LocalWorkoutPlannerMcpGateway(
         )
     )
 
-    override suspend fun callTool(name: String, arguments: Map<String, Any?>): McpToolCallResult =
-        when (name) {
+    override suspend fun callTool(name: String, arguments: Map<String, Any?>): McpToolCallResult {
+        val result = when (name) {
             FIND_EXERCISES -> findExercises(arguments)
             BUILD_WORKOUT_PLAN -> buildWorkoutPlan(arguments)
             SAVE_WORKOUT_PLAN -> saveWorkoutPlan(arguments)
             else -> throw McpToolCallException("Unknown tool \"$name\".")
         }
+        McpCallLog.record(
+            "callTool($name, $arguments) → ${if (result.isError) "ERROR" else "ok"}: " +
+                "${result.text.take(120)}${if (result.text.length > 120) "…" else ""}",
+            isError = result.isError
+        )
+        return result
+    }
 
     override suspend fun close() {
         // No connection/resource to release — everything here is plain in-memory data + local

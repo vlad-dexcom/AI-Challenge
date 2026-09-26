@@ -63,6 +63,16 @@ app/src/main/java/com/example/geminichat/
 no-op рукопожатие, а `callTool` диспатчит на `ExerciseCatalog`/`WorkoutPlanBuilder`/
 `SavedWorkoutPlanStore` вместо сетевого вызова.
 
+## Видимость на экране MCP (Call log)
+
+Изначально локальные шлюзы (`LocalWorkoutMcpGateway` из Day 18, и новый
+`LocalWorkoutPlannerMcpGateway`) не писали в общий `McpCallLog` — это делал только удалённый
+`KotlinSdkMcpGateway`, поэтому на экране **MCP** («Call log») не было видно ни вызовов Day 18,
+ни новой цепочки Day 19. Исправлено: `connect`/`listTools`/`callTool` у обоих локальных шлюзов
+теперь тоже вызывают `McpCallLog.record(...)` в том же формате, что и `KotlinSdkMcpGateway`, —
+все три шага пайплайна видны на экране MCP сразу, в реальном времени, без необходимости смотреть
+`adb logcat`.
+
 ## Валидация hand-off между шагами
 
 `build_workout_plan` и `save_workout_plan` не доверяют входным данным вслепую: перед обработкой

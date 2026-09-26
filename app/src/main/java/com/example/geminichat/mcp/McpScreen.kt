@@ -32,10 +32,12 @@ import java.util.Locale
 
 /**
  * "MCP" screen: a plain log of every MCP call made anywhere in the app, backed by the app-wide
- * [McpCallLog] singleton — both calls made while chatting with the "Fitness Coach (MCP tools)"
- * persona ([com.example.geminichat.agent.mcp.McpToolCallingAgent]) and any other
- * [KotlinSdkMcpGateway] call, show up here. Reached from [com.example.geminichat.ChatScreen]'s
- * app bar.
+ * [McpCallLog] singleton — calls made while chatting with any of the MCP-tool personas
+ * ("Fitness Coach (MCP tools)", "Workout Digest (scheduled)", "Workout Plan Builder (tool
+ * pipeline)" — see [com.example.geminichat.agent.mcp.McpToolCallingAgent]) and any other
+ * [KotlinSdkMcpGateway] call all show up here, whether the tools ran over the network
+ * ([KotlinSdkMcpGateway]) or purely locally ([LocalWorkoutMcpGateway],
+ * [LocalWorkoutPlannerMcpGateway]). Reached from [com.example.geminichat.ChatScreen]'s app bar.
  *
  * Day 16 originally had this screen own its own MCP connection (server-URL field,
  * Connect/Disconnect buttons, server identity + tool list) to demonstrate the connect/list-tools
