@@ -87,6 +87,11 @@ dependencies {
 
     implementation("androidx.core:core-ktx:1.13.1")
 
+    // Day 18: schedules the periodic workout-digest aggregation (see
+    // agent/workout/WorkoutDigestWorker.kt) so it keeps running in the background across app
+    // restarts/process death, without a dedicated always-on server.
+    implementation("androidx.work:work-runtime-ktx:2.9.1")
+
     // Markdown rendering for chat messages (wraps Markwon via an AndroidView TextView).
     implementation("com.github.jeziellago:compose-markdown:0.7.2")
 

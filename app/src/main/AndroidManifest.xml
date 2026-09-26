@@ -18,6 +18,18 @@
                 <category android:name="android.intent.category.LAUNCHER" />
             </intent-filter>
         </activity>
+
+        <!-- Day 18 debug/QA aid: lets `adb shell am broadcast -a
+             com.example.geminichat.RUN_WORKOUT_DIGEST_NOW` force an immediate workout-digest
+             run for manual testing (see WorkoutDigestDebugReceiver). Must be exported for adb to
+             reach it, but the receiver itself no-ops unless BuildConfig.DEBUG is true. -->
+        <receiver
+            android:name=".agent.workout.WorkoutDigestDebugReceiver"
+            android:exported="true">
+            <intent-filter>
+                <action android:name="com.example.geminichat.RUN_WORKOUT_DIGEST_NOW" />
+            </intent-filter>
+        </receiver>
     </application>
 
 </manifest>

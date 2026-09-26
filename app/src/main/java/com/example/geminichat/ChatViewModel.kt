@@ -195,6 +195,8 @@ class ChatViewModel(
     private val taskStateStore: TaskStateStore? = null,
     private val invariantStore: InvariantStore? = null,
     private val taskTransitionLogStore: TaskTransitionLogStore? = null,
+    private val workoutLogStore: com.example.geminichat.agent.workout.WorkoutLogStore? = null,
+    private val workoutSummaryStore: com.example.geminichat.agent.workout.WorkoutSummaryStore? = null,
     debugContextWindowOverrideTokens: Int? = null,
 ) : ViewModel() {
 
@@ -207,11 +209,31 @@ class ChatViewModel(
     // switches (see [McpToolCallingAgent], which connects it lazily and caches the tool list).
     private val fitnessMcpGateway = com.example.geminichat.mcp.KotlinSdkMcpGateway()
 
+    // Day 18: the local, no-network counterpart — same [McpGateway] contract, but its tools
+    // read/write on-device JSON storage (see [WorkoutLogStore]/[WorkoutSummaryStore]) instead of
+    // calling a remote server. Falls back to a temp-directory-backed store when the caller (e.g.
+    // a test) doesn't provide one, mirroring how [historyStore] etc. tolerate `null`.
+    private val workoutMcpGateway = com.example.geminichat.mcp.LocalWorkoutMcpGateway(
+        logStore = workoutLogStore ?: com.example.geminichat.agent.workout.WorkoutLogStore(
+            java.io.File(
+                System.getProperty("java.io.tmpdir") ?: ".",
+                com.example.geminichat.agent.workout.WorkoutLogStore.FILE_NAME
+            )
+        ),
+        summaryStore = workoutSummaryStore ?: com.example.geminichat.agent.workout.WorkoutSummaryStore(
+            java.io.File(
+                System.getProperty("java.io.tmpdir") ?: ".",
+                com.example.geminichat.agent.workout.WorkoutSummaryStore.FILE_NAME
+            )
+        )
+    )
+
     /**
      * Builds the [Agent] behavior for [config]: every persona uses the plain [LlmAgent] except
-     * [AgentCatalog.FITNESS_MCP_COACH] (Day 17), which needs [McpToolCallingAgent] instead so it
-     * can call real tools on [fitnessMcpGateway]. Centralized here so every construction site
-     * below (initial state, [onAgentSelected], [rebuildAgent]) picks the right behavior.
+     * [AgentCatalog.FITNESS_MCP_COACH] (Day 17) and [AgentCatalog.WORKOUT_DIGEST_COACH] (Day 18),
+     * which need [McpToolCallingAgent] instead so they can call real tools on [fitnessMcpGateway]
+     * / [workoutMcpGateway] respectively. Centralized here so every construction site below
+     * (initial state, [onAgentSelected], [rebuildAgent]) picks the right behavior.
      */
     private fun buildAgent(config: AgentConfig): Agent =
         if (config.id == AgentCatalog.FITNESS_MCP_COACH.id) {
@@ -220,6 +242,13 @@ class ChatViewModel(
                 client = geminiClient,
                 mcpGateway = fitnessMcpGateway,
                 serverUrl = com.example.geminichat.mcp.McpConfig.FITNESS_SERVER_URL
+            )
+        } else if (config.id == AgentCatalog.WORKOUT_DIGEST_COACH.id) {
+            com.example.geminichat.agent.mcp.McpToolCallingAgent(
+                config = config,
+                client = geminiClient,
+                mcpGateway = workoutMcpGateway,
+                serverUrl = com.example.geminichat.mcp.LocalWorkoutMcpGateway.DEFAULT_SERVER_URL
             )
         } else {
             LlmAgent(config = config, client = geminiClient, invariants = invariants)
@@ -1161,6 +1190,9 @@ class ChatViewModel(
     override fun onCleared() {
         super.onCleared()
         geminiClient.close()
-        kotlinx.coroutines.CoroutineScope(Dispatchers.IO).launch { fitnessMcpGateway.close() }
+        kotlinx.coroutines.CoroutineScope(Dispatchers.IO).launch {
+            fitnessMcpGateway.close()
+            workoutMcpGateway.close()
+        }
     }
 }

@@ -66,7 +66,29 @@ object AgentCatalog {
             "specific exercise or wants a workout plan. Keep answers concise and actionable."
     )
 
-    val ALL = listOf(PERSONAL_TRAINER, GENERAL_ASSISTANT, FITNESS_MCP_COACH)
+    /**
+     * Day 18: same [McpToolCallingAgent][com.example.geminichat.agent.mcp.McpToolCallingAgent]
+     * loop as [FITNESS_MCP_COACH], but backed by
+     * [com.example.geminichat.mcp.LocalWorkoutMcpGateway] instead of a remote server — its
+     * `log_workout`/`get_workout_summary` tools read/write on-device JSON storage, and the
+     * summary itself is refreshed periodically in the background by
+     * [com.example.geminichat.agent.workout.WorkoutDigestWorker] (scheduled via WorkManager, see
+     * [com.example.geminichat.agent.workout.WorkoutDigestScheduler]), not recomputed per request.
+     */
+    val WORKOUT_DIGEST_COACH = AgentConfig(
+        id = "workout-digest-coach",
+        displayName = "Workout Digest (scheduled)",
+        description = "Logs your workouts and reports a periodic summary, aggregated in the " +
+            "background on a schedule rather than computed on the spot.",
+        systemInstruction = "You are a fitness coach that tracks the user's logged workouts. " +
+            "Call log_workout when the user mentions completing a workout (goal/muscle group " +
+            "and minutes spent). Call get_workout_summary when they ask how their training is " +
+            "going, for a recap, or for a weekly summary — it returns a periodically " +
+            "aggregated summary, not a live recalculation, so mention it may be a little behind " +
+            "the very latest logged workout. Keep answers concise and actionable."
+    )
+
+    val ALL = listOf(PERSONAL_TRAINER, GENERAL_ASSISTANT, FITNESS_MCP_COACH, WORKOUT_DIGEST_COACH)
     val DEFAULT = PERSONAL_TRAINER
 
     fun byId(id: String): AgentConfig = ALL.firstOrNull { it.id == id } ?: DEFAULT
