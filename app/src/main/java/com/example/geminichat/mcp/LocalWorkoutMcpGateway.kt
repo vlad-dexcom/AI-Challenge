@@ -1,15 +1,13 @@
 package com.example.geminichat.mcp
 
-import com.example.geminichat.agent.workout.WorkoutDigestAggregator
 import com.example.geminichat.agent.workout.WorkoutLogEntry
 import com.example.geminichat.agent.workout.WorkoutLogStore
 import com.example.geminichat.agent.workout.WorkoutSummaryStore
-import java.util.UUID
-import kotlinx.serialization.encodeToString
 import kotlinx.serialization.json.Json
 import kotlinx.serialization.json.JsonPrimitive
 import kotlinx.serialization.json.buildJsonObject
 import kotlinx.serialization.json.put
+import java.util.UUID
 
 private val summaryJson = Json { prettyPrint = true }
 
