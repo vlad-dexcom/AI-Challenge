@@ -85,18 +85,37 @@
 
 ## Шаг 4 — Проверка фонового выполнения напрямую (adb)
 
-Расписание — минимум 15 минут (ограничение `WorkManager`), ждать вручную неудобно, поэтому
-запустите задачу немедленно через `adb`:
+Расписание — минимум 15 минут (ограничение `WorkManager`), ждать вручную неудобно. Background Task
+Inspector в App Inspection не везде показывает кнопку "Run now" (зависит от версии Android Studio
+и API устройства/эмулятора), поэтому надёжнее запускать задачу напрямую через `adb`, найдя её
+`job-id` в `dumpsys` автоматически — команду ниже можно скопировать целиком:
 
 ```bash
-adb shell cmd jobscheduler run -f com.example.geminichat <job-id>
-# или, проще, из Android Studio: App Inspection → Background Task Inspector →
-# найдите worker "workout-digest" → Run now.
+adb shell dumpsys jobscheduler | grep -m1 "com.example.geminichat/androidx.work"
 ```
+
+Пример вывода (число после `/` — искомый `job-id`, здесь `42`):
+
+```
+  JOB #u0a123/42: 91cbb2d com.example.geminichat/androidx.work.impl.background.systemjob.SystemJobService
+```
+
+Однострочник, который сам находит `job-id` и запускает задачу немедленно, игнорируя ограничения
+(`-f`):
+
+```bash
+JOB_ID=$(adb shell dumpsys jobscheduler | grep -m1 "com.example.geminichat/androidx.work" | sed -E 's#.*/([0-9]+):.*#\1#') && adb shell cmd jobscheduler run -f com.example.geminichat "$JOB_ID"
+```
+
+Если строка не находится (задача ещё ни разу не была поставлена в очередь системой), сначала
+откройте приложение хотя бы один раз после установки — `MainActivity.onCreate` регистрирует
+периодическую работу при каждом запуске (см. `WorkoutDigestScheduler`), после чего команда выше
+должна найти job.
 
 Также можно временно уменьшить интервал в `WorkoutDigestScheduler.schedule(context,
 repeatIntervalMinutes = ...)` только для локальной отладки (не коммитить) — минимум, который
 реально примет `WorkManager`, всё равно 15 минут.
+
 
 ---
 
