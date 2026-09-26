@@ -197,6 +197,7 @@ class ChatViewModel(
     private val taskTransitionLogStore: TaskTransitionLogStore? = null,
     private val workoutLogStore: com.example.geminichat.agent.workout.WorkoutLogStore? = null,
     private val workoutSummaryStore: com.example.geminichat.agent.workout.WorkoutSummaryStore? = null,
+    private val savedWorkoutPlanStore: com.example.geminichat.agent.planner.SavedWorkoutPlanStore? = null,
     debugContextWindowOverrideTokens: Int? = null,
 ) : ViewModel() {
 
@@ -228,11 +229,24 @@ class ChatViewModel(
         )
     )
 
+    // Day 19: the "Workout Plan Builder" pipeline gateway — same local, no-network shape as
+    // [workoutMcpGateway], but exposes 3 composable tools (find_exercises/build_workout_plan/
+    // save_workout_plan) instead of 2 independent ones (see [LocalWorkoutPlannerMcpGateway]).
+    private val workoutPlannerMcpGateway = com.example.geminichat.mcp.LocalWorkoutPlannerMcpGateway(
+        planStore = savedWorkoutPlanStore ?: com.example.geminichat.agent.planner.SavedWorkoutPlanStore(
+            java.io.File(
+                System.getProperty("java.io.tmpdir") ?: ".",
+                com.example.geminichat.agent.planner.SavedWorkoutPlanStore.FILE_NAME
+            )
+        )
+    )
+
     /**
      * Builds the [Agent] behavior for [config]: every persona uses the plain [LlmAgent] except
-     * [AgentCatalog.FITNESS_MCP_COACH] (Day 17) and [AgentCatalog.WORKOUT_DIGEST_COACH] (Day 18),
-     * which need [McpToolCallingAgent] instead so they can call real tools on [fitnessMcpGateway]
-     * / [workoutMcpGateway] respectively. Centralized here so every construction site below
+     * [AgentCatalog.FITNESS_MCP_COACH] (Day 17), [AgentCatalog.WORKOUT_DIGEST_COACH] (Day 18) and
+     * [AgentCatalog.WORKOUT_PLAN_PIPELINE_COACH] (Day 19), which need [McpToolCallingAgent]
+     * instead so they can call real tools on [fitnessMcpGateway] / [workoutMcpGateway] /
+     * [workoutPlannerMcpGateway] respectively. Centralized here so every construction site below
      * (initial state, [onAgentSelected], [rebuildAgent]) picks the right behavior.
      */
     private fun buildAgent(config: AgentConfig): Agent =
@@ -249,6 +263,13 @@ class ChatViewModel(
                 client = geminiClient,
                 mcpGateway = workoutMcpGateway,
                 serverUrl = com.example.geminichat.mcp.LocalWorkoutMcpGateway.DEFAULT_SERVER_URL
+            )
+        } else if (config.id == AgentCatalog.WORKOUT_PLAN_PIPELINE_COACH.id) {
+            com.example.geminichat.agent.mcp.McpToolCallingAgent(
+                config = config,
+                client = geminiClient,
+                mcpGateway = workoutPlannerMcpGateway,
+                serverUrl = com.example.geminichat.mcp.LocalWorkoutPlannerMcpGateway.DEFAULT_SERVER_URL
             )
         } else {
             LlmAgent(config = config, client = geminiClient, invariants = invariants)

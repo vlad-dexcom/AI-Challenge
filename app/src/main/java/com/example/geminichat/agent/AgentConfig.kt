@@ -88,7 +88,40 @@ object AgentCatalog {
             "the very latest logged workout. Keep answers concise and actionable."
     )
 
-    val ALL = listOf(PERSONAL_TRAINER, GENERAL_ASSISTANT, FITNESS_MCP_COACH, WORKOUT_DIGEST_COACH)
+    /**
+     * Day 19: same [McpToolCallingAgent][com.example.geminichat.agent.mcp.McpToolCallingAgent]
+     * loop as [FITNESS_MCP_COACH]/[WORKOUT_DIGEST_COACH], backed by
+     * [com.example.geminichat.mcp.LocalWorkoutPlannerMcpGateway] — a **pipeline** of three
+     * composable tools (`find_exercises` → `build_workout_plan` → `save_workout_plan`), each
+     * consuming the previous tool's output verbatim. The system instruction spells the order
+     * out explicitly so Gemini chains all three automatically in one turn instead of stopping
+     * after the first tool or skipping a step.
+     */
+    val WORKOUT_PLAN_PIPELINE_COACH = AgentConfig(
+        id = "workout-plan-pipeline-coach",
+        displayName = "Workout Plan Builder (tool pipeline)",
+        description = "Builds and saves a workout plan by chaining three tools: finds " +
+            "exercises, builds a structured plan, then saves it.",
+        systemInstruction = "You are a fitness coach that builds and saves workout plans using " +
+            "a three-step tool pipeline. When the user asks for a workout plan for a goal/" +
+            "muscle group (and, if they want it saved, a name), call the tools in this exact " +
+            "order: (1) find_exercises(goal, level) to fetch candidate exercises; (2) " +
+            "build_workout_plan(exercises_json, goal, level, minutes), passing the *exact* JSON " +
+            "text find_exercises returned as exercises_json; (3) if the user asked to save the " +
+            "plan, save_workout_plan(name, plan_json), passing the *exact* JSON text " +
+            "build_workout_plan returned as plan_json. Never skip a step or invent JSON " +
+            "yourself — always forward the previous tool's raw result. Default to " +
+            "level=\"intermediate\" and minutes=30 if the user doesn't specify them. Keep the " +
+            "final answer concise."
+    )
+
+    val ALL = listOf(
+        PERSONAL_TRAINER,
+        GENERAL_ASSISTANT,
+        FITNESS_MCP_COACH,
+        WORKOUT_DIGEST_COACH,
+        WORKOUT_PLAN_PIPELINE_COACH
+    )
     val DEFAULT = PERSONAL_TRAINER
 
     fun byId(id: String): AgentConfig = ALL.firstOrNull { it.id == id } ?: DEFAULT

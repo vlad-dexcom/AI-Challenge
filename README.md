@@ -278,6 +278,32 @@ Android agent, so it actually calls the tool and uses the result — not just li
 - **`agent/AgentCatalog.kt`** — new **"Fitness Coach (MCP tools)"** persona, selectable in the
   existing agent picker, backed by `McpToolCallingAgent` instead of the plain `LlmAgent`.
 
+## Composition of MCP tools (Day 19)
+
+Chained three MCP tools into a single automatic pipeline — **"Workout Plan Builder"** — proving
+that `McpToolCallingAgent`'s Day 17/18 function-calling loop already supports an arbitrary number
+of *sequential* tool calls per turn, each consuming the previous tool's raw output, with no
+changes to the loop itself. See `docs/day19-mcp-tool-composition.md` for the full write-up and
+`docs/day19-mcp-tool-composition-test-scenario.md` for a manual test walkthrough.
+
+- **`agent/planner/ExerciseCatalog.kt`** — static, offline exercise catalog + pure
+  `search(goal, level)`: step 1 ("fetch data"), tool `find_exercises`.
+- **`agent/planner/WorkoutPlanBuilder.kt`** — pure `build(exercises, goal, level, minutes)`:
+  step 2 ("process"), tool `build_workout_plan`. Deterministic/rule-based, not a second Gemini
+  call, so the data hand-off is easy to assert on in tests.
+- **`agent/planner/SavedWorkoutPlan.kt`/`SavedWorkoutPlanStore.kt`** — step 3 ("save the
+  result"), tool `save_workout_plan`, persisted as an append-only JSON file (same shape as Day
+  18's `WorkoutLogStore`).
+- **`mcp/LocalWorkoutPlannerMcpGateway.kt`** — a Day-18-style local (no-network) `McpGateway`
+  exposing all three tools, each validating that its input matches the previous tool's actual
+  output shape (rejecting a model that skips forwarding and invents JSON instead).
+- **`agent/AgentCatalog.kt`** — new **"Workout Plan Builder (tool pipeline)"** persona whose
+  system instruction spells out the required call order (`find_exercises` →
+  `build_workout_plan` → `save_workout_plan`) and "always forward the previous tool's raw
+  result".
+- **`agent/mcp/McpToolCallingAgentPipelineTest.kt`** — proves the 3-tool chain runs automatically
+  in one `agent.handle(...)` call and that each tool's arguments equal the exact prior result.
+
 ## Setup
 
 1. Get a Gemini API key from [Google AI Studio](https://aistudio.google.com/apikey).
@@ -313,9 +339,12 @@ Android agent, so it actually calls the tool and uses the result — not just li
   `TaskStateRenderer`, `TaskStateStore`, `TaskStateAdvisor`).
 - `agent/invariant/` — the Day 14 hard invariants (`Invariant`, `InvariantSet`/`InvariantRules`,
   `InvariantRenderer`, `InvariantGuard`, `InvariantStore`).
+- `agent/planner/` — the Day 19 "Workout Plan Builder" pipeline data (`ExerciseCatalog`,
+  `WorkoutPlanBuilder`, `SavedWorkoutPlan`/`SavedWorkoutPlanStore`).
 - `mcp/` — the Day 16 MCP client (`McpGateway`/`KotlinSdkMcpGateway`, `McpToolMapper`,
   `McpConnectionController`, `McpViewModel`, `McpScreen`), extended in Day 17 with
-  `McpGateway.callTool`.
+  `McpGateway.callTool`; Day 18 adds the local, no-network `LocalWorkoutMcpGateway`, Day 19 adds
+  the local, three-tool-pipeline `LocalWorkoutPlannerMcpGateway`.
 - `agent/mcp/` — Day 17 client-side tool-calling: `ToolCallingLlmClient`, `McpToolCallingAgent`.
 - `GeminiModels.kt` — kotlinx.serialization request/response DTOs for the Gemini Interactions
   API, including `system_instruction` and `generation_config`.
