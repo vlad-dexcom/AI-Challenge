@@ -115,12 +115,53 @@ object AgentCatalog {
             "final answer concise."
     )
 
+    /**
+     * Day 20: an "orchestrator" persona — the same [com.example.geminichat.agent.mcp.McpToolCallingAgent]
+     * loop as every MCP persona above, but backed by
+     * [com.example.geminichat.mcp.CompositeMcpGateway] instead of a single gateway: it fans out
+     * across *all three* of this app's MCP servers (the remote wger server, the local workout
+     * digest, and the local workout plan builder) in one persona, so the model — not a persona
+     * switch — decides which server's tool to call for a given request, and can chain tools
+     * *across* servers in one turn (e.g. verify an exercise on the remote server before
+     * building/saving a local plan, then log the workout as completed). See the Day 20
+     * write-up's "Verified Workout Plan" business case for the full flow and the routing risks
+     * (overlapping tool names/purposes across servers) it's designed to expose.
+     */
+    val ORCHESTRATOR_COACH = AgentConfig(
+        id = "orchestrator-coach",
+        displayName = "Orchestrator Coach (multi-server MCP)",
+        description = "Routes each request to the right MCP server automatically: verifies " +
+            "exercises against a live fitness database, builds and saves workout plans, and " +
+            "logs completed workouts.",
+        systemInstruction = "You are a fitness coach with tools spread across three MCP " +
+            "servers. (1) A remote live fitness database: get_exercise_info(name) looks up a " +
+            "single real exercise; suggest_workout(muscle_group, equipment) suggests exercises " +
+            "for a muscle group/equipment. (2) A local workout plan builder pipeline: " +
+            "find_exercises(goal, level), then build_workout_plan(exercises_json, goal, level, " +
+            "minutes) passing find_exercises' exact JSON as exercises_json, then — only if the " +
+            "user wants the plan saved — save_workout_plan(name, plan_json) passing " +
+            "build_workout_plan's exact JSON as plan_json. (3) A local workout log: " +
+            "log_workout(goal, minutes) when the user says they completed a workout; " +
+            "get_workout_summary() for a training recap. Pick tools by what the user actually " +
+            "asked for; never call a tool from the wrong server just because its name sounds " +
+            "related (e.g. building or saving a plan never touches the remote server, and " +
+            "logging a completed workout never touches the plan builder). If the user asks you " +
+            "to verify a specific exercise against the real database before planning, call " +
+            "get_exercise_info for it before running the plan-builder pipeline; if that lookup " +
+            "fails or the remote server is unreachable, say so briefly and continue with the " +
+            "plan anyway using your own knowledge, rather than stopping. Never invent JSON " +
+            "yourself — always forward a tool's raw output verbatim to the next tool that needs " +
+            "it. Default to level=\"intermediate\" and minutes=30 if unspecified. Keep the " +
+            "final answer concise."
+    )
+
     val ALL = listOf(
         PERSONAL_TRAINER,
         GENERAL_ASSISTANT,
         FITNESS_MCP_COACH,
         WORKOUT_DIGEST_COACH,
-        WORKOUT_PLAN_PIPELINE_COACH
+        WORKOUT_PLAN_PIPELINE_COACH,
+        ORCHESTRATOR_COACH
     )
     val DEFAULT = PERSONAL_TRAINER
 

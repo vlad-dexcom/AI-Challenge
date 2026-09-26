@@ -243,11 +243,13 @@ class ChatViewModel(
 
     /**
      * Builds the [Agent] behavior for [config]: every persona uses the plain [LlmAgent] except
-     * [AgentCatalog.FITNESS_MCP_COACH] (Day 17), [AgentCatalog.WORKOUT_DIGEST_COACH] (Day 18) and
-     * [AgentCatalog.WORKOUT_PLAN_PIPELINE_COACH] (Day 19), which need [McpToolCallingAgent]
-     * instead so they can call real tools on [fitnessMcpGateway] / [workoutMcpGateway] /
-     * [workoutPlannerMcpGateway] respectively. Centralized here so every construction site below
-     * (initial state, [onAgentSelected], [rebuildAgent]) picks the right behavior.
+     * [AgentCatalog.FITNESS_MCP_COACH] (Day 17), [AgentCatalog.WORKOUT_DIGEST_COACH] (Day 18),
+     * [AgentCatalog.WORKOUT_PLAN_PIPELINE_COACH] (Day 19) and [AgentCatalog.ORCHESTRATOR_COACH]
+     * (Day 20), which need [McpToolCallingAgent] instead so they can call real tools on
+     * [fitnessMcpGateway] / [workoutMcpGateway] / [workoutPlannerMcpGateway] (or, for the
+     * orchestrator, all three at once via [com.example.geminichat.mcp.CompositeMcpGateway]).
+     * Centralized here so every construction site below (initial state, [onAgentSelected],
+     * [rebuildAgent]) picks the right behavior.
      */
     private fun buildAgent(config: AgentConfig): Agent =
         if (config.id == AgentCatalog.FITNESS_MCP_COACH.id) {
@@ -270,6 +272,31 @@ class ChatViewModel(
                 client = geminiClient,
                 mcpGateway = workoutPlannerMcpGateway,
                 serverUrl = com.example.geminichat.mcp.LocalWorkoutPlannerMcpGateway.DEFAULT_SERVER_URL
+            )
+        } else if (config.id == AgentCatalog.ORCHESTRATOR_COACH.id) {
+            com.example.geminichat.agent.mcp.McpToolCallingAgent(
+                config = config,
+                client = geminiClient,
+                mcpGateway = com.example.geminichat.mcp.CompositeMcpGateway(
+                    listOf(
+                        com.example.geminichat.mcp.NamedMcpGateway(
+                            name = "wger",
+                            serverUrl = com.example.geminichat.mcp.McpConfig.FITNESS_SERVER_URL,
+                            gateway = fitnessMcpGateway
+                        ),
+                        com.example.geminichat.mcp.NamedMcpGateway(
+                            name = "workout-digest",
+                            serverUrl = com.example.geminichat.mcp.LocalWorkoutMcpGateway.DEFAULT_SERVER_URL,
+                            gateway = workoutMcpGateway
+                        ),
+                        com.example.geminichat.mcp.NamedMcpGateway(
+                            name = "workout-planner",
+                            serverUrl = com.example.geminichat.mcp.LocalWorkoutPlannerMcpGateway.DEFAULT_SERVER_URL,
+                            gateway = workoutPlannerMcpGateway
+                        )
+                    )
+                ),
+                serverUrl = "orchestrator://all"
             )
         } else {
             LlmAgent(config = config, client = geminiClient, invariants = invariants)
