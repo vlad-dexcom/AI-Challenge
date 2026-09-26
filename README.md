@@ -304,6 +304,34 @@ changes to the loop itself. See `docs/day19-mcp-tool-composition.md` for the ful
 - **`agent/mcp/McpToolCallingAgentPipelineTest.kt`** — proves the 3-tool chain runs automatically
   in one `agent.handle(...)` call and that each tool's arguments equal the exact prior result.
 
+## Orchestration across multiple MCP servers (Day 20)
+
+Day 19's pipeline chained several tools on **one** MCP server/gateway. Day 20 fans the same
+`McpToolCallingAgent` loop out across **three different** servers/gateways at once — the remote
+wger server, and the two local Day 18/19 gateways — so the model itself picks the right server's
+tool for a request instead of a persona switch doing it. See `docs/day20-mcp-orchestration.md`
+for the full write-up and business case, and `docs/day20-mcp-orchestration-test-scenario.md` for
+a manual test walkthrough.
+
+- **`mcp/CompositeMcpGateway.kt`** — a new `McpGateway` implementation, contract-identical to
+  every other one, that wraps a list of `NamedMcpGateway(name, serverUrl, gateway)` members:
+  aggregates their tools, remembers which member declared each tool name, and routes
+  `callTool(name, ...)` to the right member. An unreachable member (e.g. the remote server is
+  down) doesn't fail the whole connection — it's skipped, and the remaining members' tools stay
+  usable.
+- **`agent/AgentCatalog.kt`** — new **"Orchestrator Coach (multi-server MCP)"** persona whose
+  system instruction lists all 7 tools with their owning server and explicitly warns against
+  confusing similarly-named/-themed tools across servers.
+- **`ChatViewModel.buildAgent`** — the orchestrator persona is backed by `McpToolCallingAgent`
+  wired to a `CompositeMcpGateway` over `fitnessMcpGateway` (wger), `workoutMcpGateway` (Day 18)
+  and `workoutPlannerMcpGateway` (Day 19) — no other agent code changes.
+- **`mcp/CompositeMcpGatewayTest.kt`** — tool aggregation/routing and graceful degradation when a
+  member is unreachable, at the gateway level (no Gemini/LLM involved).
+- **`agent/mcp/McpToolCallingAgentOrchestratorTest.kt`** — a scripted, 5-step "Verified Workout
+  Plan" flow (verify an exercise on the remote server → build → save a plan locally → log the
+  workout on a third, different local gateway) run through one `agent.handle(...)` call, asserting
+  both the call order and that each call landed on the correct underlying server.
+
 ## Setup
 
 1. Get a Gemini API key from [Google AI Studio](https://aistudio.google.com/apikey).
