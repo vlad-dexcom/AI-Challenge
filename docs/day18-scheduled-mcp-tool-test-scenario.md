@@ -95,24 +95,33 @@
 через `WorkManager.enqueue(...)`, вообще не трогая системный `JobScheduler`:
 
 ```bash
-adb shell am broadcast -a com.example.geminichat.RUN_WORKOUT_DIGEST_NOW
+adb shell am broadcast -a com.example.geminichat.RUN_WORKOUT_DIGEST_NOW -p com.example.geminichat
 ```
 
-Эта команда работает только в debug-сборке (`BuildConfig.DEBUG`), достаточно одной команды, id
-джобы искать не нужно.
+**Флаг `-p com.example.geminichat` обязателен**, а не опциональный: начиная с Android 8.0
+(API 26), система больше не доставляет *implicit*-broadcast'ы (без явно указанного пакета)
+статическим (объявленным в манифесте) `BroadcastReceiver` — `am broadcast` без `-p` вернёт
+`Broadcast completed: result=0` и не выдаст ни одной ошибки, но ресивер приложения при этом
+вообще не будет вызван, а Logcat останется пустым именно поэтому. С `-p` команда работает как
+одна строка, id джобы искать не нужно.
 
 Проверьте в Logcat, что воркер реально отработал и что он видит записанные тренировки:
 
 ```bash
-adb logcat -d -s WorkoutDigestWorker:I WorkoutDigestWorker:E
+adb logcat -d -s WorkoutDigestDebugRx:I WorkoutDigestWorker:I WorkoutDigestWorker:E
 ```
 
 Ожидаемая строка при успехе (число тренировок и минут должно быть больше нуля, если вы уже
 логировали тренировки на Шаге 2):
 
 ```
+I/WorkoutDigestDebugRx: Force-enqueuing an immediate WorkoutDigestWorker run (debug build only).
 I/WorkoutDigestWorker: doWork succeeded: 3 logged workout(s) read, summary=totalWorkouts=3 totalMinutes=95
 ```
+
+Если Logcat вообще пуст (ни строки `WorkoutDigestDebugRx`, ни `WorkoutDigestWorker`) — почти
+наверняка отсутствует `-p com.example.geminichat` в команде выше, либо приложение не было
+переустановлено после сборки с этим ресивером (`./gradlew :app:installDebug`).
 
 Если вместо этого видно `doWork failed, will retry` со стектрейсом — это и есть причина, по
 которой сводка не появляется; пришлите этот стектрейс для диагностики.
