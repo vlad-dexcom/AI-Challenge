@@ -1,6 +1,10 @@
 package com.example.geminichat.agent.workout
 
+import android.app.job.JobScheduler
 import android.content.Context
+import android.os.Handler
+import android.os.Looper
+import android.util.Log
 import androidx.work.ExistingPeriodicWorkPolicy
 import androidx.work.PeriodicWorkRequestBuilder
 import androidx.work.WorkManager
@@ -17,6 +21,7 @@ import java.util.concurrent.TimeUnit
 object WorkoutDigestScheduler {
 
     const val UNIQUE_WORK_NAME = "workout-digest"
+    private const val TAG = "WorkoutDigestScheduler"
 
     /**
      * [repeatIntervalMinutes] defaults to WorkManager's own minimum for periodic work (15
@@ -34,5 +39,36 @@ object WorkoutDigestScheduler {
             ExistingPeriodicWorkPolicy.KEEP,
             request
         )
+        logScheduledJobId(context.applicationContext)
     }
+
+    /**
+     * Debug/QA aid (see `docs/day18-scheduled-mcp-tool-test-scenario.md`): logs the underlying
+     * `JobScheduler` job id WorkManager assigned to this periodic work, so it can be force-run
+     * immediately (`adb shell cmd jobscheduler run -f <package> <job-id>`) instead of waiting
+     * out the real 15-minute schedule. Looked up via the public [JobScheduler.getAllPendingJobs]
+     * API (a short delay after enqueueing, since WorkManager schedules the underlying job on a
+     * background thread) rather than any WorkManager-internal API, which isn't public.
+     */
+    private fun logScheduledJobId(appContext: Context) {
+        Handler(Looper.getMainLooper()).postDelayed({
+            val jobScheduler =
+                appContext.getSystemService(Context.JOB_SCHEDULER_SERVICE) as JobScheduler
+            val jobId = jobScheduler.allPendingJobs
+                .firstOrNull { it.service.packageName == appContext.packageName }
+                ?.id
+            if (jobId != null) {
+                Log.i(
+                    TAG,
+                    "Workout digest job id=$jobId - run it now with: " +
+                        "adb shell cmd jobscheduler run -f ${appContext.packageName} $jobId"
+                )
+            } else {
+                Log.w(TAG, "Workout digest job not visible in JobScheduler yet; try again shortly.")
+            }
+        }, JOB_LOG_DELAY_MILLIS)
+    }
+
+    private const val JOB_LOG_DELAY_MILLIS = 1_000L
 }
+

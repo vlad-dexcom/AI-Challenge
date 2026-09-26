@@ -85,36 +85,29 @@
 
 ## Шаг 4 — Проверка фонового выполнения напрямую (adb)
 
-Расписание — минимум 15 минут (ограничение `WorkManager`), ждать вручную неудобно. Background Task
-Inspector в App Inspection не везде показывает кнопку "Run now" (зависит от версии Android Studio
-и API устройства/эмулятора), поэтому надёжнее запускать задачу напрямую через `adb`, найдя её
-`job-id` в `dumpsys` автоматически — команду ниже можно скопировать целиком:
+Расписание — минимум 15 минут (ограничение `WorkManager`), ждать вручную неудобно. Приложение само
+пишет в Logcat `job-id` этой периодической работы сразу после запуска (`WorkoutDigestScheduler`,
+тег `WorkoutDigestScheduler`) — так надёжнее, чем парсить `dumpsys` вручную или искать кнопку
+"Run now" в Background Task Inspector (она есть не во всех версиях Android Studio).
 
-```bash
-adb shell dumpsys jobscheduler | grep -m1 "com.example.geminichat/androidx.work"
-```
+1. Откройте (или перезапустите) приложение — в Logcat появится строка вида:
+   ```
+   I/WorkoutDigestScheduler: Workout digest job id=42 - run it now with: adb shell cmd jobscheduler run -f com.example.geminichat 42
+   ```
+2. Скопируйте и выполните одну команду ниже — она сама находит эту строку в Logcat и сразу
+   запускает задачу, игнорируя ограничения (`-f`):
+   ```bash
+   JOB_ID=$(adb logcat -d -s WorkoutDigestScheduler:I | grep -o 'job id=[0-9]*' | tail -1 | grep -o '[0-9]*') && adb shell cmd jobscheduler run -f com.example.geminichat "$JOB_ID"
+   ```
 
-Пример вывода (число после `/` — искомый `job-id`, здесь `42`):
-
-```
-  JOB #u0a123/42: 91cbb2d com.example.geminichat/androidx.work.impl.background.systemjob.SystemJobService
-```
-
-Однострочник, который сам находит `job-id` и запускает задачу немедленно, игнорируя ограничения
-(`-f`):
-
-```bash
-JOB_ID=$(adb shell dumpsys jobscheduler | grep -m1 "com.example.geminichat/androidx.work" | sed -E 's#.*/([0-9]+):.*#\1#') && adb shell cmd jobscheduler run -f com.example.geminichat "$JOB_ID"
-```
-
-Если строка не находится (задача ещё ни разу не была поставлена в очередь системой), сначала
-откройте приложение хотя бы один раз после установки — `MainActivity.onCreate` регистрирует
-периодическую работу при каждом запуске (см. `WorkoutDigestScheduler`), после чего команда выше
-должна найти job.
+Если `JOB_ID` пустой — приложение ещё не успело залогировать id (подождите секунду после запуска
+и повторите) либо Logcat уже был очищен раньше, чем появилась нужная строка; перезапустите
+приложение и выполните команду снова.
 
 Также можно временно уменьшить интервал в `WorkoutDigestScheduler.schedule(context,
 repeatIntervalMinutes = ...)` только для локальной отладки (не коммитить) — минимум, который
 реально примет `WorkManager`, всё равно 15 минут.
+
 
 
 ---
