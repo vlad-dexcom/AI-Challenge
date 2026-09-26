@@ -24,21 +24,34 @@ private val summaryJson = Json { prettyPrint = true }
  * keeps refreshing [summaryStore] on its own schedule via WorkManager regardless of whether the
  * chat UI (or this gateway) is ever touched in between — `get_workout_summary` just reads
  * whatever that background job most recently computed.
+ *
+ * Day 19 fix: every `connect`/`listTools`/`callTool` now also records a [McpCallLog] entry,
+ * exactly like [KotlinSdkMcpGateway] — previously only the remote gateway logged, so this
+ * persona's tool calls (and the Day 19 pipeline's) never showed up on [McpScreen]'s "Call log".
  */
 class LocalWorkoutMcpGateway(
     private val logStore: WorkoutLogStore,
     private val summaryStore: WorkoutSummaryStore
 ) : McpGateway {
 
-    override suspend fun connect(serverUrl: String): McpServerInfo =
-        McpServerInfo(
+    override suspend fun connect(serverUrl: String): McpServerInfo {
+        val info = McpServerInfo(
             name = "workout-digest-local",
             version = "1.0.0",
             capabilities = listOf("tools"),
             instructions = null
         )
+        McpCallLog.record("connect($serverUrl) → ${info.name} ${info.version}")
+        return info
+    }
 
-    override suspend fun listTools(): List<McpToolInfo> = listOf(
+    override suspend fun listTools(): List<McpToolInfo> {
+        val tools = buildToolList()
+        McpCallLog.record("listTools() → ${tools.size} tool(s): ${tools.joinToString(", ") { it.name }}")
+        return tools
+    }
+
+    private fun buildToolList(): List<McpToolInfo> = listOf(
         McpToolInfo(
             name = LOG_WORKOUT,
             title = "Log workout",
@@ -82,12 +95,19 @@ class LocalWorkoutMcpGateway(
         )
     )
 
-    override suspend fun callTool(name: String, arguments: Map<String, Any?>): McpToolCallResult =
-        when (name) {
+    override suspend fun callTool(name: String, arguments: Map<String, Any?>): McpToolCallResult {
+        val result = when (name) {
             LOG_WORKOUT -> logWorkout(arguments)
             GET_WORKOUT_SUMMARY -> getWorkoutSummary()
             else -> throw McpToolCallException("Unknown tool \"$name\".")
         }
+        McpCallLog.record(
+            "callTool($name, $arguments) → ${if (result.isError) "ERROR" else "ok"}: " +
+                "${result.text.take(120)}${if (result.text.length > 120) "…" else ""}",
+            isError = result.isError
+        )
+        return result
+    }
 
     override suspend fun close() {
         // No connection/resource to release — everything here is plain local file I/O.
