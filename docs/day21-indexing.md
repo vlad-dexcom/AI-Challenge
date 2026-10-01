@@ -49,6 +49,27 @@ export GEMINI_API_KEY=...            # или строка в local.properties
 ```
 `--embedder offline` — без сети и ключа (только лексика, не семантическая модель).
 
+## Визуализатор чанков (UI)
+
+```bash
+./gradlew :rag:run --args="ui"        # http://localhost:8080 (--port, --corpus, --out)
+```
+Локальная страница (JDK `com.sun.net.httpserver`, loopback, одна статическая HTML+JS, без сборки):
+- вход: вставленный текст/markdown или файл из `rag/corpus/`;
+- параметры: fixed size/overlap, structure min-merge/max-split (дефолты = дефолты чанкеров);
+- две стратегии рядом: чанки подсвечены поверх исходного текста чередующимися цветами, красная
+  полоска — начало чанка, штриховка — зона overlap, `!` — чанк обрывается посреди предложения;
+  hover/клик показывает chunk_id, source, title, section, offsets, длину, strategy и флаги
+  mid-sentence start/end;
+- сводка по каждой стратегии — те же `ChunkStats`, что и в `compare`;
+- поиск: запрос → косинус по сохранённому индексу выбранной стратегии (`rag/index/<strategy>.json`),
+  top-k со score. Эмбеддер подбирается по `meta.embeddingModel` индекса: офлайн-hashing или Gemini
+  (нужен `GEMINI_API_KEY`). Поиск идёт по сохранённому индексу корпуса, а не по вставленному тексту.
+
+API (`UiServer.kt`): `GET /api/files`, `GET /api/file?name=`, `POST /api/chunk`, `POST /api/search`;
+ошибки — JSON `{"error": ...}` (400 на некорректные параметры, 404 на неизвестный файл/индекс;
+path traversal отклоняется). Тесты: `UiServerTest`.
+
 ## Сравнение стратегий
 
 > **Важно.** В репозитории закоммичены индексы и отчёт, собранные **офлайн-эмбеддером**

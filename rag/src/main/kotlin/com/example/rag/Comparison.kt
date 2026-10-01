@@ -1,6 +1,7 @@
 package com.example.rag
 
 /** Size and boundary-quality statistics for a set of chunks (computed from an index, no re-chunking). */
+@kotlinx.serialization.Serializable
 data class ChunkStats(
     val count: Int,
     val avgChars: Int,
@@ -24,10 +25,12 @@ data class ChunkStats(
                 minChars = sizes.min(),
                 maxChars = sizes.max(),
                 endsMidSentencePct = pct(chunks.count { endsMidSentence(it.text) }),
-                startsMidSentencePct = pct(chunks.count { it.text.trimStart().firstOrNull()?.isLowerCase() == true }),
+                startsMidSentencePct = pct(chunks.count { startsMidSentence(it.text) }),
                 crossesSectionPct = pct(chunks.count { crossesSection(it.text) }),
             )
         }
+
+        internal fun startsMidSentence(text: String) = text.trimStart().firstOrNull()?.isLowerCase() == true
 
         internal fun endsMidSentence(text: String): Boolean {
             val last = text.trimEnd().lastOrNull() ?: return false

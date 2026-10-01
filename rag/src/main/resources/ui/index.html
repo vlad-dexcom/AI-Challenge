@@ -1,0 +1,116 @@
+<!doctype html>
+<html lang="en"><head><meta charset="utf-8"><title>Chunk visualiser</title>
+<style>
+ body{font:14px system-ui,sans-serif;margin:0;padding:12px;background:#fafafa;color:#222}
+ h1{font-size:18px;margin:0 0 8px}
+ fieldset{border:1px solid #ccc;margin:0 0 10px;padding:8px;background:#fff}
+ label{margin-right:12px;white-space:nowrap} input[type=number]{width:70px}
+ textarea{width:100%;height:140px;font:12px monospace;box-sizing:border-box}
+ .cols{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+ .col{background:#fff;border:1px solid #ccc;padding:8px;min-width:0}
+ .col h2{font-size:15px;margin:0 0 4px}
+ .stats{font-size:12px;margin-bottom:6px;color:#333}
+ .text{white-space:pre-wrap;word-break:break-word;font:12px/1.5 monospace;max-height:520px;overflow:auto;border:1px solid #eee;padding:4px}
+ .seg{cursor:pointer}
+ .c0{background:#cde7ff}.c1{background:#ffe0b3}.c2{background:#d4f5d0}.c3{background:#f5d0ee}
+ .ov{background:repeating-linear-gradient(45deg,#ffd84d,#ffd84d 4px,#ff9d4d 4px,#ff9d4d 8px)}
+ .start{border-left:3px solid #d00}
+ .seg:hover{outline:1px solid #000}
+ .cut{color:#d00;font-weight:bold}
+ #info{position:sticky;bottom:0;background:#222;color:#eee;padding:8px;font:12px monospace;margin-top:10px;min-height:48px;white-space:pre-wrap}
+ table{border-collapse:collapse;font-size:12px} td,th{border:1px solid #ddd;padding:2px 6px;text-align:left}
+ .err{color:#d00}.legend span{padding:0 6px;margin-right:6px}
+</style></head><body>
+<h1>Chunk visualiser (Day 21)</h1>
+<fieldset><legend>Input</legend>
+ <label>Corpus file <select id="file"><option value="">(pasted text)</option></select></label>
+ <textarea id="text" placeholder="Paste text / markdown here, or pick a corpus file"></textarea>
+</fieldset>
+<fieldset><legend>Parameters</legend>
+ <label>Fixed size <input id="fixedSize" type="number" value="800" min="1"></label>
+ <label>Overlap <input id="overlap" type="number" value="100" min="0"></label>
+ <label>Structure min-merge <input id="minChars" type="number" value="300" min="0"></label>
+ <label>Structure max-split <input id="maxChars" type="number" value="1500" min="1"></label>
+ <button id="run">Chunk</button> <span id="err" class="err"></span>
+ <div class="legend">Legend: <span class="c0">chunk A</span><span class="c1">chunk B</span><span class="c2">chunk C</span><span class="c3">chunk D</span><span class="ov">overlap (2 chunks)</span><span class="start">red bar = chunk start</span><span class="cut">!</span> = cut mid-sentence</div>
+</fieldset>
+<div class="cols">
+ <div class="col"><h2>fixed</h2><div class="stats" id="stats-fixed"></div><div class="text" id="text-fixed"></div></div>
+ <div class="col"><h2>structure</h2><div class="stats" id="stats-structure"></div><div class="text" id="text-structure"></div></div>
+</div>
+<fieldset style="margin-top:10px"><legend>Search saved index (cosine, top-k)</legend>
+ <label>Strategy <select id="sstrategy"><option>fixed</option><option>structure</option></select></label>
+ <label>k <input id="k" type="number" value="5" min="1" max="20"></label>
+ <input id="query" style="width:50%" placeholder="e.g. how much protein per day?"> <button id="search">Search</button>
+ <span id="serr" class="err"></span><div id="results"></div>
+</fieldset>
+<div id="info">Hover or click a highlighted block to see chunk metadata.</div>
+<script>
+const $=id=>document.getElementById(id);
+const esc=s=>s.replace(/[&<>]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;'}[c]));
+let pinned=false;
+async function api(path,body){
+  const r=await fetch(path,body?{method:'POST',body:JSON.stringify(body)}:{});
+  const j=await r.json(); if(!r.ok) throw new Error(j.error||r.statusText); return j;
+}
+function showInfo(c,v){
+  $('info').textContent=`chunk_id: ${c.chunkId}\nsource: ${c.source}   title: ${c.title}\nsection: ${c.section||'(none)'}\n`+
+   `offsets: ${c.startOffset}..${c.endOffset}   length: ${v.length}   strategy: ${c.strategy}\n`+
+   `starts mid-sentence: ${v.startsMidSentence}   ends mid-sentence: ${v.endsMidSentence}`;
+}
+function render(text,res){
+  const chunks=res.chunks;
+  const pts=new Set([0,text.length]);
+  chunks.forEach(v=>{pts.add(v.chunk.startOffset);pts.add(v.chunk.endOffset)});
+  const sorted=[...pts].sort((a,b)=>a-b);
+  let html='';
+  for(let i=0;i<sorted.length-1;i++){
+    const s=sorted[i],e=sorted[i+1];
+    const cov=[];chunks.forEach((v,idx)=>{if(v.chunk.startOffset<=s&&v.chunk.endOffset>=e)cov.push(idx)});
+    const body=esc(text.slice(s,e));
+    if(!cov.length){html+=body;continue}
+    const first=cov[0],isStart=cov.some(i=>chunks[i].chunk.startOffset===s);
+    const cls='seg '+(cov.length>1?'ov':'c'+(first%4))+(isStart?' start':'');
+    const endsHere=cov.filter(i=>chunks[i].chunk.endOffset===e&&chunks[i].endsMidSentence);
+    html+=`<span class="${cls}" data-c="${cov.join(',')}">${body}</span>`+(endsHere.length?'<span class="cut" title="chunk ends mid-sentence">!</span>':'');
+  }
+  const el=$('text-'+res.strategy);
+  el.innerHTML=html;
+  el.querySelectorAll('.seg').forEach(sp=>{
+    const show=()=>{const idx=sp.dataset.c.split(',').map(Number);
+      showInfo(chunks[idx[0]].chunk,chunks[idx[0]]);
+      if(idx.length>1)$('info').textContent+='\n--- overlaps with ---\n'+idx.slice(1).map(i=>chunks[i].chunk.chunkId+' ('+chunks[i].chunk.startOffset+'..'+chunks[i].chunk.endOffset+')').join('\n')};
+    sp.onmouseenter=()=>{if(!pinned)show()};
+    sp.onclick=()=>{pinned=true;show()};
+  });
+  const s=res.stats,f=x=>x.toFixed(1)+'%';
+  $('stats-'+res.strategy).innerHTML=s?`<b>${s.count}</b> chunks (${esc(res.params)}) · avg ${s.avgChars} / min ${s.minChars} / max ${s.maxChars} chars<br>`+
+    `ends mid-sentence ${f(s.endsMidSentencePct)} · starts mid-sentence ${f(s.startsMidSentencePct)} · straddles sections ${f(s.crossesSectionPct)}`:'no chunks';
+}
+async function run(){
+  $('err').textContent='';pinned=false;
+  const text=$('text').value, f=$('file').value;
+  try{
+    const r=await api('/api/chunk',{text,source:f||'pasted.md',title:f||'Pasted text',
+      fixedSize:+$('fixedSize').value,overlap:+$('overlap').value,minChars:+$('minChars').value,maxChars:+$('maxChars').value});
+    const norm=text.replace(/\r\n/g,'\n');
+    render(norm,r.fixed);render(norm,r.structure);
+  }catch(e){$('err').textContent=e.message}
+}
+async function search(){
+  $('serr').textContent='';$('results').innerHTML='';
+  try{
+    const r=await api('/api/search',{strategy:$('sstrategy').value,query:$('query').value,k:+$('k').value});
+    $('results').innerHTML=`<p>Embedding model: <code>${esc(r.embeddingModel)}</code></p><table><tr><th>#</th><th>score</th><th>chunk_id</th><th>section</th><th>text</th></tr>`+
+      r.hits.map((h,i)=>`<tr><td>${i+1}</td><td>${h.score.toFixed(3)}</td><td>${esc(h.chunk.chunkId)}</td><td>${esc(h.chunk.section)}</td><td>${esc(h.chunk.text.slice(0,300))}…</td></tr>`).join('')+'</table>';
+  }catch(e){$('serr').textContent=e.message}
+}
+$('run').onclick=run;$('search').onclick=search;
+$('query').onkeydown=e=>{if(e.key==='Enter')search()};
+$('file').onchange=async()=>{
+  if(!$('file').value)return;
+  const f=await api('/api/file?name='+encodeURIComponent($('file').value));
+  $('text').value=f.text;run();
+};
+api('/api/files').then(r=>r.files.forEach(n=>{const o=document.createElement('option');o.value=o.textContent=n;$('file').appendChild(o)}));
+</script></body></html>

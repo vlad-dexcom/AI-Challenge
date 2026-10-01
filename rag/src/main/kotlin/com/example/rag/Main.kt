@@ -8,21 +8,29 @@ private const val USAGE = """
 Usage (run from the repo root via Gradle):
   ./gradlew :rag:run --args="index   [--corpus rag/corpus] [--out rag/index] [--embedder gemini|offline]"
   ./gradlew :rag:run --args="compare [--out rag/index] [--embedder gemini|offline]"
+  ./gradlew :rag:run --args="ui      [--port 8080] [--corpus rag/corpus] [--out rag/index]"
 
 index    builds one JSON index per chunking strategy (fixed.json, structure.json) in --out.
 compare  loads both indexes, prints chunk stats + sample-query results, writes comparison-report.md.
+ui       serves the chunk visualiser at http://localhost:<port> (Ctrl+C to stop).
 --embedder gemini  (default if GEMINI_API_KEY is set) calls the Gemini embeddings REST API.
 --embedder offline deterministic hashing embedder, no network (lexical only, for tests/demos).
 The Gemini key is read from the GEMINI_API_KEY env var or from local.properties (never committed).
 """
 
 fun main(args: Array<String>) {
-    if (args.isEmpty() || args[0] !in setOf("index", "compare")) {
+    if (args.isEmpty() || args[0] !in setOf("index", "compare", "ui")) {
         println(USAGE.trim()); exitProcess(if (args.isEmpty()) 0 else 1)
     }
     val opts = args.drop(1).chunked(2).associate { it[0].removePrefix("--") to it.getOrElse(1) { "" } }
     val outDir = File(opts["out"] ?: "rag/index")
     val key = apiKey()
+    if (args[0] == "ui") {
+        val server = UiServer(UiApi(File(opts["corpus"] ?: "rag/corpus"), outDir, key), (opts["port"] ?: "8080").toInt())
+        server.start()
+        println("Chunk visualiser: http://localhost:${server.port}  (Ctrl+C to stop)")
+        Thread.currentThread().join()
+    }
     val embedderName = opts["embedder"] ?: if (key.isNotBlank()) "gemini" else "offline"
     val embedder: EmbeddingClient = when (embedderName) {
         "gemini" -> {

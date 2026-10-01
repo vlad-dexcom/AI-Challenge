@@ -348,6 +348,9 @@ See `docs/day21-indexing.md` for the design and the strategy comparison, and
   `HashingEmbeddingClient` for tests/demos.
 - **Index** — `VectorIndex` + `IndexStore` JSON files (`rag/index/fixed.json`, `structure.json`) with
   metadata (model, dimension, strategy, created time, source corpus).
+- **Chunk visualiser** — `./gradlew :rag:run --args="ui"` serves a local page (http://localhost:8080)
+  showing both chunkers side by side over a pasted/corpus text with tunable parameters, per-chunk
+  metadata, stats and a top-k search over the saved indexes.
 - **Note:** the committed indexes/report were generated with the *offline* embedder (no API key was
   available); regenerate with Gemini via the commands below. Retriever/reranker come in Days 22-23.
 
