@@ -355,12 +355,17 @@ See `docs/day21-indexing.md` for the design and the strategy comparison, and
   (metadata completeness, vector length/NaN/zero/norm, duplicate ids, staleness vs a fresh re-chunk of
   the corpus) and *Embedder ping* sanity-checks the embedder matching the index (offline hashing is
   labelled lexical-only).
-- **Note:** the committed indexes/report were generated with the *offline* embedder (no API key was
-  available); regenerate with Gemini via the commands below. Retriever/reranker come in Days 22-23.
+- **Retrieval eval** — `rag/eval/questions.json` (30 questions: direct, paraphrased, 4 out-of-corpus) and
+  `./gradlew :rag:run --args="eval"` → hit@1/3/5, MRR, top-1 score stats, report in `rag/eval/`.
+  With real Gemini embeddings: hit@3 96% (both strategies); the structure chunker's `section` metadata matches
+  the answer far more often (section hit@3 92% vs 73%). See `docs/day21-indexing.md`.
+- `rag/index/` holds the Gemini-embedded indexes; `rag/index-offline/` the lexical-only offline ones.
+  Retriever/reranker come in Days 22-23.
 
 ```
 ./gradlew :rag:test
-./gradlew :rag:run --args="index"      # GEMINI_API_KEY from env or local.properties; add --embedder offline for no network
+./gradlew :rag:run --args="index"      # GEMINI_API_KEY from env or local.properties; add --embedder offline for no network (uses rag/index-offline)
+./gradlew :rag:run --args="eval"         # retrieval eval over rag/eval/questions.json
 ./gradlew :rag:run --args="compare"    # writes rag/index/comparison-report.md
 ```
 
@@ -407,7 +412,7 @@ See `docs/day21-indexing.md` for the design and the strategy comparison, and
   the local, three-tool-pipeline `LocalWorkoutPlannerMcpGateway`.
 - `agent/mcp/` — Day 17 client-side tool-calling: `ToolCallingLlmClient`, `McpToolCallingAgent`.
 - `rag/` (Gradle module `:rag`) — Day 21 indexing: `Chunker`s, `EmbeddingClient`s, `VectorIndex`/`IndexStore`,
-  `Indexer`, comparison report and CLI (`Main.kt`); `rag/corpus/` and `rag/index/` hold the data.
+  `Indexer`, comparison report and CLI (`Main.kt`); `rag/corpus/`, `rag/eval/`, `rag/index/` (Gemini) and `rag/index-offline/` hold the data.
 - `GeminiModels.kt` — kotlinx.serialization request/response DTOs for the Gemini Interactions
   API, including `system_instruction` and `generation_config`.
 - `GeminiApiClient.kt` — Ktor `HttpClient` wrapper implementing `LlmClient`; POSTs the request

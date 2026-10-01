@@ -54,6 +54,7 @@ class UiApi(
     private val indexDir: File,
     private val apiKey: String,
     private val embedderFactory: ((IndexMeta) -> EmbeddingClient?) = { null },
+    private val evalFile: String = "rag/eval/questions.json",
 ) {
     private val json = Json { ignoreUnknownKeys = true; encodeDefaults = true }
 
@@ -122,6 +123,22 @@ class UiApi(
         return json.encodeToString(PingResponse.serializer(), resp)
     }
 
+    fun eval(strategy: String): String {
+        val file = File(indexDir, "$strategy.json")
+        if (strategy !in ChunkStrategy.entries.map { it.id } || !file.isFile) throw ApiException(404, "No saved index for '$strategy'.")
+        val qFile = File(evalFile)
+        if (!qFile.isFile) throw ApiException(404, "Eval set not found: $evalFile")
+        val index = IndexStore().load(file)
+        val embedder = embedderFactory(index.meta) ?: defaultEmbedder(index.meta)
+            ?: throw ApiException(400, "Index was built with ${index.meta.embeddingModel}; set GEMINI_API_KEY to run the eval.")
+        val metrics = try {
+            runBlocking { Evaluator.run(index, embedder, EvalSet.load(qFile)) }
+        } catch (e: EmbeddingException) {
+            throw ApiException(502, e.message ?: "Embedding failed")
+        }
+        return json.encodeToString(EvalMetrics.serializer(), metrics)
+    }
+
     private fun defaultEmbedder(meta: IndexMeta): EmbeddingClient? = when {
         meta.embeddingModel.startsWith("offline-hashing-bow-") -> HashingEmbeddingClient(meta.dimension)
         apiKey.isNotBlank() -> GeminiEmbeddingClient(apiKey, meta.embeddingModel, meta.dimension)
@@ -178,6 +195,7 @@ class UiServer(private val api: UiApi, port: Int) {
             get && path == "/api/file" -> JSON to api.file(queryParam(ex, "name") ?: throw ApiException(400, "name required"))
             get && path == "/api/index/inspect" -> JSON to api.inspect(queryParam(ex, "strategy") ?: throw ApiException(400, "strategy required"))
             get && path == "/api/embedder/ping" -> JSON to api.ping(queryParam(ex, "strategy") ?: throw ApiException(400, "strategy required"))
+            get && path == "/api/eval" -> JSON to api.eval(queryParam(ex, "strategy") ?: throw ApiException(400, "strategy required"))
             post && path == "/api/chunk" -> JSON to api.chunk(ex.requestBody.readBytes().decodeToString())
             post && path == "/api/search" -> JSON to api.search(ex.requestBody.readBytes().decodeToString())
             else -> throw ApiException(404, "Not found")

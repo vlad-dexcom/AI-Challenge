@@ -43,11 +43,13 @@ Ktor/kotlinx-serialization той же версии, что и в `:app`.
 ## Запуск
 ```bash
 export GEMINI_API_KEY=...            # или строка в local.properties
-./gradlew :rag:run --args="index"    # rag/index/fixed.json + structure.json
+./gradlew :rag:run --args="index"    # rag/index/fixed.json + structure.json (gemini)
 ./gradlew :rag:run --args="compare"  # печатает и пишет rag/index/comparison-report.md
+./gradlew :rag:run --args="eval"     # retrieval eval, rag/eval/report-gemini.md
 ./gradlew :rag:test
 ```
-`--embedder offline` — без сети и ключа (только лексика, не семантическая модель).
+`--embedder offline` — без сети и ключа (только лексика, не семантическая модель); по умолчанию пишет/читает
+`rag/index-offline/`, а gemini — `rag/index/` (переопределяется `--out`). Без ключа `--embedder` по умолчанию = offline.
 
 ## Визуализатор чанков (UI)
 
@@ -86,11 +88,9 @@ path traversal отклоняется). Тесты: `UiServerTest`, `IndexInspec
 
 ## Сравнение стратегий
 
-> **Важно.** В репозитории закоммичены индексы и отчёт, собранные **офлайн-эмбеддером**
-> (`offline-hashing-bow-256`), т.к. при разработке не было Gemini-ключа. Реальные эмбеддинги Gemini
-> **не проверялись** (клиент покрыт только тестами с MockEngine). Метрики чанков (ниже) от эмбеддингов
-> не зависят; результаты поиска — иллюстративные. Чтобы получить настоящие: запустить `index` и
-> `compare` с ключом.
+> Индексы в `rag/index/` собраны **реальными эмбеддингами Gemini** (`gemini-embedding-001`, 768 dims;
+> видно в `meta.embeddingModel`). Копия на офлайн-эмбеддере (только лексика) лежит в `rag/index-offline/`
+> — для запуска без ключа и сравнения. Метрики чанков от эмбеддингов не зависят.
 
 Параметры: fixed — 800/100, structure — max 1500 / min 300. Всего 17 документов.
 
@@ -109,9 +109,50 @@ path traversal отклоняется). Тесты: `UiServerTest`, `IndexInspec
 - **structure** даёт самодостаточные чанки с осмысленным `section` (путь заголовков). Платой
   служит разброс размеров (301–1475) и то, что у 18.8% чанков есть вторая секция — это результат
   склейки мелких секций.
-- Поиск на 8 sample-запросах (офлайн-эмбеддер): top-1 попадание в нужную статью 6/8 у обеих
-  стратегий; различия на отдельных запросах см. в `rag/index/comparison-report.md`. На такой
-  выборке и с лексическим эмбеддером разницу в качестве поиска делать выводом нельзя —
-  перепроверить с Gemini на Day 22.
+- Поиск на 8 sample-запросах (Gemini): top-1 попадание в нужную статью **fixed 7/8, structure 8/8**
+  (офлайн-hashing: 6/8 у обеих). Подробности — `rag/index/comparison-report.md`.
 - Рекомендация для Day 22: `structure` по умолчанию (чистые границы и метаданные секции для цитат),
   `fixed` оставить как baseline.
+
+## Retrieval eval (`eval`)
+
+`rag/eval/questions.json` — 30 вопросов по корпусу (английские, как и корпус): 15 `direct` (слова из текста),
+11 `paraphrase` (почти без лексического пересечения), 4 `out_of_corpus` (нет ожидаемого источника, исключены из
+hit@k/MRR). Для каждого in-corpus вопроса указан `expectedSource` и `expectedSection` — ключевое слово, которое
+должно встречаться в заголовке этого файла (проверяется автоматически, тест `EvalTest` валидирует файл против корпуса).
+
+```bash
+./gradlew :rag:run --args="eval"                                   # оба индекса, эмбеддер = gemini при наличии ключа
+./gradlew :rag:run --args="eval --embedder offline --k 5 --strategy structure"
+```
+Для каждого индекса: hit@1/3/5, MRR (по чанкам; hit = среди top-k есть чанк из ожидаемого файла), section hit@3
+(чанк ещё и из секции с ключевым словом), hit@3 отдельно для direct/paraphrase, средний top-1 score для
+in-corpus и out-of-corpus, таблица по вопросам и список промахов. Отчёт: `rag/eval/report-<embedder>.md`.
+В UI — кнопки «Eval fixed/structure» (`GET /api/eval?strategy=`).
+
+### Результаты (26 in-corpus + 4 out-of-corpus, k=5)
+
+| Метрика | gemini fixed | gemini structure | offline fixed | offline structure |
+|---|---|---|---|---|
+| hit@1 | 92.3% | 88.5% | 50.0% | 53.8% |
+| hit@3 | 96.2% | 96.2% | 69.2% | 76.9% |
+| hit@5 | 96.2% | 100% | 76.9% | 84.6% |
+| MRR | 0.942 | 0.931 | 0.605 | 0.654 |
+| section hit@3 | 73.1% | 92.3% | 11.5% | 53.8% |
+| hit@3 paraphrase | 90.9% | 90.9% | 63.6% | 63.6% |
+| avg top-1 in-corpus | 0.727 | 0.738 | 0.334 | 0.336 |
+| avg top-1 out-of-corpus | 0.532 | 0.524 | 0.174 | 0.187 |
+| min in-corpus / max out-of-corpus top-1 | 0.684 / 0.568 | 0.698 / 0.556 | 0.189 / 0.200 | 0.185 / 0.218 |
+
+Выводы:
+- Gemini резко лучше лексического эмбеддера, особенно на перефразированных вопросах и по hit@1.
+- По попаданию в **файл** стратегии почти равны (фиксированные размеры: hit@1 выше на 1 вопрос; structure
+  догоняет к k=5). Но по **секции** structure заметно лучше (92% против 73% section hit@3): его чанки
+  выровнены по заголовкам, и `section` в метаданных реально указывает на ответ.
+- Единственный промах fixed на k=5 — q14 («bar speed flat… reduce training stress», ожидался deload в 05): топ занял
+  чанк про overreaching из `07-sleep-and-recovery.md`, то есть близкий по смыслу, но не тот файл. У structure этот
+  вопрос на 5-й позиции.
+- Для порога на Day 23: у Gemini все in-corpus top-1 ≥ 0.68, а out-of-corpus top-1 ≤ 0.57, поэтому порог около
+  0.6 разделяет эти 30 вопросов; на такой маленькой выборке это ориентир, а не гарантия. Для offline-эмбеддера
+  диапазоны перекрываются (0.19 vs 0.20), порог не работает.
+- Ограничения: 30 вопросов, оценка на уровне файла, вопросы писались автором корпуса.

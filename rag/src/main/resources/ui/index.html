@@ -47,6 +47,7 @@
 <fieldset><legend>Index inspection</legend>
  <button id="inspect-fixed">Inspect fixed index</button> <button id="inspect-structure">Inspect structure index</button>
  <button id="ping-fixed">Embedder ping (fixed index model)</button> <button id="ping-structure">Embedder ping (structure index model)</button>
+ <button id="eval-fixed">Eval fixed</button> <button id="eval-structure">Eval structure</button>
  <span id="ierr" class="err"></span><div id="inspect"></div>
 </fieldset>
 <div id="info">Hover or click a highlighted block to see chunk metadata.</div>
@@ -134,7 +135,19 @@ async function ping(st){
      `<p>${esc(r.verdict)}</p><ol>${r.sentences.map(x=>'<li>'+esc(x)+'</li>').join('')}</ol><small>Related = 1 vs 2, unrelated = 1 vs 3.</small>`;
   }catch(e){$('inspect').innerHTML='';$('ierr').textContent=e.message}
 }
-['fixed','structure'].forEach(st=>{$('inspect-'+st).onclick=()=>inspect(st);$('ping-'+st).onclick=()=>ping(st)});
+async function evalRun(st){
+  $('ierr').textContent='';$('inspect').innerHTML='Running eval…';
+  try{
+    const r=await api('/api/eval?strategy='+st),p=x=>(100*x).toFixed(1)+'%';
+    $('inspect').innerHTML=`<h3>Eval: ${esc(st)} (${esc(r.embeddingModel)})</h3>`+
+     (r.embeddingModel.startsWith('offline-')?'<p class="err">Offline embedder: lexical-only.</p>':'')+
+     `<p>hit@1 <b>${p(r.hitAt1)}</b> · hit@3 <b>${p(r.hitAt3)}</b> · hit@5 <b>${p(r.hitAt5)}</b> · MRR <b>${r.mrr.toFixed(3)}</b> · direct hit@3 ${p(r.hitAt3Direct)} · paraphrase hit@3 ${p(r.hitAt3Paraphrase)}<br>`+
+     `avg top-1 score: in-corpus ${r.avgTop1InCorpus.toFixed(3)}, out-of-corpus ${r.avgTop1OutOfCorpus==null?'-':r.avgTop1OutOfCorpus.toFixed(3)}</p>`+
+     '<table><tr><th>id</th><th>type</th><th>question</th><th>expected</th><th>rank</th><th>top score</th><th>top chunk</th></tr>'+
+     r.results.map(x=>`<tr style="${x.expectedSource&&x.rank==null?'background:#fdd':''}"><td>${x.id}</td><td>${x.type}</td><td>${esc(x.question)}</td><td>${esc(x.expectedSource||'-')}</td><td>${x.rank??(x.expectedSource?'miss':'n/a')}</td><td>${x.topScore.toFixed(3)}</td><td>${esc(x.topChunkId)}</td></tr>`).join('')+'</table>';
+  }catch(e){$('inspect').innerHTML='';$('ierr').textContent=e.message}
+}
+['fixed','structure'].forEach(st=>{$('eval-'+st).onclick=()=>evalRun(st);$('inspect-'+st).onclick=()=>inspect(st);$('ping-'+st).onclick=()=>ping(st)});
 $('run').onclick=run;$('search').onclick=search;
 $('query').onkeydown=e=>{if(e.key==='Enter')search()};
 $('file').onchange=async()=>{

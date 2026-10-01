@@ -30,7 +30,17 @@ export GEMINI_API_KEY=...
 ./gradlew :rag:run --args="compare --embedder gemini"
 ```
 Ожидается: `meta.embeddingModel = gemini-embedding-001`, `dimension = 768`; sample-запросы чаще
-возвращают нужную статью на первых местах, чем офлайн-эмбеддер.
+возвращают нужную статью на первых местах, чем офлайн-эмбеддер. Индексы пишутся в `rag/index/`
+(офлайн — в `rag/index-offline/`).
+
+### 4a. Eval
+```bash
+./gradlew :rag:run --args="eval --embedder offline"   # без ключа
+./gradlew :rag:run --args="eval --embedder gemini"    # нужен ключ и gemini-индексы
+```
+Ожидается: таблица hit@1/3/5, MRR, средние top-1 score (in-corpus выше out-of-corpus), список промахов;
+файл `rag/eval/report-<embedder>.md`. Ориентиры: gemini hit@3 ≈ 96%, offline ≈ 70–77%. Эмбеддер, не совпадающий с
+моделью индекса, даёт понятную ошибку. В UI: кнопки «Eval fixed/structure» в панели Index inspection.
 
 ## 5. Визуализатор чанков (ручной)
 ```bash
@@ -49,13 +59,13 @@ export GEMINI_API_KEY=...
 
 ### 5a. Инспекция индекса и ping эмбеддера (в том же UI)
 1. Нажмите **Inspect fixed index** — ожидается «✅ all checks passed», путь/размер/mtime, meta
-   (модель `offline-hashing-bow-256`, dim 256) и 3 примера чанков с первыми 5 значениями вектора.
+   (модель `gemini-embedding-001`, dim 768) и 3 примера чанков с первыми 5 значениями вектора.
 2. Повторите для **structure**.
 3. Проверка устаревания: измените любой файл в `rag/corpus/` (например, добавьте слово), снова нажмите
    Inspect — проверка «up to date with the corpus» станет ❌ (text hash DIFFERS). Верните файл (`git checkout rag/corpus`).
 4. Временно переименуйте `rag/index/fixed.json` — Inspect даёт сообщение «No saved index…» (404). Верните файл.
-5. **Embedder ping** — для офлайн-индекса: длина 256, норма ≈1, задержка, cosine связанной пары > несвязанной,
-   красная пометка «lexical-only». Для Gemini-индекса без ключа — ошибка про `GEMINI_API_KEY`; с ключом
+5. **Embedder ping** — для gemini-индекса: длина 768, норма ≈1, задержка, cosine связанной пары > несвязанной,
+   вердикт PASS. Для офлайн-индекса — длина 256 и красная пометка «lexical-only». Для Gemini-индекса без ключа — ошибка про `GEMINI_API_KEY`; с ключом
    (после `index --embedder gemini`) — вердикт PASS при related > unrelated.
 
 ## 6. Приложение не сломалось
