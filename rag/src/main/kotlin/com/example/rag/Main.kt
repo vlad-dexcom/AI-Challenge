@@ -1,6 +1,8 @@
 package com.example.rag
 
 import kotlinx.coroutines.runBlocking
+import kotlinx.serialization.builtins.ListSerializer
+import kotlinx.serialization.json.Json
 import java.io.File
 import kotlin.system.exitProcess
 
@@ -9,12 +11,16 @@ Usage (run from the repo root via Gradle):
   ./gradlew :rag:run --args="index   [--corpus rag/corpus] [--out rag/index] [--embedder gemini|offline]"
   ./gradlew :rag:run --args="compare [--out rag/index] [--embedder gemini|offline]"
   ./gradlew :rag:run --args="eval    [--embedder gemini|offline] [--k 5] [--strategy fixed|structure] [--questions rag/eval/questions.json] [--out dir]"
+  ./gradlew :rag:run --args="ask     \"question\" [--mode both|rag|no-rag] [--k 4] [--strategy structure] [--model gemini-3.5-flash]"
+  ./gradlew :rag:run --args="rag-eval [--questions rag/eval/control-questions.json] [--k 4] [--strategy structure] [--out rag/eval]"
   ./gradlew :rag:run --args="ui      [--port 8080] [--corpus rag/corpus] [--out rag/index]"
 
 index    builds one JSON index per chunking strategy (fixed.json, structure.json) in --out.
 compare  loads both indexes, prints chunk stats + sample-query results, writes comparison-report.md.
 eval     runs the retrieval eval set against each saved index (hit@1/3/5, MRR, top-1 score stats) and writes rag/eval/report-<embedder>.md.
 Default --out is rag/index for gemini and rag/index-offline for offline (so both sets of indexes can live side by side).
+ask      Day 22: answers one question WITHOUT RAG, WITH RAG (top-k chunks from the index in the prompt), or both.
+rag-eval Day 22: runs the 10 control questions in both modes, writes rag/eval/control-results.json and control-report.md.
 ui       serves the chunk visualiser at http://localhost:<port> (Ctrl+C to stop).
 --embedder gemini  (default if GEMINI_API_KEY is set) calls the Gemini embeddings REST API.
 --embedder offline deterministic hashing embedder, no network (lexical only, for tests/demos).
@@ -22,11 +28,13 @@ The Gemini key is read from the GEMINI_API_KEY env var or from local.properties 
 """
 
 fun main(args: Array<String>) {
-    if (args.isEmpty() || args[0] !in setOf("index", "compare", "eval", "ui")) {
+    if (args.isEmpty() || args[0] !in setOf("index", "compare", "eval", "ui", "ask", "rag-eval")) {
         println(USAGE.trim()); exitProcess(if (args.isEmpty()) 0 else 1)
     }
-    val opts = args.drop(1).chunked(2).associate { it[0].removePrefix("--") to it.getOrElse(1) { "" } }
+    val positional = if (args[0] == "ask" && args.size > 1 && !args[1].startsWith("--")) args[1] else null
+    val opts = args.drop(if (positional != null) 2 else 1).chunked(2).associate { it[0].removePrefix("--") to it.getOrElse(1) { "" } }
     val key = apiKey()
+    val question = positional ?: opts["question"]
     if (args[0] == "ui") {
         val server = UiServer(UiApi(File(opts["corpus"] ?: "rag/corpus"), File(opts["out"] ?: "rag/index"), key), (opts["port"] ?: "8080").toInt())
         server.start()
@@ -50,6 +58,8 @@ fun main(args: Array<String>) {
             "index" -> runIndex(File(opts["corpus"] ?: "rag/corpus"), outDir, embedder)
             "compare" -> runCompare(outDir, embedder)
             "eval" -> runEval(opts, outDir, embedder, embedderName)
+            "ask" -> runAsk(opts, question, outDir, embedder, key)
+            "rag-eval" -> runRagEval(opts, outDir, embedder, key)
         }
     }
     exitProcess(0)
@@ -125,4 +135,49 @@ private suspend fun runEval(opts: Map<String, String>, dir: File, embedder: Embe
     report.writeText(md)
     println(md)
     println("Report written to ${report.path}")
+}
+
+private fun buildPipeline(opts: Map<String, String>, dir: File, embedder: EmbeddingClient, key: String): RagPipeline {
+    if (key.isBlank()) { System.err.println("GEMINI_API_KEY is not set (env var or local.properties)."); exitProcess(2) }
+    val file = File(dir, "${opts["strategy"] ?: "structure"}.json")
+    require(file.isFile) { "Missing index ${file.path}; run the index command first." }
+    val index = IndexStore().load(file)
+    val retriever = VectorRetriever(embedder, index, (opts["k"] ?: VectorRetriever.DEFAULT_TOP_K.toString()).toInt())
+    return RagPipeline(retriever, GeminiTextGenerator(key, opts["model"] ?: GeminiTextGenerator.DEFAULT_MODEL))
+}
+
+private suspend fun runAsk(opts: Map<String, String>, question: String?, dir: File, embedder: EmbeddingClient, key: String) {
+    if (question.isNullOrBlank()) { System.err.println("Usage: ask \"<question>\" [--mode both|rag|no-rag]"); exitProcess(1) }
+    val pipeline = buildPipeline(opts, dir, embedder, key)
+    val modes = when (val m = opts["mode"] ?: "both") {
+        "both" -> listOf(RagMode.NO_RAG, RagMode.RAG)
+        "rag" -> listOf(RagMode.RAG)
+        "no-rag" -> listOf(RagMode.NO_RAG)
+        else -> { System.err.println("Unknown mode '$m'"); exitProcess(1) }
+    }
+    for (mode in modes) {
+        val a = pipeline.ask(question, mode).getOrElse { System.err.println("${mode.name} failed: ${it.message}"); exitProcess(3) }
+        println("\n=== ${if (mode == RagMode.RAG) "WITH RAG" else "WITHOUT RAG"} ===\n${a.answer}")
+        if (mode == RagMode.RAG) {
+            println("\nSources:")
+            a.hits.forEachIndexed { i, h -> println("  [${i + 1}] ${RagPromptBuilder.sourceLabel(h.chunk)}  (score %.3f)".format(h.score)) }
+        }
+    }
+}
+
+private suspend fun runRagEval(opts: Map<String, String>, dir: File, embedder: EmbeddingClient, key: String) {
+    val questions = ControlSet.load(File(opts["questions"] ?: "rag/eval/control-questions.json"))
+    val problems = ControlSet.validate(questions, CorpusLoader.load(File(opts["corpus"] ?: "rag/corpus")))
+    if (problems.isNotEmpty()) { System.err.println("Invalid control set:\n" + problems.joinToString("\n")); exitProcess(1) }
+    val pipeline = buildPipeline(opts, dir, embedder, key)
+    val results = ControlScorer.run(pipeline, questions)
+    val out = File(opts["out"] ?: "rag/eval")
+    out.mkdirs()
+    File(out, "control-results.json").writeText(
+        Json { prettyPrint = true; prettyPrintIndent = "  " }.encodeToString(ListSerializer(ControlResult.serializer()), results)
+    )
+    val md = ControlScorer.renderMarkdown(questions, results)
+    File(out, "control-report.md").writeText(md)
+    println(md)
+    println("Written to ${out.path}/control-results.json and control-report.md")
 }

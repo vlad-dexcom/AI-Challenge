@@ -1,0 +1,375 @@
+[
+  {
+    "id": "c01",
+    "category": "specific",
+    "question": "In the beginner 3-day full-body program, what exactly is on Day 2 and how many sets and reps for each exercise?",
+    "noRag": "In a standard, highly effective 3-day beginner full-body program, **Day 2** focuses on a hip-hinge movement (posterior chain), vertical pressing, vertical pulling, and unilateral (single-leg) work. \n\nHere is the exact workout for Day 2:\n\n### **Day 2: Pull & Press Focus**\n\n| Exercise | Sets | Reps | Rest |\n| :--- | :---: | :---: | :---: |\n| **1. Romanian Deadlift (Barbell or DB)** | 3 | 8–10 | 90 sec |\n| **2. Dumbbell Overhead Press** | 3 | 8–10 | 90 sec |\n| **3. Lat Pulldown** (or Assisted Pull-Up) | 3 | 10–12 | 60–90 sec |\n| **4. Dumbbell Reverse Lunge** | 3 | 8–10 (per leg) | 60–90 sec |\n| **5. Plank** | 3 | 30–45 sec hold | 60 sec |\n\n### **Trainer Tips for Day 2:**\n* **Warm-up:** Do 5 minutes of light cardio and some dynamic stretches (like arm circles and bodyweight squats) before starting.\n* **Weight Selection:** Choose a weight where the last 2 reps of every set feel challenging, but you can still maintain perfect form (RPE 8).\n* **Progression:** If you can hit the top end of the rep range (e.g., 10 reps on the overhead press) for all 3 sets, increase the weight slightly next week.",
+    "rag": "In the beginner 3-day full-body program, Day 2 consists of the following exercises, sets, and reps:\n\n*   **Trap-bar or kettlebell deadlift:** 3 sets of 5 to 8 [1]\n*   **Dumbbell overhead press:** 3 sets of 6 to 10 [1]\n*   **Lat pulldown:** 3 sets of 8 to 12 [1]\n*   **Reverse lunge:** 2 to 3 sets of 8 to 10 each side [1]\n*   **Dead bug:** 2 to 3 sets [1]",
+    "noRagScore": {
+      "factsHit": 3,
+      "factsTotal": 6,
+      "missingFacts": [
+        [
+          "trap-bar",
+          "trap bar",
+          "kettlebell deadlift"
+        ],
+        [
+          "dead bug"
+        ],
+        [
+          "5 to 8",
+          "5-8"
+        ]
+      ],
+      "admitsNoInfo": false
+    },
+    "ragScore": {
+      "factsHit": 6,
+      "factsTotal": 6,
+      "missingFacts": [],
+      "admitsNoInfo": false
+    },
+    "sources": {
+      "expectedFound": 1,
+      "expectedTotal": 1,
+      "retrieved": [
+        "13-beginner-program-design.md > Beginner Program Design for Strength and Muscle > A practical 3-day full-body program",
+        "13-beginner-program-design.md > Beginner Program Design for Strength and Muscle > A practical 4-day upper/lower split",
+        "13-beginner-program-design.md > Beginner Program Design for Strength and Muscle > Day 3",
+        "14-home-workouts-and-bodyweight.md > Home Workouts with Dumbbells, Bands, and Bodyweight > Workout B"
+      ],
+      "topScore": 0.7521492,
+      "answerCitesSources": true
+    }
+  },
+  {
+    "id": "c02",
+    "category": "specific",
+    "question": "What are the useful pull-up progressions if I cannot do a strict pull-up yet?",
+    "noRag": "To build the strength for your first strict pull-up, follow this systematic progression. Train these movements 2–3 times a week.\n\n### 1. Dead Hangs & Scapular Pull-ups\n*   **Why:** Builds grip strength and shoulder stability.\n*   **How:** Hang from the bar with active shoulders (don't let your ears touch your shoulders). For scapular pull-ups, keep your arms straight and pull your shoulder blades down and back, lifting your body slightly. \n*   **Goal:** 3 sets of a 30-second hang / 10-15 scapular shrugs.\n\n### 2. Inverted Rows (Australian Pull-ups)\n*   **Why:** Builds the foundational back and arm strength at an easier angle.\n*   **How:** Use a barbell in a rack or TRX straps. Keep your body in a straight plank and pull your chest to the bar. Lower the bar/straps to make it harder.\n*   **Goal:** 3 sets of 8–10 reps at a challenging angle.\n\n### 3. Band-Assisted Pull-ups\n*   **Why:** Simulates the exact movement pattern of a pull-up.\n*   **How:** Loop a resistance band around the bar and place your foot or knee in it. Use the lightest band possible that still allows you to complete your reps.\n*   **Goal:** 3 sets of 5–8 reps.\n\n### 4. Negative (Eccentric) Pull-ups\n*   **Why:** *This is the ultimate bridge to a strict pull-up.* You are stronger lowering yourself than pulling yourself up.\n*   **How:** Jump or use a box to get your chin over the bar. Lower yourself down as slowly as possible (aim for a 3 to 5-second descent) until your arms are fully straight.\n*   **Goal:** 3 sets of 4–6 slow negatives.\n\n---\n\n### Trainer Tips for Success:\n\n*   **Nutrition:** Pull-ups are about your **strength-to-weight ratio**. Eating sufficient protein (0.8–1g per lb of body weight) helps build muscle, while maintaining a lean body composition makes lifting your own weight significantly easier.\n*   **Recovery:** Your back and grip need rest. Allow 48 hours between intense pulling sessions. If your elbows start to ache, back off the volume and focus on mobility.",
+    "rag": "If you cannot do a strict bodyweight pull-up yet, useful intermediate progressions that preserve the actual movement pattern include:\n\n*   Slow eccentrics [1]\n*   Band-assisted pull-ups [1]\n*   Machine-assisted pull-ups [1]\n*   Isometric holds [1]\n*   Scapular pull-ups [1]\n\nAdditionally, incorporating pauses and slower eccentrics are valid ways to progress bodyweight pulling exercises and build strength [2].",
+    "noRagScore": {
+      "factsHit": 4,
+      "factsTotal": 5,
+      "missingFacts": [
+        [
+          "isometric"
+        ]
+      ],
+      "admitsNoInfo": false
+    },
+    "ragScore": {
+      "factsHit": 5,
+      "factsTotal": 5,
+      "missingFacts": [],
+      "admitsNoInfo": false
+    },
+    "sources": {
+      "expectedFound": 1,
+      "expectedTotal": 1,
+      "retrieved": [
+        "04-pulling-and-back-training.md > Pulling and Back Training > Pull-up progressions",
+        "04-pulling-and-back-training.md > Pulling and Back Training > Progression ideas",
+        "04-pulling-and-back-training.md > Pulling and Back Training > Pull-ups and chin-ups",
+        "14-home-workouts-and-bodyweight.md > Home Workouts with Dumbbells, Bands, and Bodyweight > Push progressions > Bodyweight pushing ladder"
+      ],
+      "topScore": 0.7643763,
+      "answerCitesSources": true
+    }
+  },
+  {
+    "id": "c03",
+    "category": "specific",
+    "question": "My deadlift stalls above the knee and the bar climbs in stages at lockout. What does this indicate and which variations help?",
+    "noRag": "This issue—stalling above the knee and \"hitching\" (climbing in stages)—is very common. Here is what it indicates and how to fix it.\n\n### What This Indicates\n\n1. **Weak Glutes (Incomplete Hip Extension):** The glutes are the primary movers for the final lockout. If they are weak, you cannot push your hips forward to meet the bar, leading to a grind.\n2. **Hips Rising Too Fast Off the Floor:** If your hips shoot up instantly when you pull, your knees straighten too early. This leaves you in a \"stiff-legged\" position above the knee, forcing your lower back and hamstrings to do all the work from a terrible mechanical position.\n3. **Losing Upper Back Tightness:** If your upper back rounds off the floor, the bar drifts away from your thighs. The further the bar is from your center of gravity, the harder the lockout becomes.\n\n---\n\n### Best Variations to Fix It\n\nTo fix this, you need to address both **positioning off the floor** and **lockout strength**.\n\n#### 1. For Lockout Strength & Glute Drive\n* **Block Pulls (Bar elevated 2–4 inches on blocks):** \n  * *Why:* This overloads the exact range where you stall. It teaches you to aggressively drive your hips forward and squeeze your glutes to finish the lift.\n* **Banded Deadlifts (or Chains):**\n  * *Why:* Accommodating resistance makes the weight heavier as you pull higher. This forces you to accelerate through the lockout rather than decelerating.\n* **Barbell Hip Thrusts:**\n  * *Why:* The ultimate accessory for building the horizontal hip extension strength needed to lock out a heavy deadlift.\n\n#### 2. For Positioning & Tension\n* **Pause Deadlifts (Pause 1 inch off the floor OR just below the knee):**\n  * *Why:* Pausing forces you to stay tight, prevents your hips from shooting up, and teaches you to keep the bar close to your shins.\n* **Deficit Deadlifts (Standing on a 1–2 inch platform):**\n  * *Why:* Increases the range of motion, forcing you to use more quad drive off the floor. This keeps your hips in a better position when you finally reach the knees.\n\n### Quick Form Cue\nAs the bar passes your knees, **do not pull up with your lower back; push your hips forward into the bar** and squeeze your glutes as hard as possible.",
+    "rag": "If your deadlift stalls above the knee and climbs in stages, this is known as \"hitching at lockout\" [1]. This indicates that you likely lost your position earlier in the lift [1]. \n\nTo help correct this issue, you can use the following deadlift variations, depending on where your positional breakdown starts:\n* **Paused deadlifts** [1]\n* **Romanian deadlifts (RDLs)** [1]\n* **Block pulls** [1]",
+    "noRagScore": {
+      "factsHit": 2,
+      "factsTotal": 4,
+      "missingFacts": [
+        [
+          "lost position earlier",
+          "lost position",
+          "earlier"
+        ],
+        [
+          "rdl",
+          "romanian"
+        ]
+      ],
+      "admitsNoInfo": false
+    },
+    "ragScore": {
+      "factsHit": 4,
+      "factsTotal": 4,
+      "missingFacts": [],
+      "admitsNoInfo": false
+    },
+    "sources": {
+      "expectedFound": 1,
+      "expectedTotal": 1,
+      "retrieved": [
+        "02-deadlift-technique.md > Deadlift Technique > Romanian deadlift technique",
+        "02-deadlift-technique.md > Deadlift Technique > Lockout without overdoing it",
+        "02-deadlift-technique.md > Deadlift Technique > Common deadlift faults and fixes > Bent arms",
+        "02-deadlift-technique.md > Deadlift Technique > Final deadlift checklist"
+      ],
+      "topScore": 0.7237012,
+      "answerCitesSources": true
+    }
+  },
+  {
+    "id": "c04",
+    "category": "specific",
+    "question": "Give me Template A of the simple core training routine: exercises, sets, reps or time.",
+    "noRag": "Here is **Template A** of the Simple Core Training Routine, focusing on stability, anti-rotation, and fundamental strength. \n\n### **Template A: Core Stability & Control**\n\n| Exercise | Target Area | Sets | Reps / Time | Rest |\n| :--- | :--- | :---: | :---: | :---: |\n| **1. RKC Plank** | Anterior Core (Deep Abs) | 3 | 20–30 sec (max tension) | 45 sec |\n| **2. Bird-Dog** | Posterior Chain & Stability | 3 | 10 per side (slow tempo) | 30 sec |\n| **3. Pallof Press** | Anti-Rotation (Obliques) | 3 | 12 per side | 45 sec |\n| **4. Hanging Knee Raise** | Lower Abs / Hip Flexors | 3 | 10–12 (no swinging) | 60 sec |\n\n### **Trainer Tips for Template A:**\n* **RKC Plank:** Don't just hold passively. Squeeze your glutes, pull your elbows toward your toes, and brace your abs as hard as possible. Quality over duration.\n* **Pallof Press:** Use a cable machine or resistance band. Stand perpendicular to the anchor, press straight out, and resist the urge to let the band pull your torso.\n* **Frequency:** Perform this routine 2–3 times per week at the end of your workouts.",
+    "rag": "Template A of the simple core training routine consists of the following:\n\n*   **Dead bug:** 2 to 3 sets of 5 to 8 reps per side [1]\n*   **Side plank:** 2 to 3 sets of 15 to 30 seconds per side [1]\n*   **Suitcase carry:** 2 to 4 trips per side [1]",
+    "noRagScore": {
+      "factsHit": 0,
+      "factsTotal": 6,
+      "missingFacts": [
+        [
+          "dead bug"
+        ],
+        [
+          "5 to 8",
+          "5-8"
+        ],
+        [
+          "side plank"
+        ],
+        [
+          "15 to 30",
+          "15-30"
+        ],
+        [
+          "suitcase carry"
+        ],
+        [
+          "2 to 4 trips",
+          "2-4 trips",
+          "2 to 4"
+        ]
+      ],
+      "admitsNoInfo": false
+    },
+    "ragScore": {
+      "factsHit": 6,
+      "factsTotal": 6,
+      "missingFacts": [],
+      "admitsNoInfo": false
+    },
+    "sources": {
+      "expectedFound": 1,
+      "expectedTotal": 1,
+      "retrieved": [
+        "15-core-training-and-posture.md > Core Training, Bracing, and Posture Without the Myths > Better advice for desk workers",
+        "15-core-training-and-posture.md > Core Training, Bracing, and Posture Without the Myths > What about flexion exercises?",
+        "14-home-workouts-and-bodyweight.md > Home Workouts with Dumbbells, Bands, and Bodyweight > Workout B",
+        "15-core-training-and-posture.md > Core Training, Bracing, and Posture Without the Myths > Anti-rotation and lateral stability"
+      ],
+      "topScore": 0.7100468,
+      "answerCitesSources": true
+    }
+  },
+  {
+    "id": "c05",
+    "category": "specific",
+    "question": "How should I split a 10-15 minute warm-up into phases and how long should each phase last?",
+    "noRag": "An effective 10-15 minute warm-up should follow the **RAMP protocol** (Raise, Activate, Mobilize, Potentiate). This prepares your cardiovascular system, joints, and nervous system for the upcoming workout. \n\nHere is how to split your time:\n\n### Phase 1: Raise (3–5 Minutes)\n*   **Goal:** Increase heart rate, body temperature, blood flow, and joint lubrication.\n*   **What to do:** Low-intensity, steady-state cardio. \n*   **Examples:** Rowing, cycling, light jogging, or jumping rope. You should break a very light sweat but still be able to hold a conversation.\n\n### Phase 2: Activate & Mobilize (5–7 Minutes)\n*   **Goal:** Turn on key muscle groups (glutes, core, rotator cuff) and actively move your joints through their full range of motion.\n*   **What to do:** Dynamic stretching and resistance band work. Avoid static (holding) stretches here.\n*   **Examples:** \n    *   *Mobility:* World’s greatest stretch, deep squats, arm circles, leg swings.\n    *   *Activation:* Glute bridges, plank variations, band pull-aparts.\n\n### Phase 3: Potentiate / Prime (2–3 Minutes)\n*   **Goal:** Wake up your central nervous system (CNS) and prep your body for the specific movements of your workout.\n*   **What to do:** Explosive movements or empty-barbell/bodyweight versions of your first exercise.\n*   **Examples:** \n    *   *For strength training:* 1-2 warm-up sets of your first lift with an empty bar or very light weight.\n    *   *For cardio/sports:* 3-5 short, high-intensity efforts (e.g., 50-meter strides, kettlebell swings, or medicine ball slams).\n\n**Trainer Tip:** Keep it moving. If you sit down or check your phone for more than 60 seconds during your warm-up, you lose the physiological benefits of the elevated heart rate.",
+    "rag": "To make a 10-to-15-minute warm-up highly efficient, you can split it into three distinct phases using this practical formula:\n\n1. **General movement:** 3 to 5 minutes [1].\n2. **Targeted mobility or activation:** 3 to 5 minutes [1].\n3. **Progressively specific sets:** 5 to 10 minutes [1].\n\nThis structured approach ensures your preparation is relevant to the upcoming session rather than relying on random stretching [1].",
+    "noRagScore": {
+      "factsHit": 3,
+      "factsTotal": 5,
+      "missingFacts": [
+        [
+          "general"
+        ],
+        [
+          "5 to 10",
+          "5-10"
+        ]
+      ],
+      "admitsNoInfo": false
+    },
+    "ragScore": {
+      "factsHit": 5,
+      "factsTotal": 5,
+      "missingFacts": [],
+      "admitsNoInfo": false
+    },
+    "sources": {
+      "expectedFound": 1,
+      "expectedTotal": 1,
+      "retrieved": [
+        "10-warm-up-and-mobility.md > Warm-Up and Mobility for Safer, Better Training > Making It Efficient",
+        "10-warm-up-and-mobility.md > Warm-Up and Mobility for Safer, Better Training > What a Warm-Up Should Accomplish",
+        "10-warm-up-and-mobility.md > Warm-Up and Mobility for Safer, Better Training > General Warm-Up Versus Specific Warm-Up",
+        "10-warm-up-and-mobility.md > Warm-Up and Mobility for Safer, Better Training > Ramp-Up Sets: The Most Specific Warm-Up Tool"
+      ],
+      "topScore": 0.74567986,
+      "answerCitesSources": true
+    }
+  },
+  {
+    "id": "c06",
+    "category": "specific",
+    "question": "What rep ranges does the knowledge base assign to high specificity, repeated strength practice, and assistance work?",
+    "noRag": "Based on the scientific principles of strength training (specifically the framework popularized by Juggernaut Training Systems and Dr. Mike Israetel), the rep ranges for these categories are defined as follows:\n\n### 1. High Specificity (Competition Practice)\n* **Rep Range:** **1 to 3 reps** (typically >85% of 1RM)\n* **Purpose:** Maximizing neurological adaptations, practicing competition-specific technique, and preparing the body for maximal force production.\n\n### 2. Repeated Strength Practice (Basic Strength)\n* **Rep Range:** **3 to 6 reps** (typically 75% to 85% of 1RM)\n* **Purpose:** Building strength while accumulating enough volume to stimulate myofibrillar hypertrophy. This is the \"sweet spot\" for practicing the main lifts under heavy, but manageable, loads.\n\n### 3. Assistance Work (Hypertrophy / Underload)\n* **Rep Range:** **6 to 10 reps** (typically 60% to 75% of 1RM, sometimes extending up to 12 reps)\n* **Purpose:** Building muscle mass, correcting weak points, and promoting joint recovery/health without the extreme systemic fatigue of heavier loads.",
+    "rag": "Based on the provided context, the rep ranges assigned to these roles are:\n\n*   **High specificity:** 1 to 3 reps [1].\n*   **Repeated strength practice:** 3 to 6 reps [1].\n*   **Assistance work (and hypertrophy support):** 6 to 12 or more reps [1].",
+    "noRagScore": {
+      "factsHit": 2,
+      "factsTotal": 3,
+      "missingFacts": [
+        [
+          "6 to 12",
+          "6-12"
+        ]
+      ],
+      "admitsNoInfo": false
+    },
+    "ragScore": {
+      "factsHit": 3,
+      "factsTotal": 3,
+      "missingFacts": [],
+      "admitsNoInfo": false
+    },
+    "sources": {
+      "expectedFound": 1,
+      "expectedTotal": 1,
+      "retrieved": [
+        "05-strength-programming-basics.md > Strength Programming Basics > Rep ranges for strength development",
+        "05-strength-programming-basics.md > Strength Programming Basics > Specificity and exercise selection",
+        "06-hypertrophy-training.md > Hypertrophy Training > Rep ranges for muscle growth",
+        "05-strength-programming-basics.md > Strength Programming Basics > Final principle"
+      ],
+      "topScore": 0.74551606,
+      "answerCitesSources": true
+    }
+  },
+  {
+    "id": "c07",
+    "category": "common",
+    "question": "How much protein per kilogram of body weight should an active lifter eat per day, and how should it be spread across the day?",
+    "noRag": "For an active lifter, here is the optimal protein strategy based on current sports nutrition science:\n\n### 1. Daily Protein Target\n*   **1.6 to 2.2 grams per kilogram** of body weight per day. \n*   *Note:* If you are in a calorie deficit (cutting), aim for the higher end (up to **2.4 g/kg**) to prevent muscle loss.\n\n### 2. How to Spread It Across the Day\nTo maximize muscle protein synthesis (MPS), do not eat all your protein in one or two sittings. Instead, distribute it evenly:\n\n*   **Frequency:** Eat **3 to 5 meals** per day, spaced **3 to 5 hours** apart.\n*   **Per-Meal Target:** Aim for **0.40 to 0.55 g/kg per meal** (typically 30 to 50 grams for most lifters). This triggers the \"muscle-building switch\" (leucine threshold) at each meal.\n*   **Workout Timing:** Consume a protein-rich meal within **2 hours before** and **2 hours after** your workout. \n*   **Before Bed:** Consume **30 to 40 grams** of slow-digesting protein (like casein, cottage cheese, or Greek yogurt) before sleep to sustain muscle recovery overnight.\n\n### Quick Example (80 kg / 176 lb Lifter)\n*   **Daily Target:** 160 grams of protein (using 2.0 g/kg).\n*   **Distribution:** 4 meals of 40 grams, spaced 4 hours apart.",
+    "rag": "An active adult should aim for about 1.6 to 2.2 grams of protein per kilogram of body weight per day [1]. \n\nTo distribute this throughout the day, it is best to spread your protein intake across three to five meals rather than consuming it in one large serving [2]. This approach makes the protein easier to use and digest, helps with appetite control, and establishes a steady rhythm that makes adherence simpler [2].",
+    "noRagScore": {
+      "factsHit": 3,
+      "factsTotal": 3,
+      "missingFacts": [],
+      "admitsNoInfo": false
+    },
+    "ragScore": {
+      "factsHit": 3,
+      "factsTotal": 3,
+      "missingFacts": [],
+      "admitsNoInfo": false
+    },
+    "sources": {
+      "expectedFound": 1,
+      "expectedTotal": 1,
+      "retrieved": [
+        "08-nutrition-protein-and-calories.md > Nutrition, Protein, and Calories for Fitness Goals > Protein: The Priority Macronutrient for Lifters",
+        "08-nutrition-protein-and-calories.md > Nutrition, Protein, and Calories for Fitness Goals > Protein: The Priority Macronutrient for Lifters > Distributing protein across the day",
+        "08-nutrition-protein-and-calories.md > Nutrition, Protein, and Calories for Fitness Goals > How to Set Macros Without Overcomplicating It",
+        "17-supplements-and-ergogenic-aids.md > Supplements and Ergogenic Aids: What Helps, What Does Not, and How to Use Them Safely > Protein powder"
+      ],
+      "topScore": 0.7198924,
+      "answerCitesSources": true
+    }
+  },
+  {
+    "id": "c08",
+    "category": "common",
+    "question": "The bar drifts forward away from my body in the deadlift. How do I fix it?",
+    "noRag": "Bar drift in the deadlift is usually caused by improper setup or failing to engage your upper back. Here is how to fix it in three steps:\n\n### 1. Fix Your Setup (The Mid-Foot Rule)\n* **The Issue:** If the bar starts too far forward, it will stay forward.\n* **The Fix:** Stand with the bar cutting your feet exactly in half (about 1 inch from your shins). When you bend over to grab the bar, **do not move the bar**. Bend your knees only until your shins touch the bar. \n\n### 2. Engage Your Lats (\"Protect Your Armpits\")\n* **The Issue:** Your lats are responsible for keeping the bar pulled close to your body. If they are loose, the bar drifts.\n* **The Fix:** Before you lift, imagine trying to squeeze oranges in your armpits, or try to \"break the bar\" in half around your shins. This engages your lats and pulls the bar tight against your body.\n\n### 3. Don't \"Squat\" the Deadlift\n* **The Issue:** If you drop your hips too low during setup, your shins will push forward, shoving the bar away from you.\n* **The Fix:** Keep your hips higher. Your shins should be relatively vertical, not angled forward like in a squat. \n\n### Quick Cue to Remember:\n**\"Pull back, not just up.\"** Drag the bar up your shins and thighs. If you aren't wearing high socks or sweatpants to protect your shins, you're probably letting the bar drift.",
+    "rag": "If the bar drifts or swings away from your body, you lose leverage immediately and increase the load on your lower back, which makes the lockout much harder [2, 3]. \n\nTo fix this issue, focus on the following:\n\n1. **Recheck your start position:** Ensure you keep the bar positioned over your midfoot [3].\n2. **Engage your lats more aggressively:** This helps keep the bar path tight so that the bar tracks almost vertically and stays very close to your shins and thighs [2, 3].\n3. **Use helpful cues:** When pulling, think about trying to \"squeeze the bar to the legs\" and \"keep the armpits tight\" [1].",
+    "noRagScore": {
+      "factsHit": 2,
+      "factsTotal": 2,
+      "missingFacts": [],
+      "admitsNoInfo": false
+    },
+    "ragScore": {
+      "factsHit": 2,
+      "factsTotal": 2,
+      "missingFacts": [],
+      "admitsNoInfo": false
+    },
+    "sources": {
+      "expectedFound": 1,
+      "expectedTotal": 1,
+      "retrieved": [
+        "02-deadlift-technique.md > Deadlift Technique > Common deadlift faults and fixes > Bent arms",
+        "02-deadlift-technique.md > Deadlift Technique > The hinge and first pull",
+        "02-deadlift-technique.md > Deadlift Technique > Romanian deadlift technique",
+        "02-deadlift-technique.md > Deadlift Technique > Tension before the bar leaves the floor"
+      ],
+      "topScore": 0.72000486,
+      "answerCitesSources": true
+    }
+  },
+  {
+    "id": "c09",
+    "category": "out_of_corpus",
+    "question": "What is the current men's raw deadlift world record?",
+    "noRag": "The current men’s raw deadlift world records (performed in a drug-tested or non-tested powerlifting meet, using a standard barbell, with a belt, but **no deadlift suit and no straps**) are split by stance:\n\n*   **All-Time Raw Record (Sumo Stance):** **487.5 kg (1,074.7 lbs)**, set by **Danny Grigsby** (USA) on July 29, 2022, at the WRPF American Pro. \n*   **All-Time Raw Record (Conventional Stance):** **460 kg (1,014.1 lbs)**, set by **Benedikt Magnússon** (Iceland) on April 2, 2011.\n\n*(Note: While Hafthor Björnsson holds the heaviest deadlift in history at 501 kg/1,104.5 lbs, this was done under strongman rules using a deadlift suit and wrist straps, which is not classified as \"raw\" powerlifting).*",
+    "rag": "I am sorry, but the provided knowledge base does not contain information about the current men's raw deadlift world record.",
+    "noRagScore": {
+      "factsHit": 0,
+      "factsTotal": 0,
+      "missingFacts": [],
+      "admitsNoInfo": false
+    },
+    "ragScore": {
+      "factsHit": 0,
+      "factsTotal": 0,
+      "missingFacts": [],
+      "admitsNoInfo": true
+    },
+    "sources": {
+      "expectedFound": 0,
+      "expectedTotal": 0,
+      "retrieved": [
+        "02-deadlift-technique.md > Deadlift Technique",
+        "02-deadlift-technique.md > Deadlift Technique > Final deadlift checklist",
+        "02-deadlift-technique.md > Deadlift Technique > Common deadlift faults and fixes > Bent arms",
+        "02-deadlift-technique.md > Deadlift Technique > The hinge and first pull"
+      ],
+      "topScore": 0.59640425,
+      "answerCitesSources": false
+    }
+  },
+  {
+    "id": "c10",
+    "category": "out_of_corpus",
+    "question": "Which specific brand of protein powder does the knowledge base recommend buying?",
+    "noRag": "As a personal trainer, I don't recommend just one single brand. Instead, I advise choosing brands that are **third-party tested** (look for the *NSF Certified for Sport* or *Informed-Choice* seals) to guarantee purity, safety, and accurate labeling. \n\nThe three most highly recommended brands in the fitness industry are:\n\n1. **Optimum Nutrition (ON) Gold Standard Whey:** The industry benchmark. It offers the best overall balance of quality, taste, mixability, and affordability.\n2. **Thorne Whey Protein Isolate:** The gold standard for purity. It is NSF Certified for Sport, contains no artificial sweeteners, and is highly digestible, making it the top choice for competitive athletes.\n3. **Transparent Labs 100% Grass-Fed Whey Isolate:** An exceptionally clean option with zero artificial fillers, sweeteners, or food dyes, and a very high protein-by-weight ratio.\n\n**Quick Buying Tip:** Look at the nutrition label. A high-quality powder should have at least **20–25 grams of protein** per scoop, with total calories staying between **110–130 calories**. If the calories are much higher, it has too many added fats and carbs.",
+    "rag": "The provided knowledge base does not cover or recommend any specific brands of protein powder. It only notes that protein powder is a convenient option to help meet your daily protein goals [1][3], and advises favoring straightforward ingredients and prioritizing quality control [4].",
+    "noRagScore": {
+      "factsHit": 0,
+      "factsTotal": 0,
+      "missingFacts": [],
+      "admitsNoInfo": false
+    },
+    "ragScore": {
+      "factsHit": 0,
+      "factsTotal": 0,
+      "missingFacts": [],
+      "admitsNoInfo": true
+    },
+    "sources": {
+      "expectedFound": 0,
+      "expectedTotal": 0,
+      "retrieved": [
+        "17-supplements-and-ergogenic-aids.md > Supplements and Ergogenic Aids: What Helps, What Does Not, and How to Use Them Safely > Protein powder",
+        "17-supplements-and-ergogenic-aids.md > Supplements and Ergogenic Aids: What Helps, What Does Not, and How to Use Them Safely > Protein powder > When powder earns its place",
+        "17-supplements-and-ergogenic-aids.md > Supplements and Ergogenic Aids: What Helps, What Does Not, and How to Use Them Safely > A practical shortlist",
+        "17-supplements-and-ergogenic-aids.md > Supplements and Ergogenic Aids: What Helps, What Does Not, and How to Use Them Safely > Final perspective"
+      ],
+      "topScore": 0.7308571,
+      "answerCitesSources": true
+    }
+  }
+]

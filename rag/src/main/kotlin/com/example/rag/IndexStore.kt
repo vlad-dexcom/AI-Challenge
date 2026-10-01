@@ -32,8 +32,11 @@ class IndexStore {
         file.writeText(json.encodeToString(StoredIndex.serializer(), stored))
     }
 
-    fun load(file: File): VectorIndex {
-        val stored = json.decodeFromString(StoredIndex.serializer(), file.readText())
+    fun load(file: File): VectorIndex = parse(file.readText())
+
+    /** Parses index JSON from any source (e.g. an Android asset stream). */
+    fun parse(text: String): VectorIndex {
+        val stored = json.decodeFromString(StoredIndex.serializer(), text)
         return VectorIndex(stored.meta, stored.chunks.map {
             IndexedChunk(
                 Chunk(it.chunkId, it.source, it.title, it.section, it.text, it.startOffset, it.endOffset, it.strategy),

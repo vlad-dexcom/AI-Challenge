@@ -174,7 +174,9 @@ data class ChatUiState(
     /**
      * Day 15: set of valid actions allowed by the state machine given [taskState].
      */
-    val allowedTaskEvents: Set<TaskEvent> = emptySet()
+    val allowedTaskEvents: Set<TaskEvent> = emptySet(),
+    /** Day 22: With RAG / Without RAG / Compare switch of the RAG agent (see [ChatViewModel.onRagModeSelected]). */
+    val ragMode: com.example.geminichat.agent.rag.RagAgentMode = com.example.geminichat.agent.rag.RagAgentMode.RAG
 ) {
     companion object {
         const val MAIN_BRANCH_ID = "main"
@@ -199,6 +201,8 @@ class ChatViewModel(
     private val workoutSummaryStore: com.example.geminichat.agent.workout.WorkoutSummaryStore? = null,
     private val savedWorkoutPlanStore: com.example.geminichat.agent.planner.SavedWorkoutPlanStore? = null,
     debugContextWindowOverrideTokens: Int? = null,
+    /** Day 22: loads the bundled RAG index (an app asset); `null` disables the RAG agent's retrieval. */
+    private val ragIndexLoader: (() -> com.example.rag.VectorIndex)? = null,
 ) : ViewModel() {
 
     private val geminiClient = GeminiApiClient(apiKey, debugContextWindowOverrideTokens)
@@ -241,6 +245,17 @@ class ChatViewModel(
         )
     )
 
+    // Day 22: RAG mode switch read by the RAG agent on every request, and its lazily loaded,
+    // lazily embedded retriever (index parsing + the embedding call only happen on first use).
+    private var ragMode = com.example.geminichat.agent.rag.RagAgentMode.RAG
+    private val ragRetriever = com.example.rag.Retriever { question ->
+        val loader = ragIndexLoader ?: error("The RAG index is not bundled in this build.")
+        val index = ragIndex ?: loader().also { ragIndex = it }
+        com.example.rag.VectorRetriever(ragEmbedder, index).retrieve(question)
+    }
+    private var ragIndex: com.example.rag.VectorIndex? = null
+    private val ragEmbedder = com.example.rag.GeminiEmbeddingClient(apiKey)
+
     /**
      * Builds the [Agent] behavior for [config]: every persona uses the plain [LlmAgent] except
      * [AgentCatalog.FITNESS_MCP_COACH] (Day 17), [AgentCatalog.WORKOUT_DIGEST_COACH] (Day 18),
@@ -252,7 +267,14 @@ class ChatViewModel(
      * [rebuildAgent]) picks the right behavior.
      */
     private fun buildAgent(config: AgentConfig): Agent =
-        if (config.id == AgentCatalog.FITNESS_MCP_COACH.id) {
+        if (config.id == AgentCatalog.RAG_KNOWLEDGE_COACH.id) {
+            com.example.geminichat.agent.rag.RagAgent(
+                config = config,
+                client = geminiClient,
+                retriever = ragRetriever,
+                mode = { ragMode }
+            )
+        } else if (config.id == AgentCatalog.FITNESS_MCP_COACH.id) {
             com.example.geminichat.agent.mcp.McpToolCallingAgent(
                 config = config,
                 client = geminiClient,
@@ -391,6 +413,11 @@ class ChatViewModel(
     fun onModelSelected(model: String) {
         _uiState.value = _uiState.value.copy(selectedModel = model)
         persistHistory()
+    }
+
+    fun onRagModeSelected(mode: com.example.geminichat.agent.rag.RagAgentMode) {
+        ragMode = mode
+        _uiState.value = _uiState.value.copy(ragMode = mode)
     }
 
     fun onAgentSelected(agentId: String) {
