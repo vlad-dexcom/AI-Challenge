@@ -6,4 +6,6 @@ plugins {
     // Since Kotlin 2.0 the Compose compiler is a separate Gradle plugin, versioned in lockstep
     // with the Kotlin Gradle plugin (needed for the MCP Kotlin SDK, which requires Kotlin 2.4+).
     id("org.jetbrains.kotlin.plugin.compose") version "2.4.0" apply false
+    // Day 21: pure Kotlin/JVM module (:rag) for document indexing.
+    id("org.jetbrains.kotlin.jvm") version "2.4.0" apply false
 }
