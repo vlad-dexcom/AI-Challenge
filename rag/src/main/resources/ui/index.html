@@ -44,6 +44,11 @@
  <input id="query" style="width:50%" placeholder="e.g. how much protein per day?"> <button id="search">Search</button>
  <span id="serr" class="err"></span><div id="results"></div>
 </fieldset>
+<fieldset><legend>Index inspection</legend>
+ <button id="inspect-fixed">Inspect fixed index</button> <button id="inspect-structure">Inspect structure index</button>
+ <button id="ping-fixed">Embedder ping (fixed index model)</button> <button id="ping-structure">Embedder ping (structure index model)</button>
+ <span id="ierr" class="err"></span><div id="inspect"></div>
+</fieldset>
 <div id="info">Hover or click a highlighted block to see chunk metadata.</div>
 <script>
 const $=id=>document.getElementById(id);
@@ -105,6 +110,31 @@ async function search(){
       r.hits.map((h,i)=>`<tr><td>${i+1}</td><td>${h.score.toFixed(3)}</td><td>${esc(h.chunk.chunkId)}</td><td>${esc(h.chunk.section)}</td><td>${esc(h.chunk.text.slice(0,300))}…</td></tr>`).join('')+'</table>';
   }catch(e){$('serr').textContent=e.message}
 }
+async function inspect(st){
+  $('ierr').textContent='';$('inspect').innerHTML='';
+  try{
+    const r=await api('/api/index/inspect?strategy='+st);
+    const m=r.meta,vs=r.vectorStats;
+    $('inspect').innerHTML=`<h3>${esc(st)}: ${r.checks.every(c=>c.ok)?'✅ all checks passed':'❌ some checks failed'}</h3>`+
+     `<p><code>${esc(r.file)}</code> · ${(r.sizeBytes/1024).toFixed(0)} KB · modified ${esc(r.modifiedAt)}</p>`+
+     (m?`<p>model <b>${esc(m.embeddingModel)}</b> · dim ${m.dimension} · strategy ${esc(m.strategy)} (${esc(m.strategyParams)}) · created ${esc(m.createdAt)} · corpus ${esc(m.sourceCorpus)} · ${r.chunkCount} chunks</p>`:'')+
+     '<table>'+r.checks.map(c=>`<tr><td>${c.ok?'✅':'❌'}</td><td>${esc(c.name)}</td><td>${esc(c.detail)}</td></tr>`).join('')+'</table>'+
+     (r.samples.length?'<h4>Sample chunks</h4><table><tr><th>chunk_id</th><th>section</th><th>text (100 chars)</th><th>vector[0..4]</th></tr>'+
+      r.samples.map(x=>`<tr><td>${esc(x.chunkId)}</td><td>${esc(x.section)}</td><td>${esc(x.preview)}</td><td>${x.vectorHead.map(n=>n.toFixed(4)).join(', ')}</td></tr>`).join('')+'</table>':'');
+  }catch(e){$('ierr').textContent=e.message}
+}
+async function ping(st){
+  $('ierr').textContent='';$('inspect').innerHTML='Pinging…';
+  try{
+    const r=await api('/api/embedder/ping?strategy='+st);
+    $('inspect').innerHTML=`<h3>Embedder ping: ${esc(r.embeddingModel)}</h3>`+
+     (r.lexicalOnly?'<p class="err"><b>Offline embedder: lexical-only (word overlap), not a semantic model.</b></p>':'')+
+     `<table><tr><td>vector length</td><td>${r.vectorLength}</td></tr><tr><td>L2 norm</td><td>${r.norm.toFixed(4)}</td></tr><tr><td>latency (3 sentences)</td><td>${r.latencyMs} ms</td></tr>`+
+     `<tr><td>cosine related pair</td><td>${r.relatedSimilarity.toFixed(3)}</td></tr><tr><td>cosine unrelated pair</td><td>${r.unrelatedSimilarity.toFixed(3)}</td></tr></table>`+
+     `<p>${esc(r.verdict)}</p><ol>${r.sentences.map(x=>'<li>'+esc(x)+'</li>').join('')}</ol><small>Related = 1 vs 2, unrelated = 1 vs 3.</small>`;
+  }catch(e){$('inspect').innerHTML='';$('ierr').textContent=e.message}
+}
+['fixed','structure'].forEach(st=>{$('inspect-'+st).onclick=()=>inspect(st);$('ping-'+st).onclick=()=>ping(st)});
 $('run').onclick=run;$('search').onclick=search;
 $('query').onkeydown=e=>{if(e.key==='Enter')search()};
 $('file').onchange=async()=>{

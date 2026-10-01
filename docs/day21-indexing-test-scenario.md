@@ -47,6 +47,17 @@ export GEMINI_API_KEY=...
 6. Блок поиска: введите `how much protein per day?`, выберите стратегию, нажмите Search — top-k
    со score и секциями (с офлайн-индексом — лексический поиск, не семантический).
 
+### 5a. Инспекция индекса и ping эмбеддера (в том же UI)
+1. Нажмите **Inspect fixed index** — ожидается «✅ all checks passed», путь/размер/mtime, meta
+   (модель `offline-hashing-bow-256`, dim 256) и 3 примера чанков с первыми 5 значениями вектора.
+2. Повторите для **structure**.
+3. Проверка устаревания: измените любой файл в `rag/corpus/` (например, добавьте слово), снова нажмите
+   Inspect — проверка «up to date with the corpus» станет ❌ (text hash DIFFERS). Верните файл (`git checkout rag/corpus`).
+4. Временно переименуйте `rag/index/fixed.json` — Inspect даёт сообщение «No saved index…» (404). Верните файл.
+5. **Embedder ping** — для офлайн-индекса: длина 256, норма ≈1, задержка, cosine связанной пары > несвязанной,
+   красная пометка «lexical-only». Для Gemini-индекса без ключа — ошибка про `GEMINI_API_KEY`; с ключом
+   (после `index --embedder gemini`) — вердикт PASS при related > unrelated.
+
 ## 6. Приложение не сломалось
 ```bash
 ./gradlew :app:testDebugUnitTest

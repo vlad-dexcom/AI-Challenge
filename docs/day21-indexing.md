@@ -66,9 +66,23 @@ export GEMINI_API_KEY=...            # или строка в local.properties
   top-k со score. Эмбеддер подбирается по `meta.embeddingModel` индекса: офлайн-hashing или Gemini
   (нужен `GEMINI_API_KEY`). Поиск идёт по сохранённому индексу корпуса, а не по вставленному тексту.
 
-API (`UiServer.kt`): `GET /api/files`, `GET /api/file?name=`, `POST /api/chunk`, `POST /api/search`;
+### Инспекция индекса и проверка эмбеддера
+Панель «Index inspection» в UI (кнопки на каждую стратегию):
+- `GET /api/index/inspect?strategy=fixed|structure` (404, если индекса нет) — путь/размер/mtime файла, `meta`,
+  число чанков и чек-лист pass/fail: файл парсится; `chunkCount` == `meta.chunkCount`; метаданные
+  (chunk_id, source, title, offsets, text) заполнены; у чанков есть `section`; chunk_id уникальны; длина
+  векторов == `meta.dimension`; нет NaN/Infinity; нет нулевых векторов; L2-нормы min/avg/max и нормализованность;
+  **актуальность** — корпус перечанкуется той же стратегией/параметрами (из `meta.strategyParams`),
+  сравниваются число чанков/документов и SHA-256 id+офсетов+текста (устаревший индекс → FAIL). Плюс 3 примера
+  чанков (id, section, 100 символов, первые 5 значений вектора). Логика — `IndexInspector.kt`.
+- `GET /api/embedder/ping?strategy=...` — эмбеддит 3 фразы тем же эмбеддером, что в `meta` индекса
+  (офлайн-hashing или Gemini при наличии ключа, иначе понятная ошибка 400 «no key»); показывает модель, длину
+  вектора, норму, задержку, cosine для связанной пары (protein/muscle) и несвязанной. Офлайн-эмбеддер явно помечен
+  как **lexical-only** (вердикт о семантике не выносится); для Gemini — PASS, если related > unrelated.
+
+API (`UiServer.kt`): `GET /api/files`, `GET /api/file?name=`, `POST /api/chunk`, `POST /api/search`, `GET /api/index/inspect`, `GET /api/embedder/ping`;
 ошибки — JSON `{"error": ...}` (400 на некорректные параметры, 404 на неизвестный файл/индекс;
-path traversal отклоняется). Тесты: `UiServerTest`.
+path traversal отклоняется). Тесты: `UiServerTest`, `IndexInspectorTest` (хороший индекс, неверная размерность, NaN/нулевой вектор, пропущенные метаданные/дубликаты, устаревший индекс, ping, эндпоинты).
 
 ## Сравнение стратегий
 

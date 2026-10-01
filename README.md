@@ -351,6 +351,10 @@ See `docs/day21-indexing.md` for the design and the strategy comparison, and
 - **Chunk visualiser** — `./gradlew :rag:run --args="ui"` serves a local page (http://localhost:8080)
   showing both chunkers side by side over a pasted/corpus text with tunable parameters, per-chunk
   metadata, stats and a top-k search over the saved indexes.
+- **Index inspection** — in the same UI, *Inspect index* runs a pass/fail checklist on a saved index
+  (metadata completeness, vector length/NaN/zero/norm, duplicate ids, staleness vs a fresh re-chunk of
+  the corpus) and *Embedder ping* sanity-checks the embedder matching the index (offline hashing is
+  labelled lexical-only).
 - **Note:** the committed indexes/report were generated with the *offline* embedder (no API key was
   available); regenerate with Gemini via the commands below. Retriever/reranker come in Days 22-23.
 
