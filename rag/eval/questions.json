@@ -1,0 +1,207 @@
+{
+  "description": "Retrieval eval set for rag/corpus. type: direct (keyword overlap), paraphrase (little lexical overlap), out_of_corpus (no expected source; excluded from hit@k/MRR).",
+  "questions": [
+    {
+      "id": "q01",
+      "type": "direct",
+      "question": "How many grams of protein per kilogram of body weight should I eat each day?",
+      "expectedSource": "08-nutrition-protein-and-calories.md",
+      "expectedSection": "Protein"
+    },
+    {
+      "id": "q02",
+      "type": "paraphrase",
+      "question": "I lift weights and want to know how much of the tissue-repair nutrient I need daily",
+      "expectedSource": "08-nutrition-protein-and-calories.md",
+      "expectedSection": "Protein"
+    },
+    {
+      "id": "q03",
+      "type": "direct",
+      "question": "What is NEAT and why does it drop when dieting?",
+      "expectedSource": "09-fat-loss-and-body-composition.md",
+      "expectedSection": "NEAT"
+    },
+    {
+      "id": "q04",
+      "type": "paraphrase",
+      "question": "Why am I burning fewer calories on a diet even though I eat exactly what I planned?",
+      "expectedSource": "09-fat-loss-and-body-composition.md",
+      "expectedSection": "NEAT"
+    },
+    {
+      "id": "q05",
+      "type": "direct",
+      "question": "What is the ideal bar path in the bench press?",
+      "expectedSource": "03-bench-press-and-pushing.md",
+      "expectedSection": "bar path"
+    },
+    {
+      "id": "q06",
+      "type": "paraphrase",
+      "question": "Should the barbell travel straight up and down when I press lying on a flat bench?",
+      "expectedSource": "03-bench-press-and-pushing.md",
+      "expectedSection": "bar path"
+    },
+    {
+      "id": "q07",
+      "type": "direct",
+      "question": "How do ramp-up sets work in a warm-up?",
+      "expectedSource": "10-warm-up-and-mobility.md",
+      "expectedSection": "Ramp-Up"
+    },
+    {
+      "id": "q08",
+      "type": "paraphrase",
+      "question": "Why shouldn't my first heavy set be the first time I feel real weight on my back that day?",
+      "expectedSource": "10-warm-up-and-mobility.md",
+      "expectedSection": "Ramp-Up"
+    },
+    {
+      "id": "q09",
+      "type": "direct",
+      "question": "What is the difference between muscle soreness and pain?",
+      "expectedSource": "11-injury-prevention-and-rehab.md",
+      "expectedSection": "Pain Versus Soreness"
+    },
+    {
+      "id": "q10",
+      "type": "paraphrase",
+      "question": "A sharp, localized feeling gets worse every time I load the movement - should I keep going?",
+      "expectedSource": "11-injury-prevention-and-rehab.md",
+      "expectedSection": "Pain Versus Soreness"
+    },
+    {
+      "id": "q11",
+      "type": "direct",
+      "question": "Does it matter when I take creatine, before or after training?",
+      "expectedSource": "17-supplements-and-ergogenic-aids.md",
+      "expectedSection": "Creatine"
+    },
+    {
+      "id": "q12",
+      "type": "direct",
+      "question": "What are the benefits and downsides of HIIT?",
+      "expectedSource": "12-cardio-and-conditioning.md",
+      "expectedSection": "HIIT"
+    },
+    {
+      "id": "q13",
+      "type": "direct",
+      "question": "What is a deload and when do I need one?",
+      "expectedSource": "05-strength-programming-basics.md",
+      "expectedSection": "deloads"
+    },
+    {
+      "id": "q14",
+      "type": "paraphrase",
+      "question": "My bar speed is flat and I feel unmotivated; should I temporarily reduce training stress?",
+      "expectedSource": "05-strength-programming-basics.md",
+      "expectedSection": "deloads"
+    },
+    {
+      "id": "q15",
+      "type": "direct",
+      "question": "Why does the Romanian deadlift stop around mid-shin?",
+      "expectedSource": "02-deadlift-technique.md",
+      "expectedSection": "Romanian"
+    },
+    {
+      "id": "q16",
+      "type": "paraphrase",
+      "question": "Which hip-hinge lift starts from standing instead of from the floor?",
+      "expectedSource": "02-deadlift-technique.md",
+      "expectedSection": "Romanian"
+    },
+    {
+      "id": "q17",
+      "type": "direct",
+      "question": "How can I progress toward a strict pull-up?",
+      "expectedSource": "04-pulling-and-back-training.md",
+      "expectedSection": "Pull-up progressions"
+    },
+    {
+      "id": "q18",
+      "type": "direct",
+      "question": "Is sitting perfectly upright all day needed to prevent back pain?",
+      "expectedSource": "15-core-training-and-posture.md",
+      "expectedSection": "Desk posture myths"
+    },
+    {
+      "id": "q19",
+      "type": "paraphrase",
+      "question": "Does slouching at my desk all day damage my spine?",
+      "expectedSource": "15-core-training-and-posture.md",
+      "expectedSection": "Desk posture myths"
+    },
+    {
+      "id": "q20",
+      "type": "direct",
+      "question": "What is a minimum viable version of a habit?",
+      "expectedSource": "16-motivation-habits-and-consistency.md",
+      "expectedSection": "minimum version"
+    },
+    {
+      "id": "q21",
+      "type": "paraphrase",
+      "question": "I keep skipping workouts when life gets busy; how do I make it easier to stick with training?",
+      "expectedSource": "16-motivation-habits-and-consistency.md",
+      "expectedSection": "minimum version"
+    },
+    {
+      "id": "q22",
+      "type": "direct",
+      "question": "How many reps in reserve should beginners leave at the end of a set?",
+      "expectedSource": "13-beginner-program-design.md",
+      "expectedSection": "How hard"
+    },
+    {
+      "id": "q23",
+      "type": "direct",
+      "question": "How do I fix my knees caving inward during squats?",
+      "expectedSource": "01-squat-technique.md",
+      "expectedSection": "Common faults"
+    },
+    {
+      "id": "q24",
+      "type": "paraphrase",
+      "question": "Do partial reps build muscle as well as full-range reps?",
+      "expectedSource": "06-hypertrophy-training.md",
+      "expectedSection": "Range of motion"
+    },
+    {
+      "id": "q25",
+      "type": "direct",
+      "question": "What does sleep hygiene mean?",
+      "expectedSource": "07-sleep-and-recovery.md",
+      "expectedSection": "Sleep Hygiene"
+    },
+    {
+      "id": "q26",
+      "type": "paraphrase",
+      "question": "How can I keep progressing with home workouts when my dumbbells are too light?",
+      "expectedSource": "14-home-workouts-and-bodyweight.md",
+      "expectedSection": "progress without adding"
+    },
+    {
+      "id": "q27",
+      "type": "out_of_corpus",
+      "question": "What is the best strategy for investing in the stock market?"
+    },
+    {
+      "id": "q28",
+      "type": "out_of_corpus",
+      "question": "How do I bake a sourdough loaf with a crispy crust?"
+    },
+    {
+      "id": "q29",
+      "type": "out_of_corpus",
+      "question": "Who won the 2018 football World Cup?"
+    },
+    {
+      "id": "q30",
+      "type": "out_of_corpus",
+      "question": "How do I configure a Kubernetes ingress controller?"
+    }
+  ]
+}

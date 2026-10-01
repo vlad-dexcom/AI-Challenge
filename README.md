@@ -332,6 +332,43 @@ a manual test walkthrough.
   workout on a third, different local gateway) run through one `agent.handle(...)` call, asserting
   both the call order and that each call landed on the correct underlying server.
 
+## Document indexing (Day 21)
+
+First step of RAG week: a local, searchable index over a document corpus. The new pure Kotlin/JVM
+module `:rag` (no Android deps; `:app` depends on it) implements chunking → embeddings → JSON index.
+See `docs/day21-indexing.md` for the design and the strategy comparison, and
+`docs/day21-indexing-test-scenario.md` for a walkthrough.
+
+- **Corpus** — `rag/corpus/`: 17 fitness articles (~22k words ≈ 44 pages).
+- **Two chunkers** — `FixedSizeChunker` (800 chars, 100 overlap) and `StructureChunker` (markdown
+  headings; tiny sections merged, oversized ones split). Every `Chunk` carries `chunkId`, `source`,
+  `title`, `section` (heading path), offsets and strategy.
+- **Embeddings** — `EmbeddingClient` interface; `GeminiEmbeddingClient` (Ktor REST,
+  `gemini-embedding-001`, batching, document/query task types, retry) and an offline deterministic
+  `HashingEmbeddingClient` for tests/demos.
+- **Index** — `VectorIndex` + `IndexStore` JSON files (`rag/index/fixed.json`, `structure.json`) with
+  metadata (model, dimension, strategy, created time, source corpus).
+- **Chunk visualiser** — `./gradlew :rag:run --args="ui"` serves a local page (http://localhost:8080)
+  showing both chunkers side by side over a pasted/corpus text with tunable parameters, per-chunk
+  metadata, stats and a top-k search over the saved indexes.
+- **Index inspection** — in the same UI, *Inspect index* runs a pass/fail checklist on a saved index
+  (metadata completeness, vector length/NaN/zero/norm, duplicate ids, staleness vs a fresh re-chunk of
+  the corpus) and *Embedder ping* sanity-checks the embedder matching the index (offline hashing is
+  labelled lexical-only).
+- **Retrieval eval** — `rag/eval/questions.json` (30 questions: direct, paraphrased, 4 out-of-corpus) and
+  `./gradlew :rag:run --args="eval"` → hit@1/3/5, MRR, top-1 score stats, report in `rag/eval/`.
+  With real Gemini embeddings: hit@3 96% (both strategies); the structure chunker's `section` metadata matches
+  the answer far more often (section hit@3 92% vs 73%). See `docs/day21-indexing.md`.
+- `rag/index/` holds the Gemini-embedded indexes; `rag/index-offline/` the lexical-only offline ones.
+  Retriever/reranker come in Days 22-23.
+
+```
+./gradlew :rag:test
+./gradlew :rag:run --args="index"      # GEMINI_API_KEY from env or local.properties; add --embedder offline for no network (uses rag/index-offline)
+./gradlew :rag:run --args="eval"         # retrieval eval over rag/eval/questions.json
+./gradlew :rag:run --args="compare"    # writes rag/index/comparison-report.md
+```
+
 ## Setup
 
 1. Get a Gemini API key from [Google AI Studio](https://aistudio.google.com/apikey).
@@ -374,6 +411,8 @@ a manual test walkthrough.
   `McpGateway.callTool`; Day 18 adds the local, no-network `LocalWorkoutMcpGateway`, Day 19 adds
   the local, three-tool-pipeline `LocalWorkoutPlannerMcpGateway`.
 - `agent/mcp/` — Day 17 client-side tool-calling: `ToolCallingLlmClient`, `McpToolCallingAgent`.
+- `rag/` (Gradle module `:rag`) — Day 21 indexing: `Chunker`s, `EmbeddingClient`s, `VectorIndex`/`IndexStore`,
+  `Indexer`, comparison report and CLI (`Main.kt`); `rag/corpus/`, `rag/eval/`, `rag/index/` (Gemini) and `rag/index-offline/` hold the data.
 - `GeminiModels.kt` — kotlinx.serialization request/response DTOs for the Gemini Interactions
   API, including `system_instruction` and `generation_config`.
 - `GeminiApiClient.kt` — Ktor `HttpClient` wrapper implementing `LlmClient`; POSTs the request

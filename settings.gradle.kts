@@ -19,3 +19,4 @@ dependencyResolutionManagement {
 
 rootProject.name = "PersonalTrainer"
 include(":app")
+include(":rag")
