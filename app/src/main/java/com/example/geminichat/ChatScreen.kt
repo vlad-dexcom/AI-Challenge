@@ -21,6 +21,7 @@ import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.DropdownMenu
+import androidx.compose.material3.FilterChip
 import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
@@ -1311,6 +1312,21 @@ private fun SettingsScreen(uiState: ChatUiState, viewModel: ChatViewModel, onBac
                 color = MaterialTheme.colorScheme.onSurfaceVariant,
                 modifier = Modifier.padding(horizontal = 12.dp)
             )
+            if (uiState.selectedAgentId == com.example.geminichat.agent.AgentCatalog.RAG_KNOWLEDGE_COACH.id) {
+                Row(
+                    modifier = Modifier.fillMaxWidth().padding(horizontal = 12.dp),
+                    horizontalArrangement = Arrangement.spacedBy(8.dp)
+                ) {
+                    com.example.geminichat.agent.rag.RagAgentMode.entries.forEach { mode ->
+                        FilterChip(
+                            selected = uiState.ragMode == mode,
+                            onClick = { viewModel.onRagModeSelected(mode) },
+                            label = { Text(mode.label) },
+                            enabled = !uiState.isLoading
+                        )
+                    }
+                }
+            }
             Row(
                 modifier = Modifier.fillMaxWidth().padding(horizontal = 12.dp, vertical = 8.dp),
                 verticalAlignment = Alignment.CenterVertically

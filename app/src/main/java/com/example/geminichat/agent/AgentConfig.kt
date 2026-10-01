@@ -155,13 +155,28 @@ object AgentCatalog {
             "final answer concise."
     )
 
+    /**
+     * Day 22: answers from the bundled fitness knowledge base (RAG) — see
+     * [com.example.geminichat.agent.rag.RagAgent]. Has a With RAG / Without RAG / Compare mode
+     * switch in Settings so the same question can be tried with and without retrieval.
+     */
+    val RAG_KNOWLEDGE_COACH = AgentConfig(
+        id = "rag-knowledge-coach",
+        displayName = "Knowledge Coach (RAG)",
+        description = "Answers from the bundled training knowledge base with cited sources. " +
+            "Switch With RAG / Without RAG / Compare in Settings.",
+        systemInstruction = "You are a knowledgeable, concise personal trainer.",
+        temperature = 0.2
+    )
+
     val ALL = listOf(
         PERSONAL_TRAINER,
         GENERAL_ASSISTANT,
         FITNESS_MCP_COACH,
         WORKOUT_DIGEST_COACH,
         WORKOUT_PLAN_PIPELINE_COACH,
-        ORCHESTRATOR_COACH
+        ORCHESTRATOR_COACH,
+        RAG_KNOWLEDGE_COACH
     )
     val DEFAULT = PERSONAL_TRAINER
 

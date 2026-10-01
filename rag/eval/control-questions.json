@@ -1,0 +1,65 @@
+{
+  "description": "Day 22 control set: 10 questions over rag/corpus. category: specific (answer lives in a concrete corpus passage; a plain LLM is expected to be generic/different), common (plain LLM likely fine), out_of_corpus (corpus has no answer; the right behaviour is to admit it). mustContain = groups of alternatives; a group is hit when ANY alternative occurs (case-insensitive) in the answer; the answer should hit every group. expectedSources = source file + heading keyword of the section that holds the answer.",
+  "questions": [
+    {
+      "id": "c01", "category": "specific",
+      "question": "In the beginner 3-day full-body program, what exactly is on Day 2 and how many sets and reps for each exercise?",
+      "mustContain": [["trap-bar", "trap bar", "kettlebell deadlift"], ["overhead press"], ["lat pulldown"], ["reverse lunge"], ["dead bug"], ["5 to 8", "5-8"]],
+      "expectedSources": [{"source": "13-beginner-program-design.md", "section": "Day 2"}]
+    },
+    {
+      "id": "c02", "category": "specific",
+      "question": "What are the useful pull-up progressions if I cannot do a strict pull-up yet?",
+      "mustContain": [["eccentric"], ["band-assisted", "band assisted"], ["machine-assisted", "machine assisted", "assisted pull"], ["isometric"], ["scapular pull"]],
+      "expectedSources": [{"source": "04-pulling-and-back-training.md", "section": "Pull-up progressions"}]
+    },
+    {
+      "id": "c03", "category": "specific",
+      "question": "My deadlift stalls above the knee and the bar climbs in stages at lockout. What does this indicate and which variations help?",
+      "mustContain": [["lost position earlier", "lost position", "earlier"], ["paused deadlift", "pause"], ["rdl", "romanian"], ["block pull", "rack pull"]],
+      "expectedSources": [{"source": "02-deadlift-technique.md", "section": "Hitching"}]
+    },
+    {
+      "id": "c04", "category": "specific",
+      "question": "Give me Template A of the simple core training routine: exercises, sets, reps or time.",
+      "mustContain": [["dead bug"], ["5 to 8", "5-8"], ["side plank"], ["15 to 30", "15-30"], ["suitcase carry"], ["2 to 4 trips", "2-4 trips", "2 to 4"]],
+      "expectedSources": [{"source": "15-core-training-and-posture.md", "section": "Template A"}]
+    },
+    {
+      "id": "c05", "category": "specific",
+      "question": "How should I split a 10-15 minute warm-up into phases and how long should each phase last?",
+      "mustContain": [["3 to 5", "3-5"], ["general"], ["mobility", "activation"], ["5 to 10", "5-10"], ["specific"]],
+      "expectedSources": [{"source": "10-warm-up-and-mobility.md", "section": "Efficient"}]
+    },
+    {
+      "id": "c06", "category": "specific",
+      "question": "What rep ranges does the knowledge base assign to high specificity, repeated strength practice, and assistance work?",
+      "mustContain": [["1 to 3", "1-3"], ["3 to 6", "3-6"], ["6 to 12", "6-12"]],
+      "expectedSources": [{"source": "05-strength-programming-basics.md", "section": "Rep ranges"}]
+    },
+    {
+      "id": "c07", "category": "common",
+      "question": "How much protein per kilogram of body weight should an active lifter eat per day, and how should it be spread across the day?",
+      "mustContain": [["1.6"], ["2.2"], ["three to five", "3 to 5", "3-5"]],
+      "expectedSources": [{"source": "08-nutrition-protein-and-calories.md", "section": "Protein"}]
+    },
+    {
+      "id": "c08", "category": "common",
+      "question": "The bar drifts forward away from my body in the deadlift. How do I fix it?",
+      "mustContain": [["midfoot", "mid-foot"], ["lat"]],
+      "expectedSources": [{"source": "02-deadlift-technique.md", "section": "drifting"}]
+    },
+    {
+      "id": "c09", "category": "out_of_corpus",
+      "question": "What is the current men's raw deadlift world record?",
+      "mustContain": [],
+      "expectedSources": []
+    },
+    {
+      "id": "c10", "category": "out_of_corpus",
+      "question": "Which specific brand of protein powder does the knowledge base recommend buying?",
+      "mustContain": [],
+      "expectedSources": []
+    }
+  ]
+}

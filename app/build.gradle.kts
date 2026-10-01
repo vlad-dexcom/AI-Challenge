@@ -53,6 +53,15 @@ android {
     }
 }
 
+// Day 22: bundle the prebuilt (Gemini-embedded, structure-chunked) RAG index as an app asset.
+// Copied at build time from rag/index so there is a single committed source of truth.
+val copyRagIndex by tasks.registering(Copy::class) {
+    from(rootProject.file("rag/index/structure.json"))
+    into(layout.buildDirectory.dir("generated/ragAssets/rag"))
+}
+android.sourceSets.getByName("main").assets.srcDir(layout.buildDirectory.dir("generated/ragAssets"))
+tasks.matching { it.name.startsWith("merge") && it.name.endsWith("Assets") }.configureEach { dependsOn(copyRagIndex) }
+
 kotlin {
     compilerOptions {
         jvmTarget.set(org.jetbrains.kotlin.gradle.dsl.JvmTarget.JVM_17)

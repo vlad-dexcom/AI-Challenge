@@ -19,6 +19,10 @@ import com.example.geminichat.agent.workout.WorkoutSummaryStore
 import java.io.File
 
 class MainActivity : ComponentActivity() {
+    private companion object {
+        const val RAG_INDEX_ASSET = "rag/structure.json"
+    }
+
 
     private val viewModel: ChatViewModel by viewModels {
         object : ViewModelProvider.Factory {
@@ -63,7 +67,10 @@ class MainActivity : ComponentActivity() {
                     invariantStore = invariantStore,
                     taskTransitionLogStore = taskTransitionLogStore,
                     workoutLogStore = workoutLogStore,
-                    workoutSummaryStore = workoutSummaryStore
+                    workoutSummaryStore = workoutSummaryStore,
+                    ragIndexLoader = {
+                        assets.open(RAG_INDEX_ASSET).bufferedReader().use { com.example.rag.IndexStore().parse(it.readText()) }
+                    }
                 ) as T
             }
         }

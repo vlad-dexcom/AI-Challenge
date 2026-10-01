@@ -369,6 +369,29 @@ See `docs/day21-indexing.md` for the design and the strategy comparison, and
 ./gradlew :rag:run --args="compare"    # writes rag/index/comparison-report.md
 ```
 
+## First RAG query (Day 22)
+
+Question → retrieve chunks → combine with the question → LLM, with a **With RAG / Without RAG** switch.
+See `docs/day22-rag-query.md` (design, results) and `docs/day22-rag-query-test-scenario.md`.
+
+- **`:rag` pipeline** — `Retriever`/`VectorRetriever` (query-type embedding, top-k; an interface so Day 23 can
+  add thresholds/reranking), `RagPromptBuilder` (numbered `[file > section]` context, cite `[n]`, admit when the
+  context lacks the answer), `RagPipeline` (`NO_RAG` / `RAG` / `compare`), `TextGenerator` +
+  `GeminiTextGenerator` (plain REST).
+- **Agent** — "Knowledge Coach (RAG)" in the app (`agent/rag/RagAgent`): chips *With RAG / Without RAG / Compare*
+  in Settings, sources listed under the answer; the structure index is bundled as an asset (`copyRagIndex`).
+- **CLI** — `./gradlew :rag:run --args='ask "<question>"'` (both modes) and `--args="rag-eval"`.
+- **Control set** — `rag/eval/control-questions.json`: 10 questions with expected facts and sources
+  (6 corpus-specific, 2 common, 2 out-of-corpus). Real Gemini run: expected facts 19/34 without RAG vs
+  34/34 with RAG; both out-of-corpus questions answered honestly only with RAG. Results (`rag/eval/control-results.json`,
+  `control-report.md`) and the manually judged table are in `docs/day22-rag-query.md`.
+
+```
+./gradlew :rag:test :app:testDebugUnitTest
+./gradlew :rag:run --args='ask "What are the pull-up progressions?" --mode both'
+./gradlew :rag:run --args="rag-eval"
+```
+
 ## Setup
 
 1. Get a Gemini API key from [Google AI Studio](https://aistudio.google.com/apikey).
@@ -411,7 +434,8 @@ See `docs/day21-indexing.md` for the design and the strategy comparison, and
   `McpGateway.callTool`; Day 18 adds the local, no-network `LocalWorkoutMcpGateway`, Day 19 adds
   the local, three-tool-pipeline `LocalWorkoutPlannerMcpGateway`.
 - `agent/mcp/` — Day 17 client-side tool-calling: `ToolCallingLlmClient`, `McpToolCallingAgent`.
-- `rag/` (Gradle module `:rag`) — Day 21 indexing: `Chunker`s, `EmbeddingClient`s, `VectorIndex`/`IndexStore`,
+- `agent/rag/` — Day 22 `RagAgent` (With RAG / Without RAG / Compare) over the `:rag` pipeline.
+- `rag/` (Gradle module `:rag`) — Day 21 indexing (+ Day 22 `Retriever`, `RagPromptBuilder`, `RagPipeline`, `TextGenerator`, `ControlSet`, CLI `ask`/`rag-eval`): `Chunker`s, `EmbeddingClient`s, `VectorIndex`/`IndexStore`,
   `Indexer`, comparison report and CLI (`Main.kt`); `rag/corpus/`, `rag/eval/`, `rag/index/` (Gemini) and `rag/index-offline/` hold the data.
 - `GeminiModels.kt` — kotlinx.serialization request/response DTOs for the Gemini Interactions
   API, including `system_instruction` and `generation_config`.
