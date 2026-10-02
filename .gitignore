@@ -43,3 +43,6 @@ key.properties
 freeline.py
 freeline/
 freeline_project_description.json
+
+### RAG caches (Day 23) ###
+rag/cache/

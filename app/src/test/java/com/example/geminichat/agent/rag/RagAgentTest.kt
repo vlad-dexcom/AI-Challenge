@@ -6,6 +6,7 @@ import com.example.geminichat.agent.LlmClient
 import com.example.geminichat.agent.LlmRequestSpec
 import com.example.rag.Chunk
 import com.example.rag.ChunkStrategy
+import com.example.rag.RagConfig
 import com.example.rag.Retriever
 import com.example.rag.SearchHit
 import kotlinx.coroutines.test.runTest
@@ -49,6 +50,21 @@ class RagAgentTest {
         assertTrue(r.text.startsWith("with [1]"))
         assertTrue(r.text.contains("1. 13-beginner-program-design.md > Day 2 (0.81)"))
         assertEquals(config.id, r.agentId)
+    }
+
+    @Test fun day23FilterAnswersWithoutCallingTheModelWhenNothingIsRelevant() = runTest {
+        val client = llm()
+        val a = RagAgent(config, client, Retriever { listOf(hit.copy(score = 0.3f)) }, RagConfig.DEFAULT) { RagAgentMode.RAG }
+        val r = a.handle(AgentRequest("What is the world record?")).getOrThrow()
+        assertTrue(client.specs.isEmpty())
+        assertTrue(r.text.contains("knowledge base does not cover"))
+        assertTrue(r.text.contains("none retrieved"))
+    }
+
+    @Test fun day23FilterKeepsRelevantChunks() = runTest {
+        val client = llm()
+        val a = RagAgent(config, client, Retriever { listOf(hit) }, RagConfig.DEFAULT) { RagAgentMode.RAG }
+        assertTrue(a.handle(AgentRequest("What is on Day 2?")).getOrThrow().text.startsWith("with [1]"))
     }
 
     @Test fun noRagModeSkipsRetrievalAndShowsNoSources() = runTest {

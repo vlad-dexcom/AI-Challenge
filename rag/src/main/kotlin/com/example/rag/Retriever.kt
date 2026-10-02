@@ -6,6 +6,9 @@ package com.example.rag
  */
 fun interface Retriever {
     suspend fun retrieve(question: String): List<SearchHit>
+
+    /** Candidate pool of up to [topK] chunks for the two-stage pipeline; the default just truncates [retrieve]. */
+    suspend fun retrieve(question: String, topK: Int): List<SearchHit> = retrieve(question).take(topK)
 }
 
 /** Embeds the question as a RETRIEVAL_QUERY and returns the [topK] most similar chunks of [index]. */
@@ -24,7 +27,9 @@ class VectorRetriever(
         }
     }
 
-    override suspend fun retrieve(question: String): List<SearchHit> {
+    override suspend fun retrieve(question: String): List<SearchHit> = retrieve(question, topK)
+
+    override suspend fun retrieve(question: String, topK: Int): List<SearchHit> {
         val vector = embedder.embed(listOf(question), EmbeddingTaskType.RETRIEVAL_QUERY).single()
         return index.search(vector, topK)
     }

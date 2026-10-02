@@ -21,7 +21,17 @@ import kotlinx.serialization.json.Json
 /** Minimal "prompt in, text out" LLM abstraction so the RAG pipeline stays independent of any provider (the app adapts its own `LlmClient`). */
 fun interface TextGenerator {
     suspend fun generate(systemInstruction: String?, prompt: String): Result<String>
+
+    /**
+     * Same, with per-call [options]. The default ignores them, so implementations over any endpoint
+     * (generateContent here, the Interactions API in `:app`) stay valid; [GeminiTextGenerator] honours them.
+     */
+    suspend fun generate(systemInstruction: String?, prompt: String, options: GenerationOptions): Result<String> =
+        generate(systemInstruction, prompt)
 }
+
+/** [temperature] null = the generator's own default; [json] asks for a JSON-only reply (Day 24 structured output). */
+data class GenerationOptions(val temperature: Double? = null, val json: Boolean = false)
 
 /** Plain-REST Gemini `generateContent` client (no SDK) used by the CLI. Retries 429/5xx with exponential backoff. */
 class GeminiTextGenerator(
@@ -43,12 +53,15 @@ class GeminiTextGenerator(
         install(HttpTimeout) { requestTimeoutMillis = 120_000 }
     }
 
-    override suspend fun generate(systemInstruction: String?, prompt: String): Result<String> {
+    override suspend fun generate(systemInstruction: String?, prompt: String): Result<String> =
+        generate(systemInstruction, prompt, GenerationOptions())
+
+    override suspend fun generate(systemInstruction: String?, prompt: String, options: GenerationOptions): Result<String> {
         if (apiKey.isBlank()) return Result.failure(IllegalStateException("GEMINI_API_KEY is not set"))
         val body = Request(
             contents = listOf(Content(listOf(Part(prompt)))),
             systemInstruction = systemInstruction?.let { Content(listOf(Part(it))) },
-            generationConfig = GenerationConfig(temperature),
+            generationConfig = GenerationConfig(options.temperature ?: temperature, if (options.json) "application/json" else null),
         )
         var attempt = 0
         while (true) {
@@ -77,7 +90,7 @@ class GeminiTextGenerator(
 
     @Serializable private data class Part(val text: String? = null)
     @Serializable private data class Content(val parts: List<Part> = emptyList())
-    @Serializable private data class GenerationConfig(val temperature: Double)
+    @Serializable private data class GenerationConfig(val temperature: Double, val responseMimeType: String? = null)
     @Serializable private data class Request(
         val contents: List<Content>,
         val systemInstruction: Content? = null,

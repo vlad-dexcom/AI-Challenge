@@ -248,10 +248,15 @@ class ChatViewModel(
     // Day 22: RAG mode switch read by the RAG agent on every request, and its lazily loaded,
     // lazily embedded retriever (index parsing + the embedding call only happen on first use).
     private var ragMode = com.example.geminichat.agent.rag.RagAgentMode.RAG
-    private val ragRetriever = com.example.rag.Retriever { question ->
-        val loader = ragIndexLoader ?: error("The RAG index is not bundled in this build.")
-        val index = ragIndex ?: loader().also { ragIndex = it }
-        com.example.rag.VectorRetriever(ragEmbedder, index).retrieve(question)
+    private val ragRetriever = object : com.example.rag.Retriever {
+        private fun vector(topK: Int): com.example.rag.VectorRetriever {
+            val loader = ragIndexLoader ?: error("The RAG index is not bundled in this build.")
+            val index = ragIndex ?: loader().also { ragIndex = it }
+            return com.example.rag.VectorRetriever(ragEmbedder, index, topK)
+        }
+
+        override suspend fun retrieve(question: String) = vector(com.example.rag.VectorRetriever.DEFAULT_TOP_K).retrieve(question)
+        override suspend fun retrieve(question: String, topK: Int) = vector(topK).retrieve(question)
     }
     private var ragIndex: com.example.rag.VectorIndex? = null
     private val ragEmbedder = com.example.rag.GeminiEmbeddingClient(apiKey)
@@ -272,7 +277,9 @@ class ChatViewModel(
                 config = config,
                 client = geminiClient,
                 retriever = ragRetriever,
-                mode = { ragMode }
+                mode = { ragMode },
+                // Day 23 defaults tuned on rag/eval (threshold filter + heuristic rerank; no extra LLM calls).
+                ragConfig = com.example.rag.RagConfig.DEFAULT
             )
         } else if (config.id == AgentCatalog.FITNESS_MCP_COACH.id) {
             com.example.geminichat.agent.mcp.McpToolCallingAgent(

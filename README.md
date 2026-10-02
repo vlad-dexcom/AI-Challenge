@@ -395,6 +395,21 @@ See `docs/day22-rag-query.md` (design, results) and `docs/day22-rag-query-test-s
 ./gradlew :rag:run --args="rag-eval"
 ```
 
+## Reranking, filtering and query rewrite (Day 23)
+
+Second retrieval stage in `:rag`: **topKBefore candidates → cosine threshold filter → reranker → topKAfter chunks → prompt**, plus an
+optional LLM **query rewrite** (the answer still uses the original question). Pluggable `ChunkFilter` / `Reranker` / `QueryRewriter`;
+`RagConfig.DEFAULT` = threshold 0.65, top-10 → top-4, filter + heuristic rerank, rewrite off (chosen from a documented sweep).
+When the filter rejects everything the model is not called ("not enough information" result).
+
+- `./gradlew :rag:run --args="sweep"` — threshold × topK grid on the 30-question eval set (no LLM) → `rag/eval/sweep.md`.
+- `./gradlew :rag:run --args="modes-eval"` — no RAG / plain / +filter / +rerank / +rewrite / all on eval + control sets with real Gemini
+  (LLM-judged, clearly labelled) → `rag/eval/modes-report.md`. Caches in git-ignored `rag/cache/`.
+- `ask "…" --filter on --rerank on --rewrite on` and the web UI **Chat** tab (toggles, thresholds, *Pipeline debug* view).
+- Result (26 in-corpus questions): hit@1 88.5% → 96.2% with rerank, 100% with LLM rerank + rewrite; the filter makes refusals deterministic and saved
+  ~36% of LLM calls. Small eval, single author — see [docs/day23-reranking.md](docs/day23-reranking.md) and
+  [the test scenario](docs/day23-reranking-test-scenario.md).
+
 ## Setup
 
 1. Get a Gemini API key from [Google AI Studio](https://aistudio.google.com/apikey).
@@ -437,8 +452,8 @@ See `docs/day22-rag-query.md` (design, results) and `docs/day22-rag-query-test-s
   `McpGateway.callTool`; Day 18 adds the local, no-network `LocalWorkoutMcpGateway`, Day 19 adds
   the local, three-tool-pipeline `LocalWorkoutPlannerMcpGateway`.
 - `agent/mcp/` — Day 17 client-side tool-calling: `ToolCallingLlmClient`, `McpToolCallingAgent`.
-- `agent/rag/` — Day 22 `RagAgent` (With RAG / Without RAG / Compare) over the `:rag` pipeline.
-- `rag/` (Gradle module `:rag`) — Day 21 indexing (+ Day 22 `Retriever`, `RagPromptBuilder`, `RagPipeline`, `TextGenerator`, `ControlSet`, CLI `ask`/`rag-eval`): `Chunker`s, `EmbeddingClient`s, `VectorIndex`/`IndexStore`,
+- `agent/rag/` — Day 22 `RagAgent` (With RAG / Without RAG / Compare) over the `:rag` pipeline (Day 23: `RagConfig.DEFAULT` filter + rerank).
+- `rag/` (Gradle module `:rag`) — Day 21 indexing (+ Day 22 `Retriever`, `RagPromptBuilder`, `RagPipeline`, `TextGenerator`, `ControlSet`, CLI `ask`/`rag-eval`; Day 23 `RagConfig`, `ThresholdFilter`, `HeuristicReranker`/`LlmReranker`, `LlmQueryRewriter`, `Judge`, caches, CLI `sweep`/`modes-eval`): `Chunker`s, `EmbeddingClient`s, `VectorIndex`/`IndexStore`,
   `Indexer`, comparison report and CLI (`Main.kt`); `rag/corpus/`, `rag/eval/`, `rag/index/` (Gemini) and `rag/index-offline/` hold the data.
 - `GeminiModels.kt` — kotlinx.serialization request/response DTOs for the Gemini Interactions
   API, including `system_instruction` and `generation_config`.
