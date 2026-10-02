@@ -151,4 +151,19 @@ class ChatApiTest {
         val html = c.inputStream.readBytes().decodeToString()
         assertTrue(html.contains("id=\"csend\"") && html.contains("Chunk visualiser"))
     }
+
+    @Test fun markdownRendererIsServedAndUsedByThePageWithoutRawInnerHtml() {
+        start("")
+        fun get(path: String) = (URL("http://localhost:${server.port}$path").openConnection() as HttpURLConnection).let {
+            it.contentType to it.inputStream.readBytes().decodeToString()
+        }
+        val (type, js) = get("/ui/markdown.js")
+        assertTrue(type.startsWith("application/javascript"))
+        assertTrue(js.contains("function esc(") && js.contains("noopener noreferrer") && js.contains("https?:"))
+        val html = get("/").second
+        assertTrue(html.contains("""<script src="/ui/markdown.js">"""))
+        assertTrue(html.contains("md(t.answer") && html.contains("md(c.text)"))
+        assertFalse(html.contains("${'$'}{t.answer"))
+        assertFalse(html.contains("${'$'}{c.text}"))
+    }
 }

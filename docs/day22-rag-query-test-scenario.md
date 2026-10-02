@@ -51,4 +51,5 @@ lat pulldown, reverse lunge, dead bug со ссылками `[1]` и списк�
 5. Вопрос c09 (мировой рекорд) в *With RAG* → отказ модели и жёлтое «knowledge base has no relevant information»; в *Compare* слева — уверенные цифры.
 6. Пустое сообщение → «Type a question first»; topK = 0 → ошибка 400 в пузыре. Без ключа (запустить `ui` без `GEMINI_API_KEY`) → предупреждение вверху и «GEMINI_API_KEY is not set» в ответе.
 7. Enter отправляет, Shift+Enter — перенос; «Clear chat» очищает ленту; вкладка «Chunk visualiser» работает как раньше.
+8. Markdown: вопрос c01 в *Compare* → заголовки/списки/таблицы/код отрисованы в обеих колонках, `[1]` читаемы, блоки кода и таблицы прокручиваются; в «Retrieved chunks» текст чанка тоже в Markdown. `node rag/src/test/js/markdown.test.js` → `markdown tests OK`.
 

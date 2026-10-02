@@ -28,7 +28,17 @@
  .msg{margin:6px 0;padding:6px 10px;border-radius:8px;max-width:100%;box-sizing:border-box}
  .msg.user{background:#dbeafe;margin-left:15%} .msg.bot{background:#f3f4f6}
  .pair{display:grid;grid-template-columns:1fr 1fr;gap:8px} .pair .msg{margin:0}
- .answer{white-space:pre-wrap;word-break:break-word}
+ .answer,.md{word-break:break-word;overflow-wrap:anywhere}
+ .md>:first-child{margin-top:0}.md>:last-child{margin-bottom:0}
+ .md p{margin:6px 0}.md h3,.md h4,.md h5,.md h6{margin:10px 0 4px;font-size:14px}.md h3{font-size:15px}
+ .md ul,.md ol{margin:4px 0;padding-left:22px}
+ .md code{background:#e5e7eb;padding:0 3px;border-radius:3px;font:12px monospace}
+ .md pre{background:#1f2937;color:#e5e7eb;padding:6px 8px;overflow:auto;max-width:100%;border-radius:4px;margin:6px 0}
+ .md pre code{background:none;padding:0;color:inherit;white-space:pre}
+ .md blockquote{margin:6px 0;padding:2px 10px;border-left:3px solid #9ca3af;color:#444}
+ .md table{display:block;overflow:auto;max-width:100%;margin:6px 0}.md th{background:#e5e7eb}
+ .md hr{border:0;border-top:1px solid #ccc;margin:8px 0}.md a{color:#1d4ed8}
+ .md.chunk{background:#fff;padding:4px 8px;border:1px solid #eee;margin:2px 0 6px}
  .badge{display:inline-block;font-size:11px;padding:0 6px;border-radius:8px;background:#ddd;margin-right:6px}
  .badge.rag{background:#c7f0d0}.badge.norag{background:#ffe0b3}
  .warn{background:#fff3cd;border:1px solid #ffd966;padding:4px 8px;margin:4px 0}
@@ -83,6 +93,7 @@
 </fieldset>
 <div id="info">Hover or click a highlighted block to see chunk metadata.</div>
 </div>
+<script src="/ui/markdown.js"></script>
 <script>
 const $=id=>document.getElementById(id);
 const esc=s=>s.replace(/[&<>]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;'}[c]));
@@ -193,16 +204,17 @@ api('/api/files').then(r=>r.files.forEach(n=>{const o=document.createElement('op
 const cfg={defaultModel:''};
 function show(tab){['chat','viz'].forEach(t=>{$('page-'+t).style.display=t===tab?'':'none';$('tab-'+t).classList.toggle('on',t===tab)})}
 $('tab-chat').onclick=()=>show('chat');$('tab-viz').onclick=()=>show('viz');
+const md=s=>window.renderMarkdown?window.renderMarkdown(s):`<p style="white-space:pre-wrap">${esc(s)}</p>`;
 function turnHtml(t){
   const label=t.mode==='rag'?'<span class="badge rag">With RAG</span>':'<span class="badge norag">Without RAG</span>';
   const meta=`<span class="meta">${t.latencyMs} ms</span>`;
   if(t.error)return `<div class="msg bot">${label}${meta}<div class="err">Error: ${esc(t.error)}</div></div>`;
-  let h=`<div class="msg bot">${label}${meta}<div class="answer">${esc(t.answer||'')}</div>`;
+  let h=`<div class="msg bot">${label}${meta}<div class="answer md">${md(t.answer||'')}</div>`;
   if(t.mode==='rag'){
     if(t.notFound)h+='<div class="warn">The model says the knowledge base has no relevant information for this question.</div>';
     if(t.sources.length){
       h+='<div class="meta" style="margin-top:6px">Sources</div><ol class="src">'+t.sources.map(s=>`<li>${esc(s.label)} <span class="meta">(score ${s.score.toFixed(3)})</span></li>`).join('')+'</ol>';
-      h+=`<details><summary>Retrieved chunks (${t.chunks.length})</summary>`+t.chunks.map((c,i)=>`<div class="meta">[${i+1}] ${esc(c.source)}${c.section?' > '+esc(c.section):''} · ${esc(c.chunkId)} · score ${c.score.toFixed(3)}</div><pre>${esc(c.text)}</pre>`).join('')+'</details>';
+      h+=`<details><summary>Retrieved chunks (${t.chunks.length})</summary>`+t.chunks.map((c,i)=>`<div class="meta">[${i+1}] ${esc(c.source)}${c.section?' > '+esc(c.section):''} · ${esc(c.chunkId)} · score ${c.score.toFixed(3)}</div><div class="md chunk">${md(c.text)}</div>`).join('')+'</details>';
     }else h+='<div class="warn">No chunks were retrieved.</div>';
   }
   return h+'</div>';

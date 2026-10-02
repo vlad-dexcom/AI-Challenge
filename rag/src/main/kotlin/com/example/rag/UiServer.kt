@@ -205,6 +205,9 @@ class UiServer(private val api: UiApi, port: Int) {
                     ?: throw ApiException(500, "UI resource missing")
                 "text/html; charset=utf-8" to html
             }
+            get && path == "/ui/markdown.js" -> "application/javascript; charset=utf-8" to
+                (UiServer::class.java.getResourceAsStream("/ui/markdown.js")?.readBytes()?.decodeToString()
+                    ?: throw ApiException(500, "UI resource missing"))
             get && path == "/api/files" -> JSON to api.files()
             get && path == "/api/file" -> JSON to api.file(queryParam(ex, "name") ?: throw ApiException(400, "name required"))
             get && path == "/api/index/inspect" -> JSON to api.inspect(queryParam(ex, "strategy") ?: throw ApiException(400, "strategy required"))
