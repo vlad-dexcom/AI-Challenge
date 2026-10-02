@@ -55,8 +55,22 @@ class UiApi(
     private val apiKey: String,
     private val embedderFactory: ((IndexMeta) -> EmbeddingClient?) = { null },
     private val evalFile: String = "rag/eval/questions.json",
+    private val controlFile: String = "rag/eval/control-questions.json",
+    private val generatorFactory: ((String) -> TextGenerator?) = { null },
 ) {
     private val json = Json { ignoreUnknownKeys = true; encodeDefaults = true }
+
+    private val generators = java.util.concurrent.ConcurrentHashMap<String, TextGenerator>()
+
+    private val chatApi = ChatApi(
+        indexDir, File(controlFile), apiKey,
+        embedderFor = { embedderFactory(it) ?: defaultEmbedder(it) },
+        generatorFor = { model -> generatorFactory(model) ?: apiKey.takeIf { it.isNotBlank() }?.let { generators.getOrPut(model) { GeminiTextGenerator(it, model) } } },
+    )
+
+    fun chatConfig(): String = chatApi.config()
+
+    fun chat(body: String): String = chatApi.chat(body)
 
     fun files(): String = json.encodeToString(FileList.serializer(),
         FileList(if (corpusDir.isDirectory) CorpusLoader.load(corpusDir).map { it.source } else emptyList()))
@@ -191,11 +205,16 @@ class UiServer(private val api: UiApi, port: Int) {
                     ?: throw ApiException(500, "UI resource missing")
                 "text/html; charset=utf-8" to html
             }
+            get && path == "/ui/markdown.js" -> "application/javascript; charset=utf-8" to
+                (UiServer::class.java.getResourceAsStream("/ui/markdown.js")?.readBytes()?.decodeToString()
+                    ?: throw ApiException(500, "UI resource missing"))
             get && path == "/api/files" -> JSON to api.files()
             get && path == "/api/file" -> JSON to api.file(queryParam(ex, "name") ?: throw ApiException(400, "name required"))
             get && path == "/api/index/inspect" -> JSON to api.inspect(queryParam(ex, "strategy") ?: throw ApiException(400, "strategy required"))
             get && path == "/api/embedder/ping" -> JSON to api.ping(queryParam(ex, "strategy") ?: throw ApiException(400, "strategy required"))
             get && path == "/api/eval" -> JSON to api.eval(queryParam(ex, "strategy") ?: throw ApiException(400, "strategy required"))
+            get && path == "/api/chat/config" -> JSON to api.chatConfig()
+            post && path == "/api/chat" -> JSON to api.chat(ex.requestBody.readBytes().decodeToString())
             post && path == "/api/chunk" -> JSON to api.chunk(ex.requestBody.readBytes().decodeToString())
             post && path == "/api/search" -> JSON to api.search(ex.requestBody.readBytes().decodeToString())
             else -> throw ApiException(404, "Not found")

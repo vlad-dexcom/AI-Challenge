@@ -21,7 +21,7 @@ eval     runs the retrieval eval set against each saved index (hit@1/3/5, MRR, t
 Default --out is rag/index for gemini and rag/index-offline for offline (so both sets of indexes can live side by side).
 ask      Day 22: answers one question WITHOUT RAG, WITH RAG (top-k chunks from the index in the prompt), or both.
 rag-eval Day 22: runs the 10 control questions in both modes, writes rag/eval/control-results.json and control-report.md.
-ui       serves the chunk visualiser at http://localhost:<port> (Ctrl+C to stop).
+ui       serves the web UI (Chat tab + chunk visualiser) at http://localhost:<port> (Ctrl+C to stop).
 --embedder gemini  (default if GEMINI_API_KEY is set) calls the Gemini embeddings REST API.
 --embedder offline deterministic hashing embedder, no network (lexical only, for tests/demos).
 The Gemini key is read from the GEMINI_API_KEY env var or from local.properties (never committed).
@@ -38,7 +38,7 @@ fun main(args: Array<String>) {
     if (args[0] == "ui") {
         val server = UiServer(UiApi(File(opts["corpus"] ?: "rag/corpus"), File(opts["out"] ?: "rag/index"), key), (opts["port"] ?: "8080").toInt())
         server.start()
-        println("Chunk visualiser: http://localhost:${server.port}  (Ctrl+C to stop)")
+        println("RAG web UI (chat + chunk visualiser): http://localhost:${server.port}  (Ctrl+C to stop)")
         Thread.currentThread().join()
     }
     val embedderName = opts["embedder"] ?: if (key.isNotBlank()) "gemini" else "offline"
