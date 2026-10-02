@@ -13,6 +13,8 @@ Usage (run from the repo root via Gradle):
   ./gradlew :rag:run --args="eval    [--embedder gemini|offline] [--k 5] [--strategy fixed|structure] [--questions rag/eval/questions.json] [--out dir]"
   ./gradlew :rag:run --args="ask     \"question\" [--mode both|rag|no-rag] [--k 4] [--strategy structure] [--model gemini-3.5-flash]"
   ./gradlew :rag:run --args="rag-eval [--questions rag/eval/control-questions.json] [--k 4] [--strategy structure] [--out rag/eval]"
+  ./gradlew :rag:run --args="sweep   [--strategy structure] [--questions rag/eval/questions.json] [--report rag/eval]"
+  ./gradlew :rag:run --args="modes-eval [--threshold 0.6] [--before 15] [--after 4] [--model gemini-3.5-flash] [--no-cache true] [--questions ...] [--report rag/eval]"
   ./gradlew :rag:run --args="ui      [--port 8080] [--corpus rag/corpus] [--out rag/index]"
 
 index    builds one JSON index per chunking strategy (fixed.json, structure.json) in --out.
@@ -21,6 +23,9 @@ eval     runs the retrieval eval set against each saved index (hit@1/3/5, MRR, t
 Default --out is rag/index for gemini and rag/index-offline for offline (so both sets of indexes can live side by side).
 ask      Day 22: answers one question WITHOUT RAG, WITH RAG (top-k chunks from the index in the prompt), or both.
 rag-eval Day 22: runs the 10 control questions in both modes, writes rag/eval/control-results.json and control-report.md.
+sweep    Day 23: grid over threshold x topK-before x topK-after on the eval set (no LLM calls), writes rag/eval/sweep.{json,md}.
+modes-eval Day 23: compares no RAG / plain / +filter / +rerank / +rewrite / all on the eval + control sets (real Gemini; answers cached in rag/cache).
+ask also takes: --filter on --rerank on|llm --rewrite on --threshold 0.6 --before 15 --after 4 (stages of the Day 23 pipeline).
 ui       serves the web UI (Chat tab + chunk visualiser) at http://localhost:<port> (Ctrl+C to stop).
 --embedder gemini  (default if GEMINI_API_KEY is set) calls the Gemini embeddings REST API.
 --embedder offline deterministic hashing embedder, no network (lexical only, for tests/demos).
@@ -28,7 +33,7 @@ The Gemini key is read from the GEMINI_API_KEY env var or from local.properties 
 """
 
 fun main(args: Array<String>) {
-    if (args.isEmpty() || args[0] !in setOf("index", "compare", "eval", "ui", "ask", "rag-eval")) {
+    if (args.isEmpty() || args[0] !in setOf("index", "compare", "eval", "ui", "ask", "rag-eval", "sweep", "modes-eval")) {
         println(USAGE.trim()); exitProcess(if (args.isEmpty()) 0 else 1)
     }
     val positional = if (args[0] == "ask" && args.size > 1 && !args[1].startsWith("--")) args[1] else null
@@ -60,6 +65,8 @@ fun main(args: Array<String>) {
             "eval" -> runEval(opts, outDir, embedder, embedderName)
             "ask" -> runAsk(opts, question, outDir, embedder, key)
             "rag-eval" -> runRagEval(opts, outDir, embedder, key)
+            "sweep" -> runSweep(opts, outDir, embedder)
+            "modes-eval" -> runModesEval(opts, outDir, embedder, key)
         }
     }
     exitProcess(0)
@@ -143,8 +150,11 @@ private fun buildPipeline(opts: Map<String, String>, dir: File, embedder: Embedd
     require(file.isFile) { "Missing index ${file.path}; run the index command first." }
     val index = IndexStore().load(file)
     val retriever = VectorRetriever(embedder, index, (opts["k"] ?: VectorRetriever.DEFAULT_TOP_K.toString()).toInt())
-    return RagPipeline(retriever, GeminiTextGenerator(key, opts["model"] ?: GeminiTextGenerator.DEFAULT_MODEL))
+    val generator = GeminiTextGenerator(key, opts["model"] ?: GeminiTextGenerator.DEFAULT_MODEL)
+    return stagedPipeline(retriever, generator, if (staged(opts)) ragConfigFrom(opts) else RagConfig.PLAIN, opts["rerank"] == "llm")
 }
+
+private fun staged(opts: Map<String, String>) = flag(opts, "filter") || flag(opts, "rerank") || flag(opts, "rewrite")
 
 private suspend fun runAsk(opts: Map<String, String>, question: String?, dir: File, embedder: EmbeddingClient, key: String) {
     if (question.isNullOrBlank()) { System.err.println("Usage: ask \"<question>\" [--mode both|rag|no-rag]"); exitProcess(1) }
@@ -156,9 +166,13 @@ private suspend fun runAsk(opts: Map<String, String>, question: String?, dir: Fi
         else -> { System.err.println("Unknown mode '$m'"); exitProcess(1) }
     }
     for (mode in modes) {
-        val a = pipeline.ask(question, mode).getOrElse { System.err.println("${mode.name} failed: ${it.message}"); exitProcess(3) }
+        val a = pipeline.ask(question, mode, if (staged(opts)) ragConfigFrom(opts) else RagConfig.PLAIN).getOrElse { System.err.println("${mode.name} failed: ${it.message}"); exitProcess(3) }
         println("\n=== ${if (mode == RagMode.RAG) "WITH RAG" else "WITHOUT RAG"} ===\n${a.answer}")
         if (mode == RagMode.RAG) {
+            a.trace?.takeIf { staged(opts) }?.let { t ->
+                println("\nSearch query: ${t.searchQuery}${t.rewriteFallback?.let { " (rewrite discarded: $it)" } ?: ""}")
+                println("Retrieved ${t.retrieved.size} -> filtered ${t.filtered.size} -> reranked ${t.reranked.size}")
+            }
             println("\nSources:")
             a.hits.forEachIndexed { i, h -> println("  [${i + 1}] ${RagPromptBuilder.sourceLabel(h.chunk)}  (score %.3f)".format(h.score)) }
         }

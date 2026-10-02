@@ -23,9 +23,20 @@ data class ChatRequest(
     val question: String,
     val mode: ChatMode = ChatMode.WITH_RAG,
     val strategy: String = "structure",
+    /** Chunks that go into the prompt (topK-after). */
     val topK: Int = VectorRetriever.DEFAULT_TOP_K,
     val model: String? = null,
-)
+    /** Day 23 stages; with all three off the request behaves as on Day 22 (top-[topK] by cosine). */
+    val filter: Boolean = false,
+    val rerank: Boolean = false,
+    val rewrite: Boolean = false,
+    /** Use the LLM reranker instead of the heuristic one when [rerank] is on. */
+    val llmRerank: Boolean = false,
+    val threshold: Float = RagConfig.DEFAULT.threshold,
+    val topKBefore: Int = RagConfig.DEFAULT.topKBefore,
+) {
+    val staged: Boolean get() = filter || rerank || rewrite
+}
 
 @Serializable
 data class ChatSource(val label: String, val score: Float, val chunkId: String)
@@ -48,6 +59,11 @@ data class ChatTurn(
     val latencyMs: Long = 0,
     val error: String? = null,
     val debug: Map<String, String> = emptyMap(),
+    /** Per-stage view (RAG mode only). */
+    val trace: ChatTrace? = null,
+    /** The filter rejected every candidate, so the model was not called. */
+    val insufficient: Boolean = false,
+    val llmCalls: Int = 0,
 )
 
 @Serializable
@@ -56,11 +72,31 @@ data class ChatResponse(val question: String, val results: List<ChatTurn>)
 @Serializable
 data class ChatControlQuestion(val id: String, val category: String, val question: String)
 
+/** One chunk at one stage: [cosine] always, [rerankScore] only at the reranked stage (a different scale, not comparable). */
+@Serializable
+data class ChatStageHit(val chunkId: String, val label: String, val cosine: Float, val rerankScore: Double? = null)
+
+/** What each stage of the Day 23 pipeline did: the debug view of the UI. */
+@Serializable
+data class ChatTrace(
+    val originalQuery: String,
+    val searchQuery: String,
+    val rewriteFallback: String? = null,
+    val retrieved: List<ChatStageHit> = emptyList(),
+    val filtered: List<ChatStageHit> = emptyList(),
+    val reranked: List<ChatStageHit> = emptyList(),
+    val threshold: Float? = null,
+    val topKBefore: Int = 0,
+    val topKAfter: Int = 0,
+)
+
 @Serializable
 data class ChatConfig(
     val strategies: List<String>,
     val defaultStrategy: String,
     val defaultTopK: Int,
+    val defaultTopKBefore: Int = RagConfig.DEFAULT.topKBefore,
+    val defaultThreshold: Float = RagConfig.DEFAULT.threshold,
     val defaultModel: String,
     val keyConfigured: Boolean,
     val controlQuestions: List<ChatControlQuestion>,
@@ -71,8 +107,11 @@ data class ChatConfig(
  * Day 23 (rewrite/threshold/rerank) and Day 25 (memory) can return a pipeline built around a different [Retriever].
  */
 fun interface PipelineProvider {
-    fun pipelineFor(request: ChatRequest, needsRetrieval: Boolean): RagPipeline
+    fun pipelineFor(request: ChatRequest, needsRetrieval: Boolean): ChatPipeline
 }
+
+/** A pipeline plus the stage settings to call it with and a counter of the LLM calls it makes. */
+class ChatPipeline(val pipeline: RagPipeline, val config: RagConfig, val usage: LlmUsage)
 
 /** Chat API logic, independent of the HTTP plumbing and of [RagPipeline] internals. */
 class ChatApi(
@@ -94,9 +133,13 @@ class ChatApi(
                 ?: throw ApiException(400, "Index was built with ${index.meta.embeddingModel}; set GEMINI_API_KEY (env var or local.properties) and restart the ui.")
             VectorRetriever(embedder, index, req.topK)
         } else Retriever { emptyList() }
-        val generator = generatorFor(req.model ?: GeminiTextGenerator.DEFAULT_MODEL)
+        val model = req.model ?: GeminiTextGenerator.DEFAULT_MODEL
+        val raw = generatorFor(model)
             ?: throw ApiException(400, "GEMINI_API_KEY is not set: cannot generate answers. Set the env var or add it to local.properties and restart the ui.")
-        RagPipeline(retriever, generator)
+        val usage = LlmUsage()
+        val generator = CachedTextGenerator(raw, model, usage)
+        val config = if (req.staged) RagConfig(req.topKBefore, req.topK, req.threshold, req.filter, req.rerank, req.rewrite) else RagConfig.PLAIN
+        ChatPipeline(stagedPipeline(retriever, generator, config, req.llmRerank), config, usage)
     }
 
     fun config(): String {
@@ -106,7 +149,7 @@ class ChatApi(
         val strategies = ChunkStrategy.entries.map { it.id }.filter { File(indexDir, "$it.json").isFile }
         return json.encodeToString(
             ChatConfig.serializer(),
-            ChatConfig(strategies, "structure", VectorRetriever.DEFAULT_TOP_K, GeminiTextGenerator.DEFAULT_MODEL, apiKey.isNotBlank(), questions),
+            ChatConfig(strategies, "structure", VectorRetriever.DEFAULT_TOP_K, RagConfig.DEFAULT.topKBefore, RagConfig.DEFAULT.threshold, GeminiTextGenerator.DEFAULT_MODEL, apiKey.isNotBlank(), questions),
         )
     }
 
@@ -120,20 +163,23 @@ class ChatApi(
         if (question.isEmpty()) throw ApiException(400, "Question is empty")
         if (question.length > MAX_QUESTION) throw ApiException(400, "Question is too long (max $MAX_QUESTION characters)")
         if (req.topK !in 1..20) throw ApiException(400, "topK must be between 1 and 20")
+        if (req.topKBefore !in 1..50) throw ApiException(400, "topK before must be between 1 and 50")
+        if (req.staged && req.topK > req.topKBefore) throw ApiException(400, "topK after (${req.topK}) must not exceed topK before (${req.topKBefore})")
+        if (req.threshold.isNaN() || req.threshold !in 0f..1f) throw ApiException(400, "threshold must be between 0 and 1")
         if (req.strategy !in ChunkStrategy.entries.map { it.id }) throw ApiException(400, "Unknown strategy '${req.strategy}'")
         if (req.model != null && !MODEL_RE.matches(req.model)) throw ApiException(400, "Invalid model name")
 
         val modes = if (req.mode == ChatMode.COMPARE) listOf(ChatMode.WITHOUT_RAG, ChatMode.WITH_RAG) else listOf(req.mode)
         val results = modes.map { mode ->
-            val pipeline = provider.pipelineFor(req, mode == ChatMode.WITH_RAG)
+            val cp = provider.pipelineFor(req, mode == ChatMode.WITH_RAG)
             val start = clock()
-            val outcome = runBlocking { pipeline.ask(question, if (mode == ChatMode.WITH_RAG) RagMode.RAG else RagMode.NO_RAG) }
-            toTurn(mode, outcome, (clock() - start) / 1_000_000)
+            val outcome = runBlocking { cp.pipeline.ask(question, if (mode == ChatMode.WITH_RAG) RagMode.RAG else RagMode.NO_RAG, cp.config) }
+            toTurn(mode, outcome, (clock() - start) / 1_000_000, cp)
         }
         return json.encodeToString(ChatResponse.serializer(), ChatResponse(question, results))
     }
 
-    private fun toTurn(mode: ChatMode, outcome: Result<RagAnswer>, latencyMs: Long): ChatTurn {
+    private fun toTurn(mode: ChatMode, outcome: Result<RagAnswer>, latencyMs: Long, cp: ChatPipeline): ChatTurn {
         val a = outcome.getOrElse {
             return ChatTurn(mode, error = it.message ?: it::class.simpleName ?: "Unknown error", latencyMs = latencyMs)
         }
@@ -141,9 +187,24 @@ class ChatApi(
         val sources = a.hits.map { ChatSource(RagPromptBuilder.sourceLabel(it.chunk), it.score, it.chunk.chunkId) }
         return ChatTurn(
             mode, a.answer, sources, chunks,
-            notFound = mode == ChatMode.WITH_RAG && looksLikeNotFound(a.answer),
+            notFound = mode == ChatMode.WITH_RAG && (a.insufficientContext || looksLikeNotFound(a.answer)),
             latencyMs = latencyMs,
-            debug = mapOf("retrieved" to chunks.size.toString()),
+            debug = buildMap {
+                put("retrieved", (a.trace?.retrieved?.size ?: chunks.size).toString())
+                a.trace?.let { put("filtered", it.filtered.size.toString()); put("reranked", it.reranked.size.toString()); put("searchQuery", it.searchQuery) }
+            },
+            trace = a.trace?.let { traceView(it, cp.config) },
+            insufficient = a.insufficientContext,
+            llmCalls = cp.usage.calls,
+        )
+    }
+
+    private fun traceView(t: RetrievalTrace, config: RagConfig): ChatTrace {
+        fun view(h: SearchHit, rerank: Double? = null) = ChatStageHit(h.chunk.chunkId, RagPromptBuilder.sourceLabel(h.chunk), h.score, rerank)
+        return ChatTrace(
+            t.originalQuery, t.searchQuery, t.rewriteFallback,
+            t.retrieved.map { view(it) }, t.filtered.map { view(it) }, t.reranked.map { view(it.hit, it.rerankScore) },
+            threshold = if (config.filter) config.threshold else null, topKBefore = config.topKBefore, topKAfter = config.topKAfter,
         )
     }
 

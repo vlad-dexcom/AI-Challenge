@@ -166,4 +166,46 @@ class ChatApiTest {
         assertFalse(html.contains("${'$'}{t.answer"))
         assertFalse(html.contains("${'$'}{c.text}"))
     }
+
+    @Test fun stagedRequestReturnsPerStageTrace() {
+        start("")
+        val (code, r) = post("""{"question":"protein to build muscle","mode":"rag","topK":2,"topKBefore":4,"threshold":0.0,"filter":true,"rerank":true}""")
+        assertEquals(200, code)
+        val t = r["results"]!!.jsonArray.single().jsonObject
+        val trace = t["trace"]!!.jsonObject
+        assertEquals("protein to build muscle", trace["searchQuery"]!!.jsonPrimitive.content)
+        assertTrue(trace["retrieved"]!!.jsonArray.size >= trace["filtered"]!!.jsonArray.size)
+        assertEquals(2, trace["reranked"]!!.jsonArray.size)
+        assertTrue(trace["reranked"]!!.jsonArray[0].jsonObject["rerankScore"] != null)
+        assertEquals("false", t["insufficient"]!!.jsonPrimitive.content)
+        assertEquals("1", t["llmCalls"]!!.jsonPrimitive.content)
+    }
+
+    @Test fun filterRejectingEverythingSkipsTheModel() {
+        start("")
+        val (code, r) = post("""{"question":"protein","mode":"rag","filter":true,"threshold":1.0,"topKBefore":5}""")
+        assertEquals(200, code)
+        val t = r["results"]!!.jsonArray.single().jsonObject
+        assertEquals("true", t["insufficient"]!!.jsonPrimitive.content)
+        assertEquals("true", t["notFound"]!!.jsonPrimitive.content)
+        assertEquals(0, t["sources"]!!.jsonArray.size)
+        assertTrue(prompts.isEmpty())
+    }
+
+    @Test fun rewriteUsesTheModelAndFallsBackWhenItDrifts() {
+        start("")
+        reply = Result.success("completely different squat knee valgus")
+        val (_, r) = post("""{"question":"protein to build muscle","mode":"rag","rewrite":true,"topKBefore":4}""")
+        val trace = r["results"]!!.jsonArray.single().jsonObject["trace"]!!.jsonObject
+        assertEquals("protein to build muscle", trace["searchQuery"]!!.jsonPrimitive.content)
+        assertTrue(trace["rewriteFallback"]!!.jsonPrimitive.content.startsWith("drift"))
+        assertEquals(2, prompts.size)
+    }
+
+    @Test fun invalidStageSettingsAreRejected() {
+        start("")
+        assertEquals(400, post("""{"question":"x","filter":true,"threshold":1.5}""").first)
+        assertEquals(400, post("""{"question":"x","filter":true,"topK":8,"topKBefore":4}""").first)
+        assertEquals(400, post("""{"question":"x","topKBefore":0}""").first)
+    }
 }

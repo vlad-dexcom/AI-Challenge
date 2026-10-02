@@ -9,6 +9,7 @@ import com.example.geminichat.agent.LlmRequestSpec
 import com.example.geminichat.agent.TokenEstimator
 import com.example.geminichat.agent.TokenUsage
 import com.example.rag.RagAnswer
+import com.example.rag.RagConfig
 import com.example.rag.RagMode
 import com.example.rag.RagPipeline
 import com.example.rag.RagPromptBuilder
@@ -33,6 +34,8 @@ class RagAgent(
     override val config: AgentConfig,
     private val client: LlmClient,
     private val retriever: Retriever,
+    /** Day 23 stages (threshold filter, rerank); [RagConfig.PLAIN] keeps the Day 22 top-k behaviour. */
+    private val ragConfig: RagConfig = RagConfig.PLAIN,
     private val mode: () -> RagAgentMode,
 ) : Agent {
 
@@ -51,7 +54,7 @@ class RagAgent(
                 )
             )
         }
-        val pipeline = RagPipeline(retriever, generator)
+        val pipeline = RagPipeline(retriever, generator, config = ragConfig)
         val currentMode = mode()
         val started = System.currentTimeMillis()
 

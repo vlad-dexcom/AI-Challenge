@@ -1,0 +1,113 @@
+{
+ "description": "Day 23 side set: Russian translations of 16 questions from questions.json (single author, machine-assisted translation). The corpus is English, so this checks cross-lingual retrieval with and without query rewrite.",
+ "questions": [
+  {
+   "id": "ru01",
+   "type": "direct",
+   "question": "Сколько грамм белка на килограмм веса тела нужно есть каждый день?",
+   "expectedSource": "08-nutrition-protein-and-calories.md",
+   "expectedSection": "Protein"
+  },
+  {
+   "id": "ru03",
+   "type": "direct",
+   "question": "Что такое NEAT и почему он падает на диете?",
+   "expectedSource": "09-fat-loss-and-body-composition.md",
+   "expectedSection": "NEAT"
+  },
+  {
+   "id": "ru04",
+   "type": "paraphrase",
+   "question": "Почему я трачу меньше калорий на диете, хотя ем ровно то, что запланировал?",
+   "expectedSource": "09-fat-loss-and-body-composition.md",
+   "expectedSection": "NEAT"
+  },
+  {
+   "id": "ru06",
+   "type": "paraphrase",
+   "question": "Должна ли штанга двигаться строго вверх-вниз, когда я жму лёжа на горизонтальной скамье?",
+   "expectedSource": "03-bench-press-and-pushing.md",
+   "expectedSection": "bar path"
+  },
+  {
+   "id": "ru09",
+   "type": "direct",
+   "question": "Чем отличается мышечная болезненность от боли?",
+   "expectedSource": "11-injury-prevention-and-rehab.md",
+   "expectedSection": "Pain Versus Soreness"
+  },
+  {
+   "id": "ru10",
+   "type": "paraphrase",
+   "question": "Острое локальное ощущение усиливается при каждой нагрузке на движение — стоит ли продолжать?",
+   "expectedSource": "11-injury-prevention-and-rehab.md",
+   "expectedSection": "Pain Versus Soreness"
+  },
+  {
+   "id": "ru13",
+   "type": "direct",
+   "question": "Что такое делоад и когда он нужен?",
+   "expectedSource": "05-strength-programming-basics.md",
+   "expectedSection": "deloads"
+  },
+  {
+   "id": "ru14",
+   "type": "paraphrase",
+   "question": "Скорость штанги не растёт и нет мотивации; стоит ли временно снизить тренировочный стресс?",
+   "expectedSource": "05-strength-programming-basics.md",
+   "expectedSection": "deloads"
+  },
+  {
+   "id": "ru17",
+   "type": "direct",
+   "question": "Как прийти к строгому подтягиванию?",
+   "expectedSource": "04-pulling-and-back-training.md",
+   "expectedSection": "Pull-up progressions"
+  },
+  {
+   "id": "ru19",
+   "type": "paraphrase",
+   "question": "Вредит ли позвоночнику сутулость за столом весь день?",
+   "expectedSource": "15-core-training-and-posture.md",
+   "expectedSection": "Desk posture myths"
+  },
+  {
+   "id": "ru21",
+   "type": "paraphrase",
+   "question": "Я пропускаю тренировки, когда много дел; как облегчить себе регулярность?",
+   "expectedSource": "16-motivation-habits-and-consistency.md",
+   "expectedSection": "minimum version"
+  },
+  {
+   "id": "ru23",
+   "type": "direct",
+   "question": "Как исправить заваливание коленей внутрь в приседе?",
+   "expectedSource": "01-squat-technique.md",
+   "expectedSection": "Common faults"
+  },
+  {
+   "id": "ru24",
+   "type": "paraphrase",
+   "question": "Растят ли неполные повторения мышцы так же, как повторения в полной амплитуде?",
+   "expectedSource": "06-hypertrophy-training.md",
+   "expectedSection": "Range of motion"
+  },
+  {
+   "id": "ru25",
+   "type": "direct",
+   "question": "Что такое гигиена сна?",
+   "expectedSource": "07-sleep-and-recovery.md",
+   "expectedSection": "Sleep Hygiene"
+  },
+  {
+   "id": "ru27",
+   "type": "out_of_corpus",
+   "question": "Какая лучшая стратегия инвестирования на фондовом рынке?"
+  },
+  {
+   "id": "ru29",
+   "type": "out_of_corpus",
+   "question": "Кто выиграл чемпионат мира по футболу 2018 года?"
+  }
+ ]
+}
