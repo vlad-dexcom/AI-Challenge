@@ -59,7 +59,7 @@ class ChatApiTest {
 
     @Test fun ragModeReturnsAnswerSourcesAndChunks() {
         start("")
-        val (code, r) = post("""{"question":"protein to build muscle","mode":"rag","topK":2}""")
+        val (code, r) = post("""{"question":"protein to build muscle","mode":"rag","topK":2,"citations":false}""")
         assertEquals(200, code)
         val t = r["results"]!!.jsonArray.single().jsonObject
         assertEquals("rag", t["mode"]!!.jsonPrimitive.content)
@@ -84,7 +84,7 @@ class ChatApiTest {
 
     @Test fun compareReturnsBothModesInOrder() {
         start("")
-        val (code, r) = post("""{"question":"protein?","mode":"compare"}""")
+        val (code, r) = post("""{"question":"protein?","mode":"compare","citations":false}""")
         assertEquals(200, code)
         val modes = r["results"]!!.jsonArray.map { it.jsonObject["mode"]!!.jsonPrimitive.content }
         assertEquals(listOf("no_rag", "rag"), modes)
@@ -169,7 +169,7 @@ class ChatApiTest {
 
     @Test fun stagedRequestReturnsPerStageTrace() {
         start("")
-        val (code, r) = post("""{"question":"protein to build muscle","mode":"rag","topK":2,"topKBefore":4,"threshold":0.0,"filter":true,"rerank":true}""")
+        val (code, r) = post("""{"question":"protein to build muscle","mode":"rag","topK":2,"topKBefore":4,"threshold":0.0,"filter":true,"rerank":true,"citations":false}""")
         assertEquals(200, code)
         val t = r["results"]!!.jsonArray.single().jsonObject
         val trace = t["trace"]!!.jsonObject
@@ -195,7 +195,7 @@ class ChatApiTest {
     @Test fun rewriteUsesTheModelAndFallsBackWhenItDrifts() {
         start("")
         reply = Result.success("completely different squat knee valgus")
-        val (_, r) = post("""{"question":"protein to build muscle","mode":"rag","rewrite":true,"topKBefore":4}""")
+        val (_, r) = post("""{"question":"protein to build muscle","mode":"rag","rewrite":true,"topKBefore":4,"citations":false}""")
         val trace = r["results"]!!.jsonArray.single().jsonObject["trace"]!!.jsonObject
         assertEquals("protein to build muscle", trace["searchQuery"]!!.jsonPrimitive.content)
         assertTrue(trace["rewriteFallback"]!!.jsonPrimitive.content.startsWith("drift"))
@@ -207,5 +207,30 @@ class ChatApiTest {
         assertEquals(400, post("""{"question":"x","filter":true,"threshold":1.5}""").first)
         assertEquals(400, post("""{"question":"x","filter":true,"topK":8,"topKBefore":4}""").first)
         assertEquals(400, post("""{"question":"x","topKBefore":0}""").first)
+    }
+
+    @Test fun citationsModeReturnsIdkStateWithClarification() {
+        start("")
+        reply = Result.success("""{"answerable":false,"answer":"","sources":[],"quotes":[]}""")
+        val (code, r) = post("""{"question":"Какой бренд протеина лучше?","mode":"rag"}""")
+        assertEquals(200, code)
+        val t = r["results"]!!.jsonArray.single().jsonObject
+        val st = t["structured"]!!.jsonObject
+        assertEquals("true", st["idk"]!!.jsonPrimitive.content)
+        assertEquals("MODEL_UNANSWERABLE", st["idkReason"]!!.jsonPrimitive.content)
+        assertEquals("ru", st["language"]!!.jsonPrimitive.content)
+        assertTrue(st["clarification"]!!.jsonPrimitive.content.contains("?"))
+        assertEquals("true", t["notFound"]!!.jsonPrimitive.content)
+        assertEquals(0, t["sources"]!!.jsonArray.size)
+        assertTrue(t["answer"]!!.jsonPrimitive.content.startsWith("Не знаю"))
+    }
+
+    @Test fun citationsModeRejectsFabricatedQuotes() {
+        start("")
+        reply = Result.success("""{"answerable":true,"answer":"x","sources":[{"file":"sleep.md","section":"Sleep > Hygiene","chunkId":"sleep.md#structure-0"}],"quotes":[{"chunkId":"sleep.md#structure-0","text":"Take 5 grams of magic powder nightly."}]}""")
+        val (_, r) = post("""{"question":"sleep tips","mode":"rag"}""")
+        val st = r["results"]!!.jsonArray.single().jsonObject["structured"]!!.jsonObject
+        assertEquals("VERIFICATION_FAILED", st["idkReason"]!!.jsonPrimitive.content)
+        assertEquals(2, prompts.size)
     }
 }

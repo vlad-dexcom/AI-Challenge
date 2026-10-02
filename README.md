@@ -410,6 +410,18 @@ When the filter rejects everything the model is not called ("not enough informat
   ~36% of LLM calls. Small eval, single author — see [docs/day23-reranking.md](docs/day23-reranking.md) and
   [the test scenario](docs/day23-reranking-test-scenario.md).
 
+## Citations and "I don't know" (Day 24)
+
+RAG answers now follow a JSON contract: `answer`, `sources` (file, section, chunkId) and verbatim `quotes` (kept in the corpus language). Code, not the LLM,
+verifies every quote (normalised substring of a retrieved chunk) and every cited chunk; unverifiable answers are retried once with a stricter prompt and then
+become an **"I don't know"** (also when no chunk passes the threshold or the model says `answerable=false`), in the user's language, with one clarifying question.
+`RagAnswer.structured` carries the result; the web chat shows sources, ✓/⚠ quotes and the verification report; the `Knowledge Coach (RAG)` agent shows sources + quotes.
+
+- `./gradlew :rag:run --args="citations-eval"` — 12 questions (control set + 2 Russian) with real Gemini → `rag/eval/citations-report.{md,json}`
+  (automatic checks in code; meaning-vs-quotes is LLM-judged and labelled so, plus manual verdicts).
+- Result: sources and verbatim quotes in 9/9 answers, "I don't know" exactly on the 3 out-of-corpus questions (including c10, above the cosine threshold).
+  Small set, one author — see [docs/day24-citations.md](docs/day24-citations.md) and [the test scenario](docs/day24-citations-test-scenario.md).
+
 ## Setup
 
 1. Get a Gemini API key from [Google AI Studio](https://aistudio.google.com/apikey).

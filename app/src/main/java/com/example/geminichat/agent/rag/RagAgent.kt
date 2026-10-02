@@ -36,6 +36,8 @@ class RagAgent(
     private val retriever: Retriever,
     /** Day 23 stages (threshold filter, rerank); [RagConfig.PLAIN] keeps the Day 22 top-k behaviour. */
     private val ragConfig: RagConfig = RagConfig.PLAIN,
+    /** Day 24: JSON contract with verified sources/quotes and an "I don't know" mode (the Interactions API gets a prompt-only JSON request). */
+    private val citations: Boolean = true,
     private val mode: () -> RagAgentMode,
 ) : Agent {
 
@@ -54,7 +56,7 @@ class RagAgent(
                 )
             )
         }
-        val pipeline = RagPipeline(retriever, generator, config = ragConfig)
+        val pipeline = RagPipeline(retriever, generator, config = ragConfig, citations = citations)
         val currentMode = mode()
         val started = System.currentTimeMillis()
 
@@ -74,8 +76,13 @@ class RagAgent(
         }
 
         val text = render(currentMode, answers)
-        val prompt = answers.sumOf { TokenEstimator.estimate(RagPromptBuilder.userPrompt(it.mode, question, it.hits)) }
-        val system = answers.sumOf { TokenEstimator.estimate(RagPromptBuilder.systemPrompt(it.mode)) }
+        fun cited(a: RagAnswer) = a.mode == RagMode.RAG && a.structured != null
+        val prompt = answers.sumOf {
+            TokenEstimator.estimate(if (cited(it)) RagPromptBuilder.citationUserPrompt(question, it.hits) else RagPromptBuilder.userPrompt(it.mode, question, it.hits))
+        }
+        val system = answers.sumOf {
+            TokenEstimator.estimate(if (cited(it)) RagPromptBuilder.citationSystemPrompt() else RagPromptBuilder.systemPrompt(it.mode))
+        }
         return Result.success(
             AgentResponse(
                 text = text,
@@ -104,7 +111,19 @@ class RagAgent(
             }
         }
 
+        /** Day 24: verified sources and quotes under the answer; an "I don't know" already carries its clarifying question. */
         fun sourcesBlock(answer: RagAnswer): String {
+            val st = answer.structured
+            if (st != null) {
+                if (st.idk) return ""
+                val sources = st.sources.mapIndexed { i, s ->
+                    "${i + 1}. ${if (s.section.isBlank()) s.file else "${s.file} > ${s.section}"} (${s.chunkId}" + (s.score?.let { ", %.2f".format(it) } ?: "") + ")"
+                }.joinToString("\n")
+                val quotes = st.quotes.joinToString("\n") { q ->
+                    if (q.ok) "> ✓ “${q.text}”" else "> ⚠ not verified: “${q.text}”"
+                }
+                return "\n\n**Sources**\n$sources\n\n**Quotes** (verbatim from the knowledge base)\n$quotes"
+            }
             if (answer.hits.isEmpty()) return "\n\n**Sources:** none retrieved"
             return "\n\n**Sources**\n" + answer.hits.mapIndexed { i, h ->
                 "${i + 1}. ${RagPromptBuilder.sourceLabel(h.chunk)} (%.2f)".format(h.score)

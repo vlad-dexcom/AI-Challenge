@@ -1,0 +1,14 @@
+{
+  "c01": {"verdict": "match", "note": "The five Day 2 exercises with sets/reps are exactly the quoted bullet list; the LLM judge's PARTIAL only complains that the quote does not repeat the words 'Day 2' (a premise of the question, not a claim of the answer)."},
+  "c02": {"verdict": "match", "note": "The five progressions are the quoted list; the PARTIAL is the same premise nitpick."},
+  "c03": {"verdict": "match", "note": "Answer is a near-copy of the quoted sentence."},
+  "c04": {"verdict": "match", "note": "Dead bug / side plank / suitcase carry with sets and time are the quoted lines (Template A section); the chunk's section label is the first heading of a multi-section chunk, so it reads 'desk workers'."},
+  "c05": {"verdict": "match", "note": "3-5 / 3-5 / 5-10 minute phases are the quoted formula; the PARTIAL concerns the '10-15 min' wording of the question."},
+  "c06": {"verdict": "match", "note": "All three rep ranges quoted verbatim."},
+  "c07": {"verdict": "match", "note": "1.6-2.2 g/kg and 3-5 meals each backed by its own quote."},
+  "c08": {"verdict": "match", "note": "Both advice sentences are quoted; the quotes do not say 'drifts forward' but the advice (bar over midfoot, lats, bar path) addresses it. Mild inference by the model."},
+  "c09": {"verdict": "correct IDK", "note": "Top cosine 0.596 < 0.65, no model call; offers deadlift topics as related, not as an answer."},
+  "c10": {"verdict": "correct IDK", "note": "Top cosine 0.731 passed the filter; the model itself said answerable=false (the protein-powder section has no brands). Arguably more helpful: say the KB covers protein powder but names no brand."},
+  "ru01": {"verdict": "match", "note": "Russian answer, English verbatim quotes; the Russian wording is a faithful translation of both quotes."},
+  "ru02": {"verdict": "correct IDK", "note": "Top cosine 0.537; answered in Russian with a clarifying question."}
+}

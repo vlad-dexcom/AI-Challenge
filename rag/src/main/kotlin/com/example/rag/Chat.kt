@@ -34,6 +34,8 @@ data class ChatRequest(
     val llmRerank: Boolean = false,
     val threshold: Float = RagConfig.DEFAULT.threshold,
     val topKBefore: Int = RagConfig.DEFAULT.topKBefore,
+    /** Day 24: JSON contract with verified sources/quotes and "I don't know" in the RAG answer. */
+    val citations: Boolean = true,
 ) {
     val staged: Boolean get() = filter || rerank || rewrite
 }
@@ -64,6 +66,8 @@ data class ChatTurn(
     /** The filter rejected every candidate, so the model was not called. */
     val insufficient: Boolean = false,
     val llmCalls: Int = 0,
+    /** Day 24 (RAG mode with citations): verified sources/quotes, or the "I don't know" state. */
+    val structured: StructuredAnswer? = null,
 )
 
 @Serializable
@@ -139,7 +143,7 @@ class ChatApi(
         val usage = LlmUsage()
         val generator = CachedTextGenerator(raw, model, usage)
         val config = if (req.staged) RagConfig(req.topKBefore, req.topK, req.threshold, req.filter, req.rerank, req.rewrite) else RagConfig.PLAIN
-        ChatPipeline(stagedPipeline(retriever, generator, config, req.llmRerank), config, usage)
+        ChatPipeline(stagedPipeline(retriever, generator, config, req.llmRerank, req.citations), config, usage)
     }
 
     fun config(): String {
@@ -184,10 +188,12 @@ class ChatApi(
             return ChatTurn(mode, error = it.message ?: it::class.simpleName ?: "Unknown error", latencyMs = latencyMs)
         }
         val chunks = a.hits.map { ChatChunk(it.chunk.chunkId, it.chunk.source, it.chunk.section, it.chunk.text, it.score) }
-        val sources = a.hits.map { ChatSource(RagPromptBuilder.sourceLabel(it.chunk), it.score, it.chunk.chunkId) }
+        val st = a.structured
+        val shown = if (st == null) a.hits else a.hits.filter { h -> !st.idk && st.sources.any { it.chunkId == h.chunk.chunkId } }
+        val sources = shown.map { ChatSource(RagPromptBuilder.sourceLabel(it.chunk), it.score, it.chunk.chunkId) }
         return ChatTurn(
             mode, a.answer, sources, chunks,
-            notFound = mode == ChatMode.WITH_RAG && (a.insufficientContext || looksLikeNotFound(a.answer)),
+            notFound = mode == ChatMode.WITH_RAG && (st?.idk ?: (a.insufficientContext || looksLikeNotFound(a.answer))),
             latencyMs = latencyMs,
             debug = buildMap {
                 put("retrieved", (a.trace?.retrieved?.size ?: chunks.size).toString())
@@ -196,6 +202,7 @@ class ChatApi(
             trace = a.trace?.let { traceView(it, cp.config) },
             insufficient = a.insufficientContext,
             llmCalls = cp.usage.calls,
+            structured = st,
         )
     }
 

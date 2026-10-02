@@ -26,6 +26,7 @@ rag-eval Day 22: runs the 10 control questions in both modes, writes rag/eval/co
 sweep    Day 23: grid over threshold x topK-before x topK-after on the eval set (no LLM calls), writes rag/eval/sweep.{json,md}.
 modes-eval Day 23: compares no RAG / plain / +filter / +rerank / +rewrite / all on the eval + control sets (real Gemini; answers cached in rag/cache).
 ask also takes: --filter on --rerank on|llm --rewrite on --threshold 0.6 --before 15 --after 4 (stages of the Day 23 pipeline).
+citations-eval  Day 24: 12 questions through the cited pipeline -> rag/eval/citations-report.{md,json} (--rewrite on, --no-cache).
 ui       serves the web UI (Chat tab + chunk visualiser) at http://localhost:<port> (Ctrl+C to stop).
 --embedder gemini  (default if GEMINI_API_KEY is set) calls the Gemini embeddings REST API.
 --embedder offline deterministic hashing embedder, no network (lexical only, for tests/demos).
@@ -33,7 +34,7 @@ The Gemini key is read from the GEMINI_API_KEY env var or from local.properties 
 """
 
 fun main(args: Array<String>) {
-    if (args.isEmpty() || args[0] !in setOf("index", "compare", "eval", "ui", "ask", "rag-eval", "sweep", "modes-eval")) {
+    if (args.isEmpty() || args[0] !in setOf("index", "compare", "eval", "ui", "ask", "rag-eval", "sweep", "modes-eval", "citations-eval")) {
         println(USAGE.trim()); exitProcess(if (args.isEmpty()) 0 else 1)
     }
     val positional = if (args[0] == "ask" && args.size > 1 && !args[1].startsWith("--")) args[1] else null
@@ -67,6 +68,7 @@ fun main(args: Array<String>) {
             "rag-eval" -> runRagEval(opts, outDir, embedder, key)
             "sweep" -> runSweep(opts, outDir, embedder)
             "modes-eval" -> runModesEval(opts, outDir, embedder, key)
+            "citations-eval" -> runCitationsEval(opts, outDir, embedder, key)
         }
     }
     exitProcess(0)
@@ -151,7 +153,7 @@ private fun buildPipeline(opts: Map<String, String>, dir: File, embedder: Embedd
     val index = IndexStore().load(file)
     val retriever = VectorRetriever(embedder, index, (opts["k"] ?: VectorRetriever.DEFAULT_TOP_K.toString()).toInt())
     val generator = GeminiTextGenerator(key, opts["model"] ?: GeminiTextGenerator.DEFAULT_MODEL)
-    return stagedPipeline(retriever, generator, if (staged(opts)) ragConfigFrom(opts) else RagConfig.PLAIN, opts["rerank"] == "llm")
+    return stagedPipeline(retriever, generator, if (staged(opts)) ragConfigFrom(opts) else RagConfig.PLAIN, opts["rerank"] == "llm", citations = opts["citations"] != "off")
 }
 
 private fun staged(opts: Map<String, String>) = flag(opts, "filter") || flag(opts, "rerank") || flag(opts, "rewrite")
@@ -172,6 +174,16 @@ private suspend fun runAsk(opts: Map<String, String>, question: String?, dir: Fi
             a.trace?.takeIf { staged(opts) }?.let { t ->
                 println("\nSearch query: ${t.searchQuery}${t.rewriteFallback?.let { " (rewrite discarded: $it)" } ?: ""}")
                 println("Retrieved ${t.retrieved.size} -> filtered ${t.filtered.size} -> reranked ${t.reranked.size}")
+            }
+            val st = a.structured
+            if (st != null) {
+                if (st.idk) { println("\n(I don't know mode: ${st.idkReason}; no sources by design)"); continue }
+                println("\nSources (verified):")
+                st.sources.forEach { println("  ${it.file} > ${it.section}  [${it.chunkId}]") }
+                println("Quotes:")
+                st.quotes.forEach { println("  ${if (it.ok) "OK " else "!! ${it.status}"} \"${it.text.replace("\n", " ")}\"") }
+                println("Verification: ${st.verification.summary()}")
+                continue
             }
             println("\nSources:")
             a.hits.forEachIndexed { i, h -> println("  [${i + 1}] ${RagPromptBuilder.sourceLabel(h.chunk)}  (score %.3f)".format(h.score)) }
