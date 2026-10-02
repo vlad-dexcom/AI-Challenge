@@ -20,7 +20,38 @@
  #info{position:sticky;bottom:0;background:#222;color:#eee;padding:8px;font:12px monospace;margin-top:10px;min-height:48px;white-space:pre-wrap}
  table{border-collapse:collapse;font-size:12px} td,th{border:1px solid #ddd;padding:2px 6px;text-align:left}
  .err{color:#d00}.legend span{padding:0 6px;margin-right:6px}
+
+ nav{margin:0 0 10px} nav button{padding:6px 14px;border:1px solid #ccc;background:#eee;cursor:pointer;font-size:14px}
+ nav button.on{background:#fff;border-bottom-color:#fff;font-weight:600}
+ #chat-wrap{display:flex;flex-direction:column;gap:8px}
+ #msgs{background:#fff;border:1px solid #ccc;padding:8px;min-height:240px;max-height:60vh;overflow:auto}
+ .msg{margin:6px 0;padding:6px 10px;border-radius:8px;max-width:100%;box-sizing:border-box}
+ .msg.user{background:#dbeafe;margin-left:15%} .msg.bot{background:#f3f4f6}
+ .pair{display:grid;grid-template-columns:1fr 1fr;gap:8px} .pair .msg{margin:0}
+ .answer{white-space:pre-wrap;word-break:break-word}
+ .badge{display:inline-block;font-size:11px;padding:0 6px;border-radius:8px;background:#ddd;margin-right:6px}
+ .badge.rag{background:#c7f0d0}.badge.norag{background:#ffe0b3}
+ .warn{background:#fff3cd;border:1px solid #ffd966;padding:4px 8px;margin:4px 0}
+ .src{font-size:12px;margin:4px 0 0 0;padding-left:18px} .meta{font-size:11px;color:#666}
+ details{font-size:12px;margin-top:4px} details pre{white-space:pre-wrap;margin:2px 0 6px;background:#fff;padding:4px;border:1px solid #eee}
 </style></head><body>
+<nav><button id="tab-chat" class="on">Chat (Day 22+)</button><button id="tab-viz">Chunk visualiser (Day 21)</button></nav>
+<div id="page-chat"><div id="chat-wrap">
+<fieldset><legend>Settings</legend>
+ <label>Mode <select id="cmode"><option value="rag">With RAG</option><option value="no_rag">Without RAG</option><option value="compare">Compare</option></select></label>
+ <label>Index <select id="cstrategy"></select></label>
+ <label>topK <input id="ctopk" type="number" value="4" min="1" max="20"></label>
+ <label>Model <input id="cmodel" style="width:160px" placeholder="default"></label>
+ <label>Control question <select id="cctl" style="max-width:340px"><option value="">(pick one…)</option></select></label>
+ <button id="cclear">Clear chat</button>
+ <div class="meta">History is shown here but <b>not used for answering yet</b>: each question is sent on its own (single-shot Day 22 pipeline; memory arrives in Day 25).</div>
+ <div id="cwarn" class="warn" style="display:none"></div>
+</fieldset>
+<div id="msgs"></div>
+<div><textarea id="cq" style="height:60px;font:14px system-ui" placeholder="Ask about training, nutrition, recovery… (Enter = send, Shift+Enter = newline)"></textarea>
+ <button id="csend">Send</button> <span id="cerr" class="err"></span></div>
+</div></div>
+<div id="page-viz" style="display:none">
 <h1>Chunk visualiser (Day 21)</h1>
 <fieldset><legend>Input</legend>
  <label>Corpus file <select id="file"><option value="">(pasted text)</option></select></label>
@@ -51,6 +82,7 @@
  <span id="ierr" class="err"></span><div id="inspect"></div>
 </fieldset>
 <div id="info">Hover or click a highlighted block to see chunk metadata.</div>
+</div>
 <script>
 const $=id=>document.getElementById(id);
 const esc=s=>s.replace(/[&<>]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;'}[c]));
@@ -156,4 +188,52 @@ $('file').onchange=async()=>{
   $('text').value=f.text;run();
 };
 api('/api/files').then(r=>r.files.forEach(n=>{const o=document.createElement('option');o.value=o.textContent=n;$('file').appendChild(o)}));
+
+// ---- Chat (Day 22+) ----
+const cfg={defaultModel:''};
+function show(tab){['chat','viz'].forEach(t=>{$('page-'+t).style.display=t===tab?'':'none';$('tab-'+t).classList.toggle('on',t===tab)})}
+$('tab-chat').onclick=()=>show('chat');$('tab-viz').onclick=()=>show('viz');
+function turnHtml(t){
+  const label=t.mode==='rag'?'<span class="badge rag">With RAG</span>':'<span class="badge norag">Without RAG</span>';
+  const meta=`<span class="meta">${t.latencyMs} ms</span>`;
+  if(t.error)return `<div class="msg bot">${label}${meta}<div class="err">Error: ${esc(t.error)}</div></div>`;
+  let h=`<div class="msg bot">${label}${meta}<div class="answer">${esc(t.answer||'')}</div>`;
+  if(t.mode==='rag'){
+    if(t.notFound)h+='<div class="warn">The model says the knowledge base has no relevant information for this question.</div>';
+    if(t.sources.length){
+      h+='<div class="meta" style="margin-top:6px">Sources</div><ol class="src">'+t.sources.map(s=>`<li>${esc(s.label)} <span class="meta">(score ${s.score.toFixed(3)})</span></li>`).join('')+'</ol>';
+      h+=`<details><summary>Retrieved chunks (${t.chunks.length})</summary>`+t.chunks.map((c,i)=>`<div class="meta">[${i+1}] ${esc(c.source)}${c.section?' > '+esc(c.section):''} · ${esc(c.chunkId)} · score ${c.score.toFixed(3)}</div><pre>${esc(c.text)}</pre>`).join('')+'</details>';
+    }else h+='<div class="warn">No chunks were retrieved.</div>';
+  }
+  return h+'</div>';
+}
+function addMsg(html){const d=document.createElement('div');d.innerHTML=html;const el=d.firstElementChild;$('msgs').appendChild(el);$('msgs').scrollTop=$('msgs').scrollHeight;return el}
+async function send(){
+  const q=$('cq').value.trim();$('cerr').textContent='';
+  if(!q){$('cerr').textContent='Type a question first';return}
+  const mode=$('cmode').value;
+  addMsg(`<div class="msg user">${esc(q)}</div>`);
+  const pending=addMsg('<div class="msg bot meta">Thinking…</div>');
+  $('csend').disabled=true;$('cq').value='';
+  try{
+    const body={question:q,mode,strategy:$('cstrategy').value||'structure',topK:+$('ctopk').value||4};
+    if($('cmodel').value.trim())body.model=$('cmodel').value.trim();
+    const r=await api('/api/chat',body);
+    const html=r.results.length>1?'<div class="pair">'+r.results.map(turnHtml).join('')+'</div>':turnHtml(r.results[0]);
+    pending.outerHTML=html;
+  }catch(e){pending.outerHTML=`<div class="msg bot"><div class="err">Error: ${esc(e.message)}</div></div>`}
+  $('csend').disabled=false;$('msgs').scrollTop=$('msgs').scrollHeight;
+}
+$('csend').onclick=send;
+$('cq').onkeydown=e=>{if(e.key==='Enter'&&!e.shiftKey){e.preventDefault();send()}};
+$('cclear').onclick=()=>{$('msgs').innerHTML=''};
+$('cctl').onchange=()=>{if($('cctl').value){$('cq').value=$('cctl').value;$('cq').focus()}};
+fetch('/api/chat/config').then(r=>r.json()).then(c=>{
+  c.strategies.forEach(s=>{const o=document.createElement('option');o.value=o.textContent=s;$('cstrategy').appendChild(o)});
+  if(c.strategies.includes(c.defaultStrategy))$('cstrategy').value=c.defaultStrategy;
+  $('ctopk').value=c.defaultTopK;$('cmodel').placeholder=c.defaultModel;
+  c.controlQuestions.forEach(q=>{const o=document.createElement('option');o.value=q.question;o.textContent=`${q.id} [${q.category}] ${q.question}`.slice(0,90);$('cctl').appendChild(o)});
+  if(!c.keyConfigured){$('cwarn').style.display='';$('cwarn').textContent='GEMINI_API_KEY is not set: chat answers need it (env var or local.properties), then restart the ui.'}
+  if(!c.strategies.length){$('cwarn').style.display='';$('cwarn').textContent='No saved index found. Run: ./gradlew :rag:run --args="index"'}
+});
 </script></body></html>

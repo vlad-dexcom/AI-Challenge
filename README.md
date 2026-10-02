@@ -378,6 +378,9 @@ See `docs/day22-rag-query.md` (design, results) and `docs/day22-rag-query-test-s
   add thresholds/reranking), `RagPromptBuilder` (numbered `[file > section]` context, cite `[n]`, admit when the
   context lacks the answer), `RagPipeline` (`NO_RAG` / `RAG` / `compare`), `TextGenerator` +
   `GeminiTextGenerator` (plain REST).
+- **Chat web UI (Day 22+)** — `./gradlew :rag:run --args="ui"` → *Chat* tab: With RAG / Without RAG / Compare, sources and
+  retrieved chunks under RAG answers, control-question dropdown, topK/index/model settings. History is shown but not yet
+  used for answering (Day 25). API: `POST /api/chat` (`Chat.kt`). See `docs/day22-rag-query.md`.
 - **Agent** — "Knowledge Coach (RAG)" in the app (`agent/rag/RagAgent`): chips *With RAG / Without RAG / Compare*
   in Settings, sources listed under the answer; the structure index is bundled as an asset (`copyRagIndex`).
 - **CLI** — `./gradlew :rag:run --args='ask "<question>"'` (both modes) and `--args="rag-eval"`.
