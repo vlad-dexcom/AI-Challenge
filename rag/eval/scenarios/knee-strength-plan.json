@@ -1,0 +1,355 @@
+{
+  "id": "knee-strength-plan",
+  "title": "3-day strength program for a beginner with a knee injury and no gym",
+  "goal": "Build a 3-day strength program for a complete beginner who has a knee injury and no gym",
+  "goalHas": [
+    [
+      "program",
+      "plan",
+      "routine",
+      "workout"
+    ],
+    [
+      "strength",
+      "muscle",
+      "3-day",
+      "three",
+      "full-body"
+    ]
+  ],
+  "turns": [
+    {
+      "user": "I'm a complete beginner and I want to build a 3-day strength program. Where do I start?",
+      "note": "states the goal",
+      "judge": true,
+      "answerHas": [
+        [
+          "3",
+          "three",
+          "full-body",
+          "full body",
+          "program"
+        ]
+      ],
+      "sourceFileHas": [
+        "13-beginner",
+        "05-strength"
+      ]
+    },
+    {
+      "user": "I have a knee injury, so I have to be careful with my legs.",
+      "note": "clarification: injury (a statement phrased as a request for care)",
+      "fixes": [
+        "knee injury"
+      ],
+      "judge": true,
+      "constraintHas": [
+        [
+          "knee"
+        ]
+      ],
+      "rewriteHas": [
+        [
+          "knee"
+        ]
+      ],
+      "sourceFileHas": [
+        "11-injury"
+      ]
+    },
+    {
+      "user": "I don't have a gym, only a pair of dumbbells and resistance bands at home. What can I train with that?",
+      "note": "clarification: equipment",
+      "fixes": [
+        "knee injury",
+        "no gym: dumbbells and bands at home"
+      ],
+      "judge": true,
+      "constraintHas": [
+        [
+          "knee"
+        ],
+        [
+          "home",
+          "dumbbell",
+          "band",
+          "no gym",
+          "equipment"
+        ]
+      ],
+      "answerHas": [
+        [
+          "dumbbell",
+          "band",
+          "home",
+          "bodyweight"
+        ]
+      ],
+      "sourceFileHas": [
+        "14-home"
+      ]
+    },
+    {
+      "user": "What can I do instead of barbell squats for my legs?",
+      "note": "constraints are not repeated: must come from memory",
+      "fixes": [
+        "knee injury",
+        "no gym: dumbbells and bands at home"
+      ],
+      "judge": true,
+      "rewriteHas": [
+        [
+          "home",
+          "dumbbell",
+          "bodyweight",
+          "band",
+          "knee",
+          "knee-friendly"
+        ]
+      ],
+      "answerHas": [
+        [
+          "dumbbell",
+          "bodyweight",
+          "band",
+          "knee",
+          "home",
+          "goblet",
+          "split",
+          "bridge",
+          "box"
+        ]
+      ]
+    },
+    {
+      "user": "And how many sets and reps should I do for those?",
+      "note": "follow-up with a pronoun",
+      "fixes": [
+        "knee injury",
+        "no gym: dumbbells and bands at home"
+      ],
+      "judge": true,
+      "rewriteHas": [
+        [
+          "leg",
+          "squat",
+          "lunge",
+          "bridge",
+          "knee",
+          "dumbbell",
+          "bodyweight",
+          "home",
+          "exercise"
+        ],
+        [
+          "set",
+          "rep",
+          "volume"
+        ]
+      ],
+      "answerHas": [
+        [
+          "set"
+        ],
+        [
+          "rep"
+        ]
+      ]
+    },
+    {
+      "user": "How should I warm up before these workouts?",
+      "note": "follow-up with a pronoun",
+      "fixes": [
+        "knee injury",
+        "no gym: dumbbells and bands at home"
+      ],
+      "rewriteHas": [
+        [
+          "warm"
+        ]
+      ],
+      "sourceFileHas": [
+        "10-warm"
+      ]
+    },
+    {
+      "user": "Let's switch for a moment: how much protein should I eat per day?",
+      "note": "topic drift: nutrition",
+      "fixes": [
+        "knee injury",
+        "no gym: dumbbells and bands at home"
+      ],
+      "sourceFileHas": [
+        "08-nutrition"
+      ],
+      "answerHas": [
+        [
+          "protein"
+        ],
+        [
+          "g",
+          "gram"
+        ]
+      ]
+    },
+    {
+      "user": "How does sleep affect my recovery from all this, and what helps me sleep better?",
+      "note": "topic drift: sleep",
+      "fixes": [
+        "knee injury",
+        "no gym: dumbbells and bands at home"
+      ],
+      "rewriteHas": [
+        [
+          "sleep"
+        ],
+        [
+          "recover"
+        ]
+      ],
+      "sourceFileHas": [
+        "07-sleep"
+      ]
+    },
+    {
+      "user": "Back to my plan: lay out the three training days with exercises that fit my situation.",
+      "note": "return to the goal: the plan must reflect the constraints from earlier turns",
+      "fixes": [
+        "knee injury",
+        "no gym: dumbbells and bands at home"
+      ],
+      "judge": true,
+      "rewriteHas": [
+        [
+          "program",
+          "plan",
+          "day",
+          "full-body",
+          "full body"
+        ],
+        [
+          "knee",
+          "home",
+          "dumbbell",
+          "bodyweight",
+          "band",
+          "no gym",
+          "equipment"
+        ]
+      ],
+      "answerHas": [
+        [
+          "day 1",
+          "day 2",
+          "day 3",
+          "three",
+          "3"
+        ]
+      ],
+      "sourceFileHas": [
+        "13-beginner",
+        "14-home"
+      ]
+    },
+    {
+      "user": "What if my knee starts to hurt during one of those exercises?",
+      "note": "follow-up on the plan, uses the injury",
+      "fixes": [
+        "knee injury",
+        "no gym: dumbbells and bands at home"
+      ],
+      "judge": true,
+      "rewriteHas": [
+        [
+          "knee"
+        ],
+        [
+          "pain",
+          "hurt"
+        ]
+      ],
+      "sourceFileHas": [
+        "11-injury"
+      ],
+      "answerHas": [
+        [
+          "pain"
+        ]
+      ]
+    },
+    {
+      "user": "How do I progress from week to week without a gym?",
+      "note": "follow-up: progression with the equipment constraint",
+      "fixes": [
+        "knee injury",
+        "no gym: dumbbells and bands at home"
+      ],
+      "judge": true,
+      "rewriteHas": [
+        [
+          "progress",
+          "overload"
+        ],
+        [
+          "home",
+          "dumbbell",
+          "bodyweight",
+          "band",
+          "no gym",
+          "equipment",
+          "gym"
+        ]
+      ]
+    },
+    {
+      "user": "Do I need creatine for this program?",
+      "note": "drift: supplements, then still tied to the program",
+      "fixes": [
+        "knee injury",
+        "no gym: dumbbells and bands at home"
+      ],
+      "sourceFileHas": [
+        "17-supplements"
+      ],
+      "answerHas": [
+        [
+          "creatine"
+        ]
+      ]
+    },
+    {
+      "user": "Give me a short checklist for my first week.",
+      "note": "closing request: goal and constraints must still shape the answer",
+      "fixes": [
+        "knee injury",
+        "no gym: dumbbells and bands at home"
+      ],
+      "judge": true,
+      "rewriteHas": [
+        [
+          "week",
+          "first"
+        ],
+        [
+          "program",
+          "plan",
+          "beginner",
+          "strength",
+          "knee",
+          "home",
+          "dumbbell"
+        ]
+      ],
+      "answerHas": [
+        [
+          "knee",
+          "home",
+          "dumbbell",
+          "band",
+          "gym",
+          "pain"
+        ]
+      ]
+    }
+  ]
+}

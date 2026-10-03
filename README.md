@@ -422,6 +422,19 @@ become an **"I don't know"** (also when no chunk passes the threshold or the mod
 - Result: sources and verbatim quotes in 9/9 answers, "I don't know" exactly on the 3 out-of-corpus questions (including c10, above the cosine threshold).
   Small set, one author — see [docs/day24-citations.md](docs/day24-citations.md) and [the test scenario](docs/day24-citations-test-scenario.md).
 
+## Mini-chat with RAG and task memory (Day 25)
+
+A multi-turn chat on top of the Day 21-24 pipeline (package `com.example.rag.chat` in `:rag`): dialogue history persisted under `rag/sessions/` (git-ignored), a **task memory** (goal, clarifications,
+fixed constraints, open questions, change log; conservative merge rules, editable/resettable in the UI), a contextual query rewrite (follow-ups resolved from history + memory),
+the Day 24 structured answers (sources and verified quotes on every answer, "I don't know" keeps the goal) and a context budget (last N turns verbatim + rolling summary; memory never truncated).
+
+```bash
+./gradlew :rag:run --args="ui"                 # Chat tab -> "Chat with task memory (Day 25)"
+./gradlew :rag:run --args="chat"               # CLI REPL
+./gradlew :rag:run --args="scenarios-eval"     # two 13-turn scenarios x FULL / HISTORY_ONLY / NONE -> rag/eval/scenarios-report.{md,json}
+```
+Details, results and caveats (2 scenarios, one run, same-model judge): [docs/day25-rag-chat.md](docs/day25-rag-chat.md), manual steps: [docs/day25-rag-chat-test-scenario.md](docs/day25-rag-chat-test-scenario.md).
+
 ## Setup
 
 1. Get a Gemini API key from [Google AI Studio](https://aistudio.google.com/apikey).

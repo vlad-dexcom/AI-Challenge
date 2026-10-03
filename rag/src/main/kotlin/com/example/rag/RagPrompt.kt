@@ -42,14 +42,21 @@ Rules:
 
     const val REPAIR_SYSTEM = "You fix malformed JSON. Reply with the corrected JSON object only, no commentary."
 
-    fun citationSystemPrompt(strict: Boolean = false): String = "$SYSTEM_PROMPT\n\n$CITATION_RULES" + if (strict) STRICT_SUFFIX else ""
+    /** Day 25: added when the prompt carries task memory / dialogue. The excerpts stay the only evidence. */
+    const val DIALOG_RULES = """The user message may start with the task memory (what the user already told you) and the dialogue so far.
+- Use them only to understand the question (resolve "it", "that", "what about ...") and to respect the user's constraints: pick and adapt advice from the excerpts to fit them, and say so when an excerpt does not fit a constraint.
+- They are NOT evidence: every claim about training, nutrition or recovery must come from the excerpts and be backed by a verbatim quote. Never take a quote or a source from the dialogue.
+- If the excerpts cover the question only partly (for example a generic plan but not one built for the user's constraints), answer with what they do support, say what they do not cover, and keep "answerable" true. Set it to false only when they contain nothing that answers the current question."""
+
+    fun citationSystemPrompt(strict: Boolean = false, dialog: Boolean = false): String =
+        "$SYSTEM_PROMPT\n\n$CITATION_RULES" + (if (dialog) "\n\n$DIALOG_RULES" else "") + if (strict) STRICT_SUFFIX else ""
 
     fun citationContextBlock(hits: List<SearchHit>): String = hits.mapIndexed { i, h ->
         "[${i + 1}] chunkId: ${h.chunk.chunkId}\nfile: ${h.chunk.source}\nsection: ${h.chunk.section}\ntext:\n${h.chunk.text.trim()}"
     }.joinToString("\n\n")
 
-    fun citationUserPrompt(question: String, hits: List<SearchHit>, feedback: String? = null): String =
-        "Context:\n${citationContextBlock(hits)}\n\nQuestion: $question" + (feedback?.let { "\n\n$it" } ?: "")
+    fun citationUserPrompt(question: String, hits: List<SearchHit>, feedback: String? = null, dialogContext: String? = null): String =
+        (dialogContext?.let { "$it\n\n" } ?: "") + "Context:\n${citationContextBlock(hits)}\n\nQuestion: $question" + (feedback?.let { "\n\n$it" } ?: "")
 
     fun repairPrompt(badReply: String): String =
         "Rewrite the text below as ONE valid JSON object with keys answerable (boolean), answer (string), " +

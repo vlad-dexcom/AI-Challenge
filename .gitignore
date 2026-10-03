@@ -46,3 +46,6 @@ freeline_project_description.json
 
 ### RAG caches (Day 23) ###
 rag/cache/
+
+### Chat sessions (Day 25) ###
+rag/sessions/

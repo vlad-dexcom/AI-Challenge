@@ -47,10 +47,10 @@
  .src{font-size:12px;margin:4px 0 0 0;padding-left:18px} .meta{font-size:11px;color:#666}
  details{font-size:12px;margin-top:4px} details pre{white-space:pre-wrap;margin:2px 0 6px;background:#fff;padding:4px;border:1px solid #eee}
 </style></head><body>
-<nav><button id="tab-chat" class="on">Chat (Day 22+, stages: Day 23)</button><button id="tab-viz">Chunk visualiser (Day 21)</button></nav>
+<nav><button id="tab-chat" class="on">Chat (Day 22+, stages: Day 23, memory: Day 25)</button><button id="tab-viz">Chunk visualiser (Day 21)</button></nav>
 <div id="page-chat"><div id="chat-wrap">
 <fieldset><legend>Settings</legend>
- <label>Mode <select id="cmode"><option value="rag">With RAG</option><option value="no_rag">Without RAG</option><option value="compare">Compare</option></select></label>
+ <label>Mode <select id="cmode"><option value="session">Chat with task memory (Day 25)</option><option value="rag">With RAG (single-shot)</option><option value="no_rag">Without RAG (single-shot)</option><option value="compare">Compare (single-shot)</option></select></label>
  <label>Index <select id="cstrategy"></select></label>
  <label>topK after <input id="ctopk" type="number" value="4" min="1" max="20" style="width:50px"></label>
  <label>topK before <input id="cbefore" type="number" value="10" min="1" max="50" style="width:50px"></label>
@@ -63,9 +63,17 @@
  <label>Control question <select id="cctl" style="max-width:340px"><option value="">(pick one…)</option></select></label>
  <button id="cclear">Clear chat</button>
  <div class="meta">Stages: <b>filter</b> drops chunks below the cosine threshold (nothing left → the model is not called), <b>rerank</b> reorders the survivors and trims to topK after, <b>query rewrite</b> searches with an LLM-rewritten query (the answer still uses your original question). All off = Day 22 behaviour.</div>
- <div class="meta">History is shown here but <b>not used for answering yet</b>: each question is sent on its own (single-shot Day 22 pipeline; memory arrives in Day 25).</div>
+ <div class="meta"><b>Chat with task memory</b> (default): dialogue history, rolling summary and a task memory (goal, clarifications, constraints) are used for every answer; sources and verified quotes are shown under each answer; the stage settings above except topK/threshold are fixed (filter + rerank + contextual rewrite). The other modes are single-shot: history is shown but not used.</div>
  <div id="cwarn" class="warn" style="display:none"></div>
 </fieldset>
+<div id="sessbar" style="background:#fff;border:1px solid #ccc;padding:6px 8px">
+ <label>Session <select id="ssel" style="max-width:260px"></select></label>
+ <button id="snew">New chat</button> <button id="sreset">Reset chat</button> <button id="sdel">Delete</button>
+ <label>Memory mode <select id="smem"><option value="FULL">Full (history + task memory)</option><option value="HISTORY_ONLY">History only (ablation)</option><option value="NONE">None (single-shot RAG)</option></select></label>
+ <label>keep last N turns <input id="skeep" type="number" value="4" min="1" max="20" style="width:50px"></label>
+ <span class="meta" id="sinfo"></span>
+</div>
+<details id="memory" open><summary><b>Task memory</b> <span class="meta" id="memsum"></span></summary><div id="membody"></div></details>
 <div id="msgs"></div>
 <div><textarea id="cq" style="height:60px;font:14px system-ui" placeholder="Ask about training, nutrition, recovery… (Enter = send, Shift+Enter = newline)"></textarea>
  <button id="csend">Send</button> <span id="cerr" class="err"></span></div>
@@ -105,10 +113,10 @@
 <script src="/ui/markdown.js"></script>
 <script>
 const $=id=>document.getElementById(id);
-const esc=s=>String(s==null?'':s).replace(/[&<>]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;'}[c]));
+const esc=s=>String(s==null?'':s).replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
 let pinned=false;
-async function api(path,body){
-  const r=await fetch(path,body?{method:'POST',body:JSON.stringify(body)}:{});
+async function api(path,body,method){
+  const r=await fetch(path,body!==undefined||method?{method:method||'POST',body:body===undefined?undefined:JSON.stringify(body)}:{});
   const j=await r.json(); if(!r.ok) throw new Error(j.error||r.statusText); return j;
 }
 function showInfo(c,v){
@@ -258,11 +266,100 @@ function turnHtml(t){
   else h+='<div class="meta" style="margin-top:6px">No sources: this mode answers from the model\'s own knowledge, nothing is retrieved or cited.</div>';
   return h+'</div>';
 }
+const KIND={add:'＋',correct:'✎ corrected',remove:'−',goal:'★ goal',reset:'⟲ reset'};
+function changeText(c){return `${KIND[c.kind]||esc(c.kind)} ${esc(c.field)}${c.key?' '+esc(c.key):''}: ${c.old==null?'∅':esc(c.old)} → ${c.new==null?'∅':esc(c.new)}${c.source==='user'?' (by you)':''}`}
+function memoryHtml(m){
+  m=m||{};
+  const cons=Object.entries(m.constraints||{}),terms=Object.entries(m.terms||{}),cl=m.clarifications||[],oq=m.openQuestions||[],ch=m.changes||[];
+  const list=(items,empty)=>items.length?'<ul class="src">'+items.join('')+'</ul>':`<div class="meta">${empty}</div>`;
+  return `<div><b>Goal:</b> <input id="mgoal" value="${esc(m.goal)}" style="width:60%" placeholder="(not stated yet)"> <button data-act="goal">Save goal</button></div>`+
+    '<div class="meta" style="margin-top:6px"><b>Fixed constraints</b></div>'+
+    list(cons.map(([k,v])=>`<li><b>${esc(k)}</b>: ${esc(v)} <button data-act="rmc" data-key="${esc(k)}">✕</button></li>`),'none yet')+
+    '<div><input id="mck" placeholder="key, e.g. diet" style="width:120px"> <input id="mcv" placeholder="value, e.g. vegetarian" style="width:200px"> <button data-act="addc">Add / correct</button></div>'+
+    '<div class="meta" style="margin-top:6px"><b>Already clarified</b></div>'+
+    list(cl.map(c=>`<li>${esc(c.text)} <span class="meta">(turn ${esc(c.turn)})</span> <button data-act="rmcl" data-text="${esc(c.text)}">✕</button></li>`),'none yet')+
+    (terms.length?'<div class="meta" style="margin-top:6px"><b>Terms</b></div>'+list(terms.map(([k,v])=>`<li>${esc(k)} = ${esc(v)}</li>`),''):'')+
+    '<div class="meta" style="margin-top:6px"><b>Open questions</b></div>'+
+    list(oq.map(q=>`<li>${esc(q)} <button data-act="rmoq" data-text="${esc(q)}">✕</button></li>`),'none')+
+    `<details><summary>Change history (${ch.length})</summary>`+list(ch.slice().reverse().map(c=>`<li>turn ${esc(c.turn)}: ${changeText(c)}</li>`),'no changes yet')+'</details>'+
+    '<div style="margin-top:6px"><button data-act="resetmem">Reset memory</button></div>';
+}
+function turnFromMessage(m){
+  const i=m.info||{};
+  return {mode:'rag',answer:m.text,sources:i.sources||[],chunks:i.chunks||[],structured:i.structured||null,latencyMs:i.wallMs||0,llmCalls:i.llmCalls||0,trace:i.trace||null,insufficient:false,notFound:false};
+}
+function sessionTurnHtml(m){
+  const i=m.info||{};
+  let ex='';
+  if((i.consulted||[]).length)ex+='<div class="meta" style="margin-top:6px">Closest chunks that were looked at (not evidence, not used for the answer)</div><ol class="src">'+i.consulted.map(s=>`<li>${esc(s.label)} <span class="meta">· ${esc(s.chunkId)} · score ${Number(s.score).toFixed(3)}</span></li>`).join('')+'</ol>';
+  const d=i.memoryDiff||[],notes=i.memoryNotes||[];
+  ex+=`<details${d.length?' open':''}><summary>Task memory this turn: ${d.length} change(s)${i.memoryMode&&i.memoryMode!=='FULL'?' · memory mode '+esc(i.memoryMode):''}</summary>`+
+    d.map(c=>`<div class="meta">${changeText(c)}</div>`).join('')+notes.map(n=>`<div class="meta">note: ${esc(n)}</div>`).join('')+
+    `<div class="meta">${esc(i.llmCalls||0)} LLM call(s), ${esc(i.llmMs||0)} ms in the LLM, ${esc(i.wallMs||0)} ms wall${i.summaryUpdated?' · rolling summary updated':''}</div></details>`;
+  const h=turnHtml(turnFromMessage(m));
+  return h.slice(0,h.lastIndexOf('</div>'))+ex+'</div>';
+}
 function addMsg(html){const d=document.createElement('div');d.innerHTML=html;const el=d.firstElementChild;$('msgs').appendChild(el);$('msgs').scrollTop=$('msgs').scrollHeight;return el}
+let sess=null;
+const isSession=()=>$('cmode').value==='session';
+function sessOptions(){
+  const o={memoryMode:$('smem').value,keepLastTurns:+$('skeep').value||4,strategy:$('cstrategy').value||'structure',topK:+$('ctopk').value||4,topKBefore:+$('cbefore').value||10,threshold:parseFloat($('cthr').value),llmRerank:$('cllmrerank').checked};
+  if($('cmodel').value.trim())o.model=$('cmodel').value.trim();
+  return o;
+}
+function renderSession(){
+  if(!sess)return;
+  $('msgs').innerHTML=sess.messages.map(m=>m.role==='user'?`<div class="msg user">${esc(m.text)}</div>`:sessionTurnHtml(m)).join('');
+  $('membody').innerHTML=memoryHtml(sess.memory);
+  const mm=sess.memory;$('memsum').textContent=mm.goal?'· goal: '+mm.goal:'· no goal yet';
+  $('sinfo').textContent=`${sess.turnCount!=null?sess.turnCount:sess.messages.filter(x=>x.role==='user').length} turn(s)${sess.summary?' · rolling summary active':''}`;
+  $('msgs').scrollTop=$('msgs').scrollHeight;
+}
+async function refreshSessions(select){
+  const l=await api('/api/sessions');
+  let id=select||(sess&&sess.id);
+  if(!l.sessions.length){const r=await api('/api/sessions',{});sess=r.session;return refreshSessions(sess.id)}
+  if(!l.sessions.some(x=>x.id===id))id=l.sessions[0].id;
+  $('ssel').innerHTML=l.sessions.map(x=>`<option value="${esc(x.id)}">${esc(x.title)} (${esc(x.turns)} turns)</option>`).join('');
+  $('ssel').value=id;
+  const r=await api('/api/sessions/'+id);sess=r.session;renderSession();
+}
+async function sessionAction(fn){try{$('cerr').textContent='';const r=await fn();if(r&&r.session){sess=r.session;renderSession()}}catch(e){$('cerr').textContent=e.message}}
+function updateMode(){
+  const on=isSession();
+  $('sessbar').style.display=on?'':'none';$('memory').style.display=on?'':'none';
+  if(on)refreshSessions().catch(e=>{$('cerr').textContent=e.message});else $('msgs').innerHTML='';
+}
+$('cmode').onchange=updateMode;
+$('ssel').onchange=()=>refreshSessions($('ssel').value).catch(e=>{$('cerr').textContent=e.message});
+$('snew').onclick=()=>sessionAction(async()=>{const r=await api('/api/sessions',{});await refreshSessions(r.session.id)});
+$('sreset').onclick=()=>{if(sess&&confirm('Clear all messages and the task memory of this chat?'))sessionAction(()=>api('/api/sessions/'+sess.id+'/reset',{}))};
+$('sdel').onclick=()=>{if(sess&&confirm('Delete this chat?'))sessionAction(async()=>{await api('/api/sessions/'+sess.id,undefined,'DELETE');sess=null;await refreshSessions()})};
+$('membody').onclick=e=>{
+  const b=e.target.closest('button');if(!b||!sess)return;
+  const put=edit=>sessionAction(()=>api('/api/sessions/'+sess.id+'/memory',edit,'PUT')),a=b.dataset.act;
+  if(a==='goal')put({goalSet:true,goal:$('mgoal').value});
+  else if(a==='rmc')put({constraints:{[b.dataset.key]:null}});
+  else if(a==='addc'){const k=$('mck').value.trim(),v=$('mcv').value.trim();if(k&&v)put({constraints:{[k]:v}})}
+  else if(a==='rmcl')put({removeClarifications:[b.dataset.text]});
+  else if(a==='rmoq')put({removeOpenQuestions:[b.dataset.text]});
+  else if(a==='resetmem'){if(confirm('Forget the goal, constraints and clarifications?'))sessionAction(()=>api('/api/sessions/'+sess.id+'/memory/reset',{}))}
+};
+async function sendSession(q){
+  addMsg(`<div class="msg user">${esc(q)}</div>`);
+  const pending=addMsg('<div class="msg bot meta">Thinking… (memory update, search, answer: several LLM calls)</div>');
+  $('csend').disabled=true;$('cq').value='';
+  try{
+    const r=await api('/api/sessions/'+sess.id+'/messages',{text:q,options:sessOptions()});
+    sess=r.session;renderSession();refreshSessions(sess.id).catch(()=>{});
+  }catch(e){pending.outerHTML=`<div class="msg bot"><div class="err">Error: ${esc(e.message)} (the message was not saved, you can resend it)</div></div>`}
+  $('csend').disabled=false;
+}
 async function send(){
   const q=$('cq').value.trim();$('cerr').textContent='';
   if(!q){$('cerr').textContent='Type a question first';return}
   const mode=$('cmode').value;
+  if(mode==='session')return sendSession(q);
   addMsg(`<div class="msg user">${esc(q)}</div>`);
   const pending=addMsg('<div class="msg bot meta">Thinking…</div>');
   $('csend').disabled=true;$('cq').value='';
@@ -278,7 +375,7 @@ async function send(){
 }
 $('csend').onclick=send;
 $('cq').onkeydown=e=>{if(e.key==='Enter'&&!e.shiftKey){e.preventDefault();send()}};
-$('cclear').onclick=()=>{$('msgs').innerHTML=''};
+$('cclear').onclick=()=>{if(isSession())renderSession();else $('msgs').innerHTML=''};
 $('cctl').onchange=()=>{if($('cctl').value){$('cq').value=$('cctl').value;$('cq').focus()}};
 fetch('/api/chat/config').then(r=>r.json()).then(c=>{
   c.strategies.forEach(s=>{const o=document.createElement('option');o.value=o.textContent=s;$('cstrategy').appendChild(o)});
@@ -288,4 +385,5 @@ fetch('/api/chat/config').then(r=>r.json()).then(c=>{
   if(!c.keyConfigured){$('cwarn').style.display='';$('cwarn').textContent='GEMINI_API_KEY is not set: chat answers need it (env var or local.properties), then restart the ui.'}
   if(!c.strategies.length){$('cwarn').style.display='';$('cwarn').textContent='No saved index found. Run: ./gradlew :rag:run --args="index"'}
 });
+updateMode();
 </script></body></html>

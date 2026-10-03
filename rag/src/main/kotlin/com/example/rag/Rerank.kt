@@ -193,13 +193,15 @@ class LlmQueryRewriter(private val generator: TextGenerator) : QueryRewriter {
             "translate to English if needed, and use the specific keywords and synonyms that the articles would contain. " +
             "Reply with the query only: one line, at most 25 words, no quotes, no explanation."
 
-        fun validate(question: String, reply: String): RewriteOutcome {
+        /** [checkDrift] = false for follow-ups: a resolved query legitimately shares no words with "what about my knee?". */
+        fun validate(question: String, reply: String, checkDrift: Boolean = true): RewriteOutcome {
             val q = reply.trim().removeSurrounding("\"").trim().removePrefix("Query:").removePrefix("Search query:").trim()
             if (q.isEmpty()) return RewriteOutcome(question, "empty rewrite")
             if (q.contains('\n')) return RewriteOutcome(question, "multi-line rewrite")
             if (q.length > max(200, question.length * 3)) return RewriteOutcome(question, "rewrite too long")
             val latinQuestion = question.none { it in 'А'..'я' || it == 'ё' || it == 'Ё' }
             if (latinQuestion) {
+                if (!checkDrift) return RewriteOutcome(q)
                 val a = Text.terms(question)
                 if (a.isNotEmpty() && a.intersect(Text.terms(q)).isEmpty()) return RewriteOutcome(question, "drift: no shared terms")
             } else if (q.any { it in 'А'..'я' }) {

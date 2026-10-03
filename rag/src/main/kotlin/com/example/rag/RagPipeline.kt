@@ -57,6 +57,8 @@ class RagPipeline(
         mode: RagMode,
         config: RagConfig = this.config,
         history: List<HistoryMessage> = emptyList(),
+        /** Day 25: task memory + dialogue block for the cited answer prompt (null = single-shot, Day 24 prompts). */
+        dialogContext: String? = null,
     ): Result<RagAnswer> {
         val q = question.trim()
         require(q.isNotEmpty()) { "Question must not be blank" }
@@ -69,7 +71,7 @@ class RagPipeline(
             } catch (e: Exception) {
                 return Result.failure(e)
             }
-            if (citations) return askCited(q, trace)
+            if (citations) return askCited(q, trace, dialogContext)
             if (config.filter && trace.finalHits.isEmpty()) {
                 return Result.success(RagAnswer(mode, q, INSUFFICIENT_ANSWER, emptyList(), trace, insufficientContext = true))
             }
@@ -79,13 +81,13 @@ class RagPipeline(
             .map { RagAnswer(mode, q, it, hits, trace) }
     }
 
-    private suspend fun askCited(q: String, trace: RetrievalTrace): Result<RagAnswer> {
+    private suspend fun askCited(q: String, trace: RetrievalTrace, dialogContext: String?): Result<RagAnswer> {
         val hits = trace.finalHits
         if (hits.isEmpty()) {
             val idk = IdkResponder.build(q, IdkReason.BELOW_THRESHOLD, trace.retrieved)
             return Result.success(RagAnswer(RagMode.RAG, q, idk.answer, emptyList(), trace, insufficientContext = true, structured = idk))
         }
-        return cited.answer(q, hits, trace.retrieved).map { RagAnswer(RagMode.RAG, q, it.answer, hits, trace, structured = it) }
+        return cited.answer(q, hits, trace.retrieved, dialogContext).map { RagAnswer(RagMode.RAG, q, it.answer, hits, trace, structured = it) }
     }
 
     suspend fun compare(question: String, config: RagConfig = this.config): Result<RagComparison> {

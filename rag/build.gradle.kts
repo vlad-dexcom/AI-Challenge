@@ -15,6 +15,7 @@ application {
 // Relative paths in the CLI (rag/corpus, rag/index) resolve against the repo root.
 tasks.named<JavaExec>("run") {
     workingDir = rootProject.projectDir
+    standardInput = System.`in` // the `chat` REPL reads stdin
 }
 
 dependencies {

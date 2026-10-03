@@ -50,7 +50,7 @@ class GeminiTextGenerator(
     private val json = Json { ignoreUnknownKeys = true; encodeDefaults = false }
     private val http = HttpClient(engine) {
         install(ContentNegotiation) { json(json) }
-        install(HttpTimeout) { requestTimeoutMillis = 120_000 }
+        install(HttpTimeout) { requestTimeoutMillis = 120_000; socketTimeoutMillis = 120_000; connectTimeoutMillis = 30_000 }
     }
 
     override suspend fun generate(systemInstruction: String?, prompt: String): Result<String> =
