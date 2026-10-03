@@ -1,0 +1,106 @@
+{
+  "knee-strength-plan#1": {
+    "verdict": "ok",
+    "note": "Generic 3-day plan from the corpus; constraints are not known yet. Includes gym equipment (lat pulldown, leg press), correct for turn 1."
+  },
+  "knee-strength-plan#2": {
+    "verdict": "ok",
+    "note": "Knee-safe progression, substitution advice; stored the injury."
+  },
+  "knee-strength-plan#3": {
+    "verdict": "ok",
+    "note": "Home equipment, adapts legs to the knee."
+  },
+  "knee-strength-plan#4": {
+    "verdict": "ok",
+    "note": "Alternatives to barbell squats at home, knee-aware: memory used without repeating the constraints."
+  },
+  "knee-strength-plan#5": {
+    "verdict": "partial",
+    "note": "Resolved 'those' to the goblet squat only; answers for one exercise, ignores the other alternatives. A quote failed verbatim verification (shown as warning)."
+  },
+  "knee-strength-plan#6": {
+    "verdict": "ok",
+    "note": "Warm-up from the corpus."
+  },
+  "knee-strength-plan#7": {
+    "verdict": "ok",
+    "note": "Drift to protein, short and cited."
+  },
+  "knee-strength-plan#8": {
+    "verdict": "ok",
+    "note": "Sleep, cited; no numbers because the corpus has none."
+  },
+  "knee-strength-plan#9": {
+    "verdict": "partial",
+    "note": "Returns to the plan and adapts it to knee/home (sit-to-stand, goblet squat), but still lists lat pulldown and says Day 3 is missing: the source gives only two days in the retrieved chunks."
+  },
+  "knee-strength-plan#10": {
+    "verdict": "ok",
+    "note": "Knee pain guidance, ties back to the injury."
+  },
+  "knee-strength-plan#11": {
+    "verdict": "ok",
+    "note": "Progression without a gym."
+  },
+  "knee-strength-plan#12": {
+    "verdict": "ok",
+    "note": "Creatine: not mandatory, cited."
+  },
+  "knee-strength-plan#13": {
+    "verdict": "partial",
+    "note": "Checklist is generic: does not mention knee, home equipment or pain except 'substitute a lift that hurts' (code check answer_mentions flags it)."
+  },
+  "fat-loss-vegetarian#1": {
+    "verdict": "ok",
+    "note": "Nutrition starting steps from the corpus."
+  },
+  "fat-loss-vegetarian#2": {
+    "verdict": "ok",
+    "note": "Uses 80 kg: 128-176 g/day; stored the diet as a constraint."
+  },
+  "fat-loss-vegetarian#3": {
+    "verdict": "ok",
+    "note": "Moderate deficit, cited."
+  },
+  "fat-loss-vegetarian#4": {
+    "verdict": "ok",
+    "note": "Timing resolved to protein from history."
+  },
+  "fat-loss-vegetarian#5": {
+    "verdict": "ok",
+    "note": "Correction applied: diet replaced with vegetarian, logged as 'correct'; answer is about vegetarian protein."
+  },
+  "fat-loss-vegetarian#6": {
+    "verdict": "ok",
+    "note": "Only vegetarian sources (dairy, eggs, soy, legumes)."
+  },
+  "fat-loss-vegetarian#7": {
+    "verdict": "ok",
+    "note": "Russian answer for a Russian question from English chunks."
+  },
+  "fat-loss-vegetarian#8": {
+    "verdict": "ok",
+    "note": "Russian elliptical follow-up resolved (caffeine in the evening); short but correct."
+  },
+  "fat-loss-vegetarian#9": {
+    "verdict": "ok",
+    "note": "Verified IDK with closest topics and a clarification question; restates the goal."
+  },
+  "fat-loss-vegetarian#10": {
+    "verdict": "ok",
+    "note": "Returns to the plan: cardio on a deficit."
+  },
+  "fat-loss-vegetarian#11": {
+    "verdict": "ok",
+    "note": "Creatine, tied to the plan."
+  },
+  "fat-loss-vegetarian#12": {
+    "verdict": "ok",
+    "note": "Plateau advice."
+  },
+  "fat-loss-vegetarian#13": {
+    "verdict": "partial",
+    "note": "Honest that the corpus has no 'first-week' checklist, then builds one from guidance; the vegetarian constraint is not visibly restated in the part I read."
+  }
+}

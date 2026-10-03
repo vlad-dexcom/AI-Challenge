@@ -57,6 +57,7 @@ class UiApi(
     private val evalFile: String = "rag/eval/questions.json",
     private val controlFile: String = "rag/eval/control-questions.json",
     private val generatorFactory: ((String) -> TextGenerator?) = { null },
+    sessionsDir: File = File("rag/sessions"),
 ) {
     private val json = Json { ignoreUnknownKeys = true; encodeDefaults = true }
 
@@ -68,7 +69,15 @@ class UiApi(
         generatorFor = { model -> generatorFactory(model) ?: apiKey.takeIf { it.isNotBlank() }?.let { generators.getOrPut(model) { GeminiTextGenerator(it, model) } } },
     )
 
+    private val sessionApi = com.example.rag.chat.SessionApi(
+        com.example.rag.chat.SessionStore(sessionsDir), indexDir, apiKey,
+        embedderFor = { embedderFactory(it) ?: defaultEmbedder(it) },
+        generatorFor = { model -> generatorFactory(model) ?: apiKey.takeIf { it.isNotBlank() }?.let { generators.getOrPut(model) { GeminiTextGenerator(it, model) } } },
+    )
+
     fun chatConfig(): String = chatApi.config()
+
+    fun sessions(method: String, path: String, body: String): String = sessionApi.handle(method, path, body)
 
     fun chat(body: String): String = chatApi.chat(body)
 
@@ -215,6 +224,8 @@ class UiServer(private val api: UiApi, port: Int) {
             get && path == "/api/eval" -> JSON to api.eval(queryParam(ex, "strategy") ?: throw ApiException(400, "strategy required"))
             get && path == "/api/chat/config" -> JSON to api.chatConfig()
             post && path == "/api/chat" -> JSON to api.chat(ex.requestBody.readBytes().decodeToString())
+ path.startsWith("/api/sessions") && ex.requestMethod in setOf("GET", "POST", "PUT", "DELETE") ->
+                JSON to api.sessions(ex.requestMethod, path, ex.requestBody.readBytes().decodeToString())
             post && path == "/api/chunk" -> JSON to api.chunk(ex.requestBody.readBytes().decodeToString())
             post && path == "/api/search" -> JSON to api.search(ex.requestBody.readBytes().decodeToString())
             else -> throw ApiException(404, "Not found")

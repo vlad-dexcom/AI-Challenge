@@ -27,6 +27,8 @@ sweep    Day 23: grid over threshold x topK-before x topK-after on the eval set 
 modes-eval Day 23: compares no RAG / plain / +filter / +rerank / +rewrite / all on the eval + control sets (real Gemini; answers cached in rag/cache).
 ask also takes: --filter on --rerank on|llm --rewrite on --threshold 0.6 --before 15 --after 4 (stages of the Day 23 pipeline).
 citations-eval  Day 24: 12 questions through the cited pipeline -> rag/eval/citations-report.{md,json} (--rewrite on, --no-cache).
+chat     Day 25: REPL chat with RAG + task memory over rag/sessions (--session id, --memory full|history-only|none, --keep 4, --batch 2).
+scenarios-eval  Day 25: replays rag/eval/scenarios/*.json in FULL / HISTORY_ONLY / NONE variants -> rag/eval/scenarios-report.{md,json} (--variants full,history-only, --scenario id, --delay-ms 0, --no-cache true).
 ui       serves the web UI (Chat tab + chunk visualiser) at http://localhost:<port> (Ctrl+C to stop).
 --embedder gemini  (default if GEMINI_API_KEY is set) calls the Gemini embeddings REST API.
 --embedder offline deterministic hashing embedder, no network (lexical only, for tests/demos).
@@ -34,7 +36,7 @@ The Gemini key is read from the GEMINI_API_KEY env var or from local.properties 
 """
 
 fun main(args: Array<String>) {
-    if (args.isEmpty() || args[0] !in setOf("index", "compare", "eval", "ui", "ask", "rag-eval", "sweep", "modes-eval", "citations-eval")) {
+    if (args.isEmpty() || args[0] !in setOf("index", "compare", "eval", "ui", "ask", "rag-eval", "sweep", "modes-eval", "citations-eval", "chat", "scenarios-eval")) {
         println(USAGE.trim()); exitProcess(if (args.isEmpty()) 0 else 1)
     }
     val positional = if (args[0] == "ask" && args.size > 1 && !args[1].startsWith("--")) args[1] else null
@@ -69,6 +71,8 @@ fun main(args: Array<String>) {
             "sweep" -> runSweep(opts, outDir, embedder)
             "modes-eval" -> runModesEval(opts, outDir, embedder, key)
             "citations-eval" -> runCitationsEval(opts, outDir, embedder, key)
+            "chat" -> com.example.rag.chat.runChatRepl(opts, outDir, embedder, key)
+            "scenarios-eval" -> com.example.rag.chat.runScenariosEval(opts, outDir, embedder, key)
         }
     }
     exitProcess(0)

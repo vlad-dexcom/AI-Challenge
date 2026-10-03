@@ -217,15 +217,15 @@ class CitedAnswerer(private val generator: TextGenerator) {
         data class Malformed(val why: String) : Attempt
     }
 
-    suspend fun answer(question: String, hits: List<SearchHit>, closest: List<SearchHit> = hits): Result<StructuredAnswer> {
+    suspend fun answer(question: String, hits: List<SearchHit>, closest: List<SearchHit> = hits, dialogContext: String? = null): Result<StructuredAnswer> {
         val options = GenerationOptions(temperature = 0.0, json = true)
         var lastReport = VerificationReport()
         var lastReason = IdkReason.VERIFICATION_FAILED
         var feedback: String? = null
         val notes = mutableListOf<String>()
         for (attempt in 1..MAX_ATTEMPTS) {
-            val prompt = RagPromptBuilder.citationUserPrompt(question, hits, feedback)
-            val reply = generator.generate(RagPromptBuilder.citationSystemPrompt(strict = attempt > 1), prompt, options).getOrElse { return Result.failure(it) }
+            val prompt = RagPromptBuilder.citationUserPrompt(question, hits, feedback, dialogContext)
+            val reply = generator.generate(RagPromptBuilder.citationSystemPrompt(strict = attempt > 1, dialog = dialogContext != null), prompt, options).getOrElse { return Result.failure(it) }
             val parsed = parseOrRepair(reply, options).getOrElse { return Result.failure(it) }
             when (parsed) {
                 is Attempt.Malformed -> {

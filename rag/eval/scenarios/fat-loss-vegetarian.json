@@ -1,0 +1,329 @@
+{
+  "id": "fat-loss-vegetarian",
+  "title": "Fat loss while keeping muscle: nutrition and recovery (vegetarian correction, Russian segment, out-of-corpus question)",
+  "goal": "Lose fat while keeping muscle, with 4 lifting sessions a week and a desk job",
+  "goalHas": [
+    [
+      "fat",
+      "weight",
+      "deficit",
+      "cut"
+    ],
+    [
+      "muscle",
+      "lifting",
+      "lift",
+      "strength"
+    ]
+  ],
+  "turns": [
+    {
+      "user": "I want to lose fat but keep my muscle. I lift 4 days a week and have a desk job. Where do I start with nutrition?",
+      "note": "states the goal",
+      "judge": true,
+      "sourceFileHas": [
+        "09-fat",
+        "08-nutrition"
+      ],
+      "answerHas": [
+        [
+          "deficit",
+          "calorie",
+          "protein"
+        ]
+      ]
+    },
+    {
+      "user": "I'm 80 kg and I eat everything, meat and fish included. How much protein should I eat per day?",
+      "note": "clarifications: weight, diet",
+      "fixes": [
+        "80 kg",
+        "eats everything incl. meat and fish"
+      ],
+      "judge": true,
+      "clarificationHas": [
+        [
+          "80"
+        ]
+      ],
+      "constraintHas": [
+        [
+          "diet",
+          "eat",
+          "omnivore",
+          "meat",
+          "everything"
+        ]
+      ],
+      "sourceFileHas": [
+        "08-nutrition"
+      ],
+      "answerHas": [
+        [
+          "g",
+          "gram"
+        ],
+        [
+          "kg",
+          "kilogram"
+        ]
+      ]
+    },
+    {
+      "user": "How big should my calorie deficit be?",
+      "note": "follow-up on the goal",
+      "fixes": [
+        "80 kg",
+        "eats everything incl. meat and fish"
+      ],
+      "rewriteHas": [
+        [
+          "deficit"
+        ],
+        [
+          "fat",
+          "loss",
+          "muscle",
+          "lift"
+        ]
+      ],
+      "sourceFileHas": [
+        "09-fat"
+      ]
+    },
+    {
+      "user": "Does it matter when I eat that protein during the day?",
+      "note": "follow-up with a pronoun",
+      "fixes": [
+        "80 kg",
+        "eats everything incl. meat and fish"
+      ],
+      "rewriteHas": [
+        [
+          "protein"
+        ],
+        [
+          "timing",
+          "distribut",
+          "meal",
+          "day"
+        ]
+      ],
+      "sourceFileHas": [
+        "08-nutrition"
+      ]
+    },
+    {
+      "user": "Actually, I am vegetarian, I don't eat meat or fish. Does that change your protein advice?",
+      "note": "CORRECTION of an earlier constraint",
+      "fixes": [
+        "80 kg",
+        "vegetarian (no meat, no fish)"
+      ],
+      "judge": true,
+      "constraintHas": [
+        [
+          "vegetarian"
+        ]
+      ],
+      "diffKinds": [
+        "correct"
+      ],
+      "rewriteHas": [
+        [
+          "vegetarian",
+          "plant"
+        ],
+        [
+          "protein"
+        ]
+      ],
+      "answerAvoids": [
+        "chicken",
+        "beef",
+        "pork",
+        "salmon",
+        "tuna"
+      ]
+    },
+    {
+      "user": "Which protein sources fit me then?",
+      "note": "constraint must come from memory/history",
+      "fixes": [
+        "80 kg",
+        "vegetarian (no meat, no fish)"
+      ],
+      "judge": true,
+      "rewriteHas": [
+        [
+          "vegetarian",
+          "plant",
+          "soy",
+          "dairy",
+          "egg"
+        ],
+        [
+          "protein"
+        ]
+      ],
+      "answerAvoids": [
+        "chicken",
+        "beef",
+        "pork",
+        "salmon",
+        "tuna",
+        "eat fish"
+      ]
+    },
+    {
+      "user": "А как улучшить сон, чтобы не терять мышцы на дефиците калорий?",
+      "note": "Russian segment: Russian question, English corpus",
+      "lang": "ru",
+      "fixes": [
+        "80 kg",
+        "vegetarian (no meat, no fish)"
+      ],
+      "rewriteHas": [
+        [
+          "sleep"
+        ]
+      ],
+      "sourceFileHas": [
+        "07-sleep",
+        "09-fat"
+      ]
+    },
+    {
+      "user": "А кофе вечером мешает?",
+      "note": "Russian follow-up with ellipsis",
+      "lang": "ru",
+      "fixes": [
+        "80 kg",
+        "vegetarian (no meat, no fish)"
+      ],
+      "rewriteHas": [
+        [
+          "caffeine",
+          "coffee"
+        ],
+        [
+          "sleep"
+        ]
+      ],
+      "sourceFileHas": [
+        "07-sleep",
+        "17-supplements"
+      ]
+    },
+    {
+      "user": "What is the best brand of vegetarian protein powder to buy?",
+      "note": "OUT OF CORPUS: must be a verified I-don't-know that keeps the goal",
+      "expect": "idk",
+      "fixes": [
+        "80 kg",
+        "vegetarian (no meat, no fish)"
+      ],
+      "judge": true
+    },
+    {
+      "user": "OK, back to my plan. How should I do cardio on a deficit without losing muscle?",
+      "note": "return to the goal after the IDK",
+      "fixes": [
+        "80 kg",
+        "vegetarian (no meat, no fish)"
+      ],
+      "judge": true,
+      "rewriteHas": [
+        [
+          "cardio"
+        ],
+        [
+          "deficit",
+          "fat",
+          "muscle",
+          "lift"
+        ]
+      ],
+      "sourceFileHas": [
+        "12-cardio",
+        "09-fat"
+      ]
+    },
+    {
+      "user": "Is creatine worth it for me?",
+      "note": "constraint-relevant supplement question",
+      "fixes": [
+        "80 kg",
+        "vegetarian (no meat, no fish)"
+      ],
+      "rewriteHas": [
+        [
+          "creatine"
+        ]
+      ],
+      "sourceFileHas": [
+        "17-supplements"
+      ],
+      "answerHas": [
+        [
+          "creatine"
+        ]
+      ]
+    },
+    {
+      "user": "What should I do if my weight stops dropping for two weeks?",
+      "note": "follow-up on the goal: plateau",
+      "fixes": [
+        "80 kg",
+        "vegetarian (no meat, no fish)"
+      ],
+      "judge": true,
+      "rewriteHas": [
+        [
+          "plateau",
+          "stall",
+          "stop"
+        ]
+      ],
+      "sourceFileHas": [
+        "09-fat"
+      ]
+    },
+    {
+      "user": "Summarize my nutrition and recovery checklist for the first week.",
+      "note": "closing request: goal and vegetarian constraint must shape the answer",
+      "fixes": [
+        "80 kg",
+        "vegetarian (no meat, no fish)"
+      ],
+      "judge": true,
+      "rewriteHas": [
+        [
+          "nutrition",
+          "protein",
+          "deficit",
+          "recovery",
+          "sleep"
+        ],
+        [
+          "fat",
+          "muscle",
+          "vegetarian",
+          "deficit"
+        ]
+      ],
+      "answerHas": [
+        [
+          "protein"
+        ]
+      ],
+      "answerAvoids": [
+        "chicken",
+        "beef",
+        "pork",
+        "salmon",
+        "tuna"
+      ]
+    }
+  ]
+}
