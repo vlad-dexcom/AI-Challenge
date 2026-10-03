@@ -105,7 +105,7 @@
 <script src="/ui/markdown.js"></script>
 <script>
 const $=id=>document.getElementById(id);
-const esc=s=>s.replace(/[&<>]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;'}[c]));
+const esc=s=>String(s==null?'':s).replace(/[&<>]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;'}[c]));
 let pinned=false;
 async function api(path,body){
   const r=await fetch(path,body?{method:'POST',body:JSON.stringify(body)}:{});
