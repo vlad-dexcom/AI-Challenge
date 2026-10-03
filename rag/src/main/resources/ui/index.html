@@ -41,6 +41,8 @@
  .md.chunk{background:#fff;padding:4px 8px;border:1px solid #eee;margin:2px 0 6px}
  .badge{display:inline-block;font-size:11px;padding:0 6px;border-radius:8px;background:#ddd;margin-right:6px}
  .badge.rag{background:#c7f0d0}.badge.norag{background:#ffe0b3}
+ .quote{border-left:3px solid #999;margin:4px 0;padding:2px 8px;font-size:12px;background:#fafafa} .quote.ok{border-color:#2e8b57} .quote.bad{border-color:#d9822b;background:#fff8ec}
+ .idk{background:#eef3ff;border:1px solid #9db4f0;padding:6px 10px;margin:4px 0}
  .warn{background:#fff3cd;border:1px solid #ffd966;padding:4px 8px;margin:4px 0}
  .src{font-size:12px;margin:4px 0 0 0;padding-left:18px} .meta{font-size:11px;color:#666}
  details{font-size:12px;margin-top:4px} details pre{white-space:pre-wrap;margin:2px 0 6px;background:#fff;padding:4px;border:1px solid #eee}
@@ -103,7 +105,7 @@
 <script src="/ui/markdown.js"></script>
 <script>
 const $=id=>document.getElementById(id);
-const esc=s=>s.replace(/[&<>]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;'}[c]));
+const esc=s=>String(s==null?'':s).replace(/[&<>]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;'}[c]));
 let pinned=false;
 async function api(path,body){
   const r=await fetch(path,body?{method:'POST',body:JSON.stringify(body)}:{});
@@ -230,14 +232,30 @@ function turnHtml(t){
   if(t.error)return `<div class="msg bot">${label}${meta}<div class="err">Error: ${esc(t.error)}</div></div>`;
   let h=`<div class="msg bot">${label}${meta}<div class="answer md">${md(t.answer||'')}</div>`;
   if(t.mode==='rag'){
-    if(t.insufficient)h+='<div class="warn">Nothing passed the relevance filter, so the model was not called (not enough information in the knowledge base).</div>';
+    const st=t.structured;
+    if(st&&st.idk){
+      h+=`<div class="idk"><b>${st.language==='ru'?'Не знаю':"I don't know"}</b> <span class="meta">(${esc(st.idkReason)}; no sources are shown because there is no supported answer)</span>`+
+        (st.relatedTopics.length?`<div class="meta">${st.language==='ru'?'Ближайшие темы (не ответ)':'Closest topics (not an answer)'}: ${st.relatedTopics.map(esc).join(' · ')}</div>`:'')+
+        `<div>${esc(st.clarification||'')}</div></div>`;
+    }else if(t.insufficient)h+='<div class="warn">Nothing passed the relevance filter, so the model was not called (not enough information in the knowledge base).</div>';
     else if(t.notFound)h+='<div class="warn">The model says the knowledge base has no relevant information for this question.</div>';
     if(t.sources.length){
-      h+='<div class="meta" style="margin-top:6px">Sources</div><ol class="src">'+t.sources.map(s=>`<li>${esc(s.label)} <span class="meta">(score ${s.score.toFixed(3)})</span></li>`).join('')+'</ol>';
-      h+=`<details><summary>Retrieved chunks (${t.chunks.length})</summary>`+t.chunks.map((c,i)=>`<div class="meta">[${i+1}] ${esc(c.source)}${c.section?' > '+esc(c.section):''} · ${esc(c.chunkId)} · score ${c.score.toFixed(3)}</div><div class="md chunk">${md(c.text)}</div>`).join('')+'</details>';
-    }else if(!t.insufficient)h+='<div class="warn">No chunks were retrieved.</div>';
+      h+='<div class="meta" style="margin-top:6px">Sources'+(st?' (verified: cited chunk was among the retrieved ones)':'')+'</div><ol class="src">'+t.sources.map(s=>`<li>${esc(s.label)} <span class="meta">· ${esc(s.chunkId)} · score ${s.score.toFixed(3)}</span></li>`).join('')+'</ol>';
+    }
+    if(st&&st.quotes.length){
+      h+='<div class="meta" style="margin-top:6px">Quotes (verbatim from the chunks, original language)</div>'+st.quotes.map(q=>q.status==='VERIFIED'||q.status==='REATTRIBUTED'
+        ?`<div class="quote ok">✓ “${esc(q.text)}” <span class="meta">${esc(q.resolvedChunkId||q.chunkId)}${q.status==='REATTRIBUTED'?' (chunk id corrected)':''}</span></div>`
+        :`<div class="quote bad">⚠ “${esc(q.text)}” <span class="meta">not verified: ${q.status==='TOO_SHORT'?'too short':'not found in the retrieved chunks'}</span></div>`).join('');
+    }
+    if(t.chunks.length)h+=`<details><summary>Retrieved chunks (${t.chunks.length})</summary>`+t.chunks.map((c,i)=>`<div class="meta">[${i+1}] ${esc(c.source)}${c.section?' > '+esc(c.section):''} · ${esc(c.chunkId)} · score ${c.score.toFixed(3)}</div><div class="md chunk">${md(c.text)}</div>`).join('')+'</details>';
+    else if(!t.insufficient&&!(st&&st.idk))h+='<div class="warn">No chunks were retrieved.</div>';
+    if(st)h+=`<details><summary>Verification report${st.verification.attempts?' · '+st.verification.attempts+' attempt(s)':''}</summary><div class="meta">${esc(st.verification.quotes.filter(q=>q.status==='VERIFIED'||q.status==='REATTRIBUTED').length)}/${st.verification.quotes.length} quotes verified, ${st.verification.sources.filter(x=>x.ok).length}/${st.verification.sources.length} sources valid</div>`+
+      st.verification.quotes.map(q=>`<div class="meta">${esc(q.status)} · ${esc(q.chunkId)}${q.resolvedChunkId&&q.resolvedChunkId!==q.chunkId?' → '+esc(q.resolvedChunkId):''} · “${esc(q.text.slice(0,120))}”</div>`).join('')+
+      st.verification.sources.filter(x=>!x.ok||x.note).map(x=>`<div class="meta">source ${esc(x.source.chunkId)}: ${x.ok?'ok':'INVALID'} ${esc(x.note||'')}</div>`).join('')+
+      st.verification.notes.map(n=>`<div class="meta">${esc(n)}</div>`).join('')+'</details>';
     if(t.trace)h+=traceHtml(t);
   }
+  else h+='<div class="meta" style="margin-top:6px">No sources: this mode answers from the model\'s own knowledge, nothing is retrieved or cited.</div>';
   return h+'</div>';
 }
 function addMsg(html){const d=document.createElement('div');d.innerHTML=html;const el=d.firstElementChild;$('msgs').appendChild(el);$('msgs').scrollTop=$('msgs').scrollHeight;return el}

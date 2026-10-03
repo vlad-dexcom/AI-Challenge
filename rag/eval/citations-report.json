@@ -1,0 +1,412 @@
+{
+  "spec": "12 questions (9 in corpus, 3 out of corpus); threshold 0.65, topK 10->4, rewrite off",
+  "items": [
+    {
+      "id": "c01",
+      "lang": "en",
+      "category": "specific",
+      "question": "In the beginner 3-day full-body program, what exactly is on Day 2 and how many sets and reps for each exercise?",
+      "topCosine": 0.7521492,
+      "passedFilter": 7,
+      "idk": false,
+      "idkReason": null,
+      "answer": "On Day 2 of the beginner 3-day full-body program, the exercises and their respective sets and reps are:\n- Trap-bar or kettlebell deadlift: 3 sets of 5 to 8 [1]\n- Dumbbell overhead press: 3 sets of 6 to 10 [1]\n- Lat pulldown: 3 sets of 8 to 12 [1]\n- Reverse lunge: 2 to 3 sets of 8 to 10 each side [1]\n- Dead bug: 2 to 3 sets [1]",
+      "sources": [
+        "13-beginner-program-design.md > Beginner Program Design for Strength and Muscle > A practical 3-day full-body program"
+      ],
+      "quotes": [
+        {
+          "chunkId": "13-beginner-program-design.md#structure-4",
+          "text": "- Trap-bar or kettlebell deadlift: 3 sets of 5 to 8\n- Dumbbell overhead press: 3 sets of 6 to 10\n- Lat pulldown: 3 sets of 8 to 12\n- Reverse lunge: 2 to 3 sets of 8 to 10 each side\n- Dead bug: 2 to 3 sets",
+          "status": "VERIFIED",
+          "resolvedChunkId": "13-beginner-program-design.md#structure-4"
+        }
+      ],
+      "attempts": 1,
+      "sourcesPresent": true,
+      "quotesPresent": true,
+      "quotesVerbatim": true,
+      "citedAllRetrieved": true,
+      "expectedSourceCited": true,
+      "idkCorrect": true,
+      "meaningJudge": "PARTIAL",
+      "meaningJudgeReason": "The exercises and their sets/reps are supported, but the quotes do not mention that these are for 'Day 2 of the beginner 3-day full-body program'.",
+      "manual": {
+        "verdict": "match",
+        "note": "The five Day 2 exercises with sets/reps are exactly the quoted bullet list; the LLM judge's PARTIAL only complains that the quote does not repeat the words 'Day 2' (a premise of the question, not a claim of the answer)."
+      }
+    },
+    {
+      "id": "c02",
+      "lang": "en",
+      "category": "specific",
+      "question": "What are the useful pull-up progressions if I cannot do a strict pull-up yet?",
+      "topCosine": 0.7643763,
+      "passedFilter": 10,
+      "idk": false,
+      "idkReason": null,
+      "answer": "If you cannot perform a strict bodyweight pull-up yet, useful progression options include slow eccentrics, band-assisted pull-ups, machine-assisted pull-ups, isometric holds, and scapular pull-ups [1].",
+      "sources": [
+        "04-pulling-and-back-training.md > Pulling and Back Training > Pull-up progressions"
+      ],
+      "quotes": [
+        {
+          "chunkId": "04-pulling-and-back-training.md#structure-3",
+          "text": "Useful options include:\n\n- slow eccentrics\n- band-assisted pull-ups\n- machine-assisted pull-ups\n- isometric holds\n- scapular pull-ups",
+          "status": "VERIFIED",
+          "resolvedChunkId": "04-pulling-and-back-training.md#structure-3"
+        }
+      ],
+      "attempts": 1,
+      "sourcesPresent": true,
+      "quotesPresent": true,
+      "quotesVerbatim": true,
+      "citedAllRetrieved": true,
+      "expectedSourceCited": true,
+      "idkCorrect": true,
+      "meaningJudge": "PARTIAL",
+      "meaningJudgeReason": "The answer includes the premise of not being able to perform a strict bodyweight pull-up, which is not mentioned in the provided quotes.",
+      "manual": {
+        "verdict": "match",
+        "note": "The five progressions are the quoted list; the PARTIAL is the same premise nitpick."
+      }
+    },
+    {
+      "id": "c03",
+      "lang": "en",
+      "category": "specific",
+      "question": "My deadlift stalls above the knee and the bar climbs in stages at lockout. What does this indicate and which variations help?",
+      "topCosine": 0.7237012,
+      "passedFilter": 10,
+      "idk": false,
+      "idkReason": null,
+      "answer": "If the bar stalls above the knee and climbs in stages, it indicates that you likely lost position earlier [1]. To address this issue, variations such as paused deadlifts, RDLs, and block pulls can help, depending on where the breakdown starts [1].",
+      "sources": [
+        "02-deadlift-technique.md > Deadlift Technique > Romanian deadlift technique"
+      ],
+      "quotes": [
+        {
+          "chunkId": "02-deadlift-technique.md#structure-7",
+          "text": "If the bar stalls above the knee and climbs in stages, you likely lost position earlier. Paused deadlifts, RDLs, and block pulls can help depending on where the breakdown starts.",
+          "status": "VERIFIED",
+          "resolvedChunkId": "02-deadlift-technique.md#structure-7"
+        }
+      ],
+      "attempts": 1,
+      "sourcesPresent": true,
+      "quotesPresent": true,
+      "quotesVerbatim": true,
+      "citedAllRetrieved": true,
+      "expectedSourceCited": true,
+      "idkCorrect": true,
+      "meaningJudge": "SUPPORTED",
+      "meaningJudgeReason": "The answer is directly and fully supported by the provided quote.",
+      "manual": {
+        "verdict": "match",
+        "note": "Answer is a near-copy of the quoted sentence."
+      }
+    },
+    {
+      "id": "c04",
+      "lang": "en",
+      "category": "specific",
+      "question": "Give me Template A of the simple core training routine: exercises, sets, reps or time.",
+      "topCosine": 0.7100468,
+      "passedFilter": 10,
+      "idk": false,
+      "idkReason": null,
+      "answer": "Template A of the simple core training routine includes the following exercises, sets, and reps/time:\n- **Dead bug**: 2 to 3 sets of 5 to 8 reps per side [1]\n- **Side plank**: 2 to 3 sets of 15 to 30 seconds per side [1]\n- **Suitcase carry**: 2 to 4 trips per side [1]",
+      "sources": [
+        "15-core-training-and-posture.md > Core Training, Bracing, and Posture Without the Myths > Better advice for desk workers"
+      ],
+      "quotes": [
+        {
+          "chunkId": "15-core-training-and-posture.md#structure-11",
+          "text": "- Dead bug: 2 to 3 sets of 5 to 8 reps per side\n- Side plank: 2 to 3 sets of 15 to 30 seconds per side\n- Suitcase carry: 2 to 4 trips per side",
+          "status": "VERIFIED",
+          "resolvedChunkId": "15-core-training-and-posture.md#structure-11"
+        }
+      ],
+      "attempts": 1,
+      "sourcesPresent": true,
+      "quotesPresent": true,
+      "quotesVerbatim": true,
+      "citedAllRetrieved": true,
+      "expectedSourceCited": true,
+      "idkCorrect": true,
+      "meaningJudge": "PARTIAL",
+      "meaningJudgeReason": "The exercises, sets, and reps are supported, but the quotes do not mention 'Template A of the simple core training routine'.",
+      "manual": {
+        "verdict": "match",
+        "note": "Dead bug / side plank / suitcase carry with sets and time are the quoted lines (Template A section); the chunk's section label is the first heading of a multi-section chunk, so it reads 'desk workers'."
+      }
+    },
+    {
+      "id": "c05",
+      "lang": "en",
+      "category": "specific",
+      "question": "How should I split a 10-15 minute warm-up into phases and how long should each phase last?",
+      "topCosine": 0.74567986,
+      "passedFilter": 10,
+      "idk": false,
+      "idkReason": null,
+      "answer": "A practical formula to split a 10 to 15-minute warm-up consists of three phases:\n- **3 to 5 minutes** of general movement [1]\n- **3 to 5 minutes** of targeted mobility or activation [1]\n- **5 to 10 minutes** of progressively specific sets [1]",
+      "sources": [
+        "10-warm-up-and-mobility.md > Warm-Up and Mobility for Safer, Better Training > Making It Efficient"
+      ],
+      "quotes": [
+        {
+          "chunkId": "10-warm-up-and-mobility.md#structure-10",
+          "text": "A practical formula is:\n\n- 3 to 5 minutes of general movement\n- 3 to 5 minutes of targeted mobility or activation\n- 5 to 10 minutes of progressively specific sets",
+          "status": "VERIFIED",
+          "resolvedChunkId": "10-warm-up-and-mobility.md#structure-10"
+        }
+      ],
+      "attempts": 1,
+      "sourcesPresent": true,
+      "quotesPresent": true,
+      "quotesVerbatim": true,
+      "citedAllRetrieved": true,
+      "expectedSourceCited": true,
+      "idkCorrect": true,
+      "meaningJudge": "PARTIAL",
+      "meaningJudgeReason": "The mention of a '10 to 15-minute warm-up' is not supported by the provided quotes.",
+      "manual": {
+        "verdict": "match",
+        "note": "3-5 / 3-5 / 5-10 minute phases are the quoted formula; the PARTIAL concerns the '10-15 min' wording of the question."
+      }
+    },
+    {
+      "id": "c06",
+      "lang": "en",
+      "category": "specific",
+      "question": "What rep ranges does the knowledge base assign to high specificity, repeated strength practice, and assistance work?",
+      "topCosine": 0.74551606,
+      "passedFilter": 10,
+      "idk": false,
+      "idkReason": null,
+      "answer": "According to the knowledge base, the rep ranges assigned to these roles are:\n- 1 to 3 reps for high specificity [1]\n- 3 to 6 reps for repeated strength practice [1]\n- 6 to 12 or more reps for assistance and hypertrophy support [1]",
+      "sources": [
+        "05-strength-programming-basics.md > Strength Programming Basics > Rep ranges for strength development"
+      ],
+      "quotes": [
+        {
+          "chunkId": "05-strength-programming-basics.md#structure-7",
+          "text": "- 1 to 3 reps for high specificity\n- 3 to 6 reps for repeated strength practice\n- 6 to 12 or more for assistance and hypertrophy support",
+          "status": "VERIFIED",
+          "resolvedChunkId": "05-strength-programming-basics.md#structure-7"
+        }
+      ],
+      "attempts": 1,
+      "sourcesPresent": true,
+      "quotesPresent": true,
+      "quotesVerbatim": true,
+      "citedAllRetrieved": true,
+      "expectedSourceCited": true,
+      "idkCorrect": true,
+      "meaningJudge": "SUPPORTED",
+      "meaningJudgeReason": "Every claim in the answer is directly supported by the provided quotes.",
+      "manual": {
+        "verdict": "match",
+        "note": "All three rep ranges quoted verbatim."
+      }
+    },
+    {
+      "id": "c07",
+      "lang": "en",
+      "category": "common",
+      "question": "How much protein per kilogram of body weight should an active lifter eat per day, and how should it be spread across the day?",
+      "topCosine": 0.7198924,
+      "passedFilter": 6,
+      "idk": false,
+      "idkReason": null,
+      "answer": "An active adult should target about 1.6 to 2.2 grams of protein per kilogram of body weight per day [1]. To make it easier to use and digest, this protein should be spread across three to five meals rather than consumed in one large serving [2].",
+      "sources": [
+        "08-nutrition-protein-and-calories.md > Nutrition, Protein, and Calories for Fitness Goals > Protein: The Priority Macronutrient for Lifters",
+        "08-nutrition-protein-and-calories.md > Nutrition, Protein, and Calories for Fitness Goals > Protein: The Priority Macronutrient for Lifters > Distributing protein across the day"
+      ],
+      "quotes": [
+        {
+          "chunkId": "08-nutrition-protein-and-calories.md#structure-2",
+          "text": "A useful target for many active adults is about 1.6 to 2.2 grams of protein per kilogram of body weight per day.",
+          "status": "VERIFIED",
+          "resolvedChunkId": "08-nutrition-protein-and-calories.md#structure-2"
+        },
+        {
+          "chunkId": "08-nutrition-protein-and-calories.md#structure-3",
+          "text": "Protein is often easier to use and digest when spread across three to five meals rather than pushed into one huge serving.",
+          "status": "VERIFIED",
+          "resolvedChunkId": "08-nutrition-protein-and-calories.md#structure-3"
+        }
+      ],
+      "attempts": 1,
+      "sourcesPresent": true,
+      "quotesPresent": true,
+      "quotesVerbatim": true,
+      "citedAllRetrieved": true,
+      "expectedSourceCited": true,
+      "idkCorrect": true,
+      "meaningJudge": "SUPPORTED",
+      "meaningJudgeReason": "All claims in the answer are directly supported by the provided quotes.",
+      "manual": {
+        "verdict": "match",
+        "note": "1.6-2.2 g/kg and 3-5 meals each backed by its own quote."
+      }
+    },
+    {
+      "id": "c08",
+      "lang": "en",
+      "category": "common",
+      "question": "The bar drifts forward away from my body in the deadlift. How do I fix it?",
+      "topCosine": 0.72000486,
+      "passedFilter": 10,
+      "idk": false,
+      "idkReason": null,
+      "answer": "To fix the bar drifting forward, you should recheck your start position, keep the bar over your midfoot, and engage your lats more aggressively [4]. It is also important to keep the bar path tight, ensuring the bar tracks almost vertically and stays very close to your shins and thighs [1].",
+      "sources": [
+        "02-deadlift-technique.md > Deadlift Technique > Romanian deadlift technique",
+        "02-deadlift-technique.md > Deadlift Technique > The hinge and first pull"
+      ],
+      "quotes": [
+        {
+          "chunkId": "02-deadlift-technique.md#structure-7",
+          "text": "Recheck the start position, keep the bar over midfoot, and engage the lats more aggressively.",
+          "status": "VERIFIED",
+          "resolvedChunkId": "02-deadlift-technique.md#structure-7"
+        },
+        {
+          "chunkId": "02-deadlift-technique.md#structure-3",
+          "text": "Keep the bar path tight. The bar should track almost vertically and stay very close to the shins and thighs.",
+          "status": "VERIFIED",
+          "resolvedChunkId": "02-deadlift-technique.md#structure-3"
+        }
+      ],
+      "attempts": 1,
+      "sourcesPresent": true,
+      "quotesPresent": true,
+      "quotesVerbatim": true,
+      "citedAllRetrieved": true,
+      "expectedSourceCited": true,
+      "idkCorrect": true,
+      "meaningJudge": "PARTIAL",
+      "meaningJudgeReason": "The quotes support the recommended actions, but they do not mention the deadlift or fixing the bar drifting forward.",
+      "manual": {
+        "verdict": "match",
+        "note": "Both advice sentences are quoted; the quotes do not say 'drifts forward' but the advice (bar over midfoot, lats, bar path) addresses it. Mild inference by the model."
+      }
+    },
+    {
+      "id": "c09",
+      "lang": "en",
+      "category": "out_of_corpus",
+      "question": "What is the current men's raw deadlift world record?",
+      "topCosine": 0.59640425,
+      "passedFilter": 0,
+      "idk": true,
+      "idkReason": "BELOW_THRESHOLD",
+      "answer": "I don't know: the knowledge base has no information that reliably answers this question.\n\nClosest topics in the knowledge base (not an answer to your question): «Deadlift Technique», «Final deadlift checklist», «Common deadlift faults and fixes > Bent arms».\n\nDid you mean one of these topics? If not, which exercise, program or nutrition aspect do you have in mind?",
+      "sources": [],
+      "quotes": [],
+      "attempts": 0,
+      "sourcesPresent": false,
+      "quotesPresent": false,
+      "quotesVerbatim": false,
+      "citedAllRetrieved": false,
+      "expectedSourceCited": null,
+      "idkCorrect": true,
+      "manual": {
+        "verdict": "correct IDK",
+        "note": "Top cosine 0.596 < 0.65, no model call; offers deadlift topics as related, not as an answer."
+      }
+    },
+    {
+      "id": "c10",
+      "lang": "en",
+      "category": "out_of_corpus",
+      "question": "Which specific brand of protein powder does the knowledge base recommend buying?",
+      "topCosine": 0.7308571,
+      "passedFilter": 9,
+      "idk": true,
+      "idkReason": "MODEL_UNANSWERABLE",
+      "answer": "I don't know: the knowledge base has no information that reliably answers this question.\n\nClosest topics in the knowledge base (not an answer to your question): «Protein powder», «Protein powder > When powder earns its place», «A practical shortlist».\n\nDid you mean one of these topics? If not, which exercise, program or nutrition aspect do you have in mind?",
+      "sources": [],
+      "quotes": [],
+      "attempts": 1,
+      "sourcesPresent": false,
+      "quotesPresent": false,
+      "quotesVerbatim": false,
+      "citedAllRetrieved": false,
+      "expectedSourceCited": null,
+      "idkCorrect": true,
+      "manual": {
+        "verdict": "correct IDK",
+        "note": "Top cosine 0.731 passed the filter; the model itself said answerable=false (the protein-powder section has no brands). Arguably more helpful: say the KB covers protein powder but names no brand."
+      }
+    },
+    {
+      "id": "ru01",
+      "lang": "ru",
+      "category": "specific",
+      "question": "Что такое NEAT и почему он падает на диете?",
+      "topCosine": 0.7809391,
+      "passedFilter": 3,
+      "idk": false,
+      "idkReason": null,
+      "answer": "NEAT (non-exercise activity thermogenesis) — это энергия, которую вы расходуете на обычные движения вне структурированных тренировок: ходьбу, ерзание, домашние дела, подъем по лестнице, хождение туда-сюда, стояние и общую повседневную активность [1]. Во время диеты NEAT часто снижается незаметно для человека: из-за снижения уровня энергии вы можете больше сидеть, меньше двигаться или неосознанно избегать физических усилий [1].",
+      "sources": [
+        "09-fat-loss-and-body-composition.md > Fat Loss and Body Composition Without Losing the Plot > NEAT: The Hidden Lever"
+      ],
+      "quotes": [
+        {
+          "chunkId": "09-fat-loss-and-body-composition.md#structure-4",
+          "text": "NEAT stands for non-exercise activity thermogenesis. In plain language, it is the energy you burn through ordinary movement outside structured exercise: walking, fidgeting, chores, stairs, pacing, standing, and general daily activity.",
+          "status": "VERIFIED",
+          "resolvedChunkId": "09-fat-loss-and-body-composition.md#structure-4"
+        },
+        {
+          "chunkId": "09-fat-loss-and-body-composition.md#structure-4",
+          "text": "NEAT often drops during dieting without people noticing. You may sit more, move less, or unconsciously avoid effort because energy is lower.",
+          "status": "VERIFIED",
+          "resolvedChunkId": "09-fat-loss-and-body-composition.md#structure-4"
+        }
+      ],
+      "attempts": 1,
+      "sourcesPresent": true,
+      "quotesPresent": true,
+      "quotesVerbatim": true,
+      "citedAllRetrieved": true,
+      "expectedSourceCited": true,
+      "idkCorrect": true,
+      "meaningJudge": "SUPPORTED",
+      "meaningJudgeReason": "Every claim in the answer is directly supported by the provided quotes.",
+      "manual": {
+        "verdict": "match",
+        "note": "Russian answer, English verbatim quotes; the Russian wording is a faithful translation of both quotes."
+      }
+    },
+    {
+      "id": "ru02",
+      "lang": "ru",
+      "category": "out_of_corpus",
+      "question": "Кто выиграл чемпионат мира по пауэрлифтингу в этом году?",
+      "topCosine": 0.53696287,
+      "passedFilter": 0,
+      "idk": true,
+      "idkReason": "BELOW_THRESHOLD",
+      "answer": "Не знаю: в базе знаний нет информации, которая надёжно отвечает на этот вопрос.\n\nО каком именно упражнении, программе тренировок или аспекте питания вы хотите узнать?",
+      "sources": [],
+      "quotes": [],
+      "attempts": 0,
+      "sourcesPresent": false,
+      "quotesPresent": false,
+      "quotesVerbatim": false,
+      "citedAllRetrieved": false,
+      "expectedSourceCited": null,
+      "idkCorrect": true,
+      "manual": {
+        "verdict": "correct IDK",
+        "note": "Top cosine 0.537; answered in Russian with a clarifying question."
+      }
+    }
+  ]
+}

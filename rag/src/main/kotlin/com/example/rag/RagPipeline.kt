@@ -15,6 +15,8 @@ data class RagAnswer(
     val hits: List<SearchHit>,
     val trace: RetrievalTrace? = null,
     val insufficientContext: Boolean = false,
+    /** Day 24: verified sources/quotes or an "I don't know"; null for [RagMode.NO_RAG] and when citations are off. */
+    val structured: StructuredAnswer? = null,
 ) {
     val sources: List<String> get() = hits.map { RagPromptBuilder.sourceLabel(it.chunk) }.distinct()
 }
@@ -33,7 +35,11 @@ class RagPipeline(
     private val reranker: Reranker = HeuristicReranker(),
     private val filterFactory: (RagConfig) -> ChunkFilter = { ThresholdFilter(it.threshold) },
     private val config: RagConfig = RagConfig.PLAIN,
+    /** Day 24: RAG answers use the JSON contract with verified sources/quotes and an "I don't know" mode. Off keeps Day 22/23 free text. */
+    private val citations: Boolean = false,
 ) {
+    private val cited = CitedAnswerer(generator)
+
     /** Retrieval + stage 2 only (no answer generation); also used by the evals. */
     suspend fun retrieve(question: String, config: RagConfig = this.config, history: List<HistoryMessage> = emptyList()): RetrievalTrace {
         val q = question.trim()
@@ -63,6 +69,7 @@ class RagPipeline(
             } catch (e: Exception) {
                 return Result.failure(e)
             }
+            if (citations) return askCited(q, trace)
             if (config.filter && trace.finalHits.isEmpty()) {
                 return Result.success(RagAnswer(mode, q, INSUFFICIENT_ANSWER, emptyList(), trace, insufficientContext = true))
             }
@@ -70,6 +77,15 @@ class RagPipeline(
         val hits = trace?.finalHits ?: emptyList()
         return generator.generate(RagPromptBuilder.systemPrompt(mode), RagPromptBuilder.userPrompt(mode, q, hits))
             .map { RagAnswer(mode, q, it, hits, trace) }
+    }
+
+    private suspend fun askCited(q: String, trace: RetrievalTrace): Result<RagAnswer> {
+        val hits = trace.finalHits
+        if (hits.isEmpty()) {
+            val idk = IdkResponder.build(q, IdkReason.BELOW_THRESHOLD, trace.retrieved)
+            return Result.success(RagAnswer(RagMode.RAG, q, idk.answer, emptyList(), trace, insufficientContext = true, structured = idk))
+        }
+        return cited.answer(q, hits, trace.retrieved).map { RagAnswer(RagMode.RAG, q, it.answer, hits, trace, structured = it) }
     }
 
     suspend fun compare(question: String, config: RagConfig = this.config): Result<RagComparison> {
