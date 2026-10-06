@@ -24,7 +24,7 @@ private class PersonalizationFakeLlmClient(private val result: Result<String>) :
  * Day 12's main proof: the same [Agent.handle] call for the same user question behaves
  * differently depending on the current [UserProfile] — automatically, with no participation
  * from the caller beyond passing [AgentRequest.userProfile] (exactly what
- * [com.example.geminichat.ChatViewModel.prepareRequestContext] does on every turn).
+ * [com.example.geminichat.ChatController.prepareRequestContext] does on every turn).
  */
 class PersonalizationTest {
 

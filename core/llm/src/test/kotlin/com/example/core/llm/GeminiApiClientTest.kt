@@ -7,7 +7,7 @@ import org.junit.Test
  * [GeminiApiClient.contextWindowTokens] doesn't touch the network, so it can be tested
  * directly. In particular this locks in the `debugContextWindowOverrideTokens` escape hatch
  * used to manually trigger [com.example.core.llm.ContextWindowExceededException] in the
- * running app (see its kdoc on [GeminiApiClient] and [ChatViewModel]).
+ * running app (see its kdoc on [GeminiApiClient] and [ChatController]).
  */
 class GeminiApiClientTest {
 

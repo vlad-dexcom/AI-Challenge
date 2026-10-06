@@ -39,7 +39,7 @@ private val ADVISOR_JSON = Json { ignoreUnknownKeys = true; isLenient = true }
  * [TaskStateMachine] by explicit UI buttons, but after a user turn that sounds like it just
  * satisfied the current [TaskState.expectedAction] ("готово", "план утверждён", "не сработало,
  * нужно переделать"), one LLM call *proposes* a transition. The suggestion is never applied
- * automatically — [com.example.geminichat.ChatViewModel] surfaces it for the user to approve or
+ * automatically — [com.example.geminichat.ChatController] surfaces it for the user to approve or
  * dismiss, so [TaskState] only ever changes through [TaskStateMachine], either by a direct
  * button press or by the user's one-tap approval of a suggestion here.
  *

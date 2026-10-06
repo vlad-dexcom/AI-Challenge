@@ -23,7 +23,7 @@ import kotlinx.coroutines.withContext
  * Uses [Context.getFilesDir] directly (the same directory [com.example.geminichat.MainActivity]
  * points every other `*Store` at) rather than requiring the caller to inject file paths, since
  * WorkManager itself constructs this class via reflection — there is no constructor injection
- * point to use here the way [com.example.geminichat.ChatViewModel] does for its stores.
+ * point to use here the way [com.example.geminichat.ChatController] does for its stores.
  */
 class WorkoutDigestWorker(
     context: Context,

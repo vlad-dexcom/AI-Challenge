@@ -4,7 +4,7 @@ import com.example.core.time.nowMillis
 /**
  * Result of a [TaskStateMachine] operation: either the transition was legal and produced a new
  * [TaskState], or it was rejected with a human-readable [reason] — never a silent no-op and
- * never an exception, so the UI/[com.example.geminichat.ChatViewModel] can surface *why* a
+ * never an exception, so the UI/[com.example.geminichat.ChatController] can surface *why* a
  * button did nothing (see [com.example.geminichat.ChatUiState.errorMessage]).
  */
 sealed class TransitionResult {

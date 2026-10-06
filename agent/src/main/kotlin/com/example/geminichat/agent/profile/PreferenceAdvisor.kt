@@ -10,7 +10,7 @@ import kotlinx.serialization.json.jsonPrimitive
 /**
  * One proposed edit to [UserProfile], produced by [PreferenceAdvisor.suggest]: "change
  * [field] to [value]", with [reason] shown to the user so "Apply"/"Dismiss" is an informed
- * choice, never a silent auto-write (see [com.example.geminichat.ChatViewModel.onApplySuggestion]).
+ * choice, never a silent auto-write (see [com.example.geminichat.ChatController.onApplySuggestion]).
  */
 data class PreferenceSuggestion(
     val field: ProfileField,
@@ -24,7 +24,7 @@ private val ADVISOR_JSON = Json { ignoreUnknownKeys = true; isLenient = true }
  * Day 12's hybrid update path for [UserProfile]: the profile is edited by hand in the UI, but
  * after a user turn that sounds like a stated preference ("отвечай короче", "без штанги"),
  * one LLM call proposes a single field change. The suggestion is never applied automatically —
- * [com.example.geminichat.ChatViewModel] surfaces it as a banner the user must explicitly
+ * [com.example.geminichat.ChatController] surfaces it as a banner the user must explicitly
  * apply or dismiss, so [UserProfile] only ever changes with the user's confirmation (manual
  * edit) or their one-tap approval (advisor suggestion), never silently.
  *

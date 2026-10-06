@@ -222,7 +222,7 @@ class LlmAgent(
     /**
      * Renders [history] as a "User: ...\n<Agent>: ..." transcript so the model has the recent
      * prior conversation as context (empty string when there is no history yet). The caller
-     * (currently [com.example.geminichat.ChatViewModel]) decides what history to pass in — it
+     * (currently [com.example.geminichat.ChatController]) decides what history to pass in — it
      * is now persisted/restored across app restarts via
      * [com.example.geminichat.ChatHistoryStore], so it survives beyond a single app
      * session/process. Kept separate from the final prompt assembly in [handle] so its token

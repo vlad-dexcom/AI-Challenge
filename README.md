@@ -15,12 +15,12 @@ handled by an **agent** (not a bare API call) that talks to the Gemini API and r
 
 ## Agent architecture (Day 6)
 
-The `ChatViewModel` never talks to Gemini directly — it depends only on an `Agent`. The
+The UI (via `ChatController`) never talks to Gemini directly — it depends only on an `Agent`. The
 request/response logic (persona, model, generation params, error handling) lives entirely
 inside the agent, not scattered across the UI layer:
 
 ```
-ChatScreen ──▶ ChatViewModel ──▶ Agent (LlmAgent + AgentConfig)
+ChatScreen ──▶ ChatViewModel ──▶ ChatController ──▶ Agent (LlmAgent + AgentConfig)
                                      │  (LlmClient interface)
                                      ▼
                               GeminiApiClient (Ktor / REST)
@@ -37,11 +37,11 @@ ChatScreen ──▶ ChatViewModel ──▶ Agent (LlmAgent + AgentConfig)
   and validates the answer, and maps failures into a single user-facing `Result`.
 - **`agent/LlmClient.kt`** — transport-agnostic `interface LlmClient { suspend fun complete(spec) }`.
   `GeminiApiClient` implements it, so `LlmAgent` can be unit-tested with a fake client and no
-  network/Android dependency (see `app/src/test/.../agent/LlmAgentTest.kt`).
+  network/Android dependency (see `agent/src/test/.../agent/LlmAgentTest.kt`).
 - **`agent/AgentContracts.kt`** — `AgentRequest`/`AgentResponse`/`AgentMessage`.
 
 **In-memory chat history, mixed into every request**: the agent is not stateless anymore —
-`ChatViewModel.sendMessage()` snapshots the whole visible conversation so far and passes it as
+`ChatController.sendMessage()` snapshots the whole visible conversation so far and passes it as
 `AgentRequest.history`; `LlmAgent.renderPrompt` folds it into the prompt as a
 "User: ...\n\<Agent\>: ..." transcript before the new user message. This history lives only in
 memory for the current app process/session (it resets on process death or app restart — no
@@ -80,19 +80,19 @@ Every `LlmAgent.handle` call now counts tokens and can refuse to send an over-bu
   truncate, reject, or answer with a request cut short.
 - **UI** — `ChatScreen` shows a running "Tokens in dialog" total under the agent description,
   and each agent reply shows its own `prompt N (history M) · reply K · total T` breakdown.
-- **Tests** (`app/src/test/.../agent/TokenBudgetTest.kt`) compare a **short dialog** (few
+- **Tests** (`agent/src/test/.../agent/TokenBudgetTest.kt`) compare a **short dialog** (few
   tokens, succeeds), a **long dialog** (prompt tokens grow turn over turn as history
   accumulates — asserted to be monotonic and >4x by the 8th turn), and a **dialog that exceeds
   the model's context window** (a fake small window makes a realistic multi-turn history fail
   with `ContextWindowExceededException` and zero calls to the client), plus a sanity check that
   a short dialog still succeeds against that same tiny window.
 - **Manually triggering the overflow in the running app** — `GeminiApiClient` and
-  `ChatViewModel` both accept an optional `debugContextWindowOverrideTokens` constructor
+  `ChatController` both accept an optional `debugContextWindowOverrideTokens` constructor
   parameter (default `null`, no effect on real usage). Passing a small value (e.g. `200`)
   forces every model to report that tiny context window, so even a short chat overflows and
   you can see the "conversation is too long" error surface for real in `ChatScreen`'s error
-  banner — e.g. temporarily change `MainActivity`'s `ChatViewModel(apiKey = ...)` call to
-  `ChatViewModel(apiKey = ..., debugContextWindowOverrideTokens = 200)`, run the app, send a
+  banner — e.g. temporarily change `AppGraph`'s `ChatController(apiKey = ...)` call to
+  `ChatController(apiKey = ..., debugContextWindowOverrideTokens = 200)`, run the app, send a
   message, and revert the change afterward. See `GeminiApiClientTest.kt` for the unit-level
   proof that the override takes effect.
 
@@ -138,7 +138,7 @@ pick between.
 - **`agent/profile/PreferenceAdvisor.kt`** — the hybrid update path: the profile is edited by
   hand in the UI, but after a turn that sounds like a stated preference ("keep it shorter", "no
   barbell"), one LLM call proposes a single field change. It is *never* applied automatically —
-  `ChatScreen` shows it as an Apply/Dismiss banner (`ChatViewModel.onApplySuggestion`/
+  `ChatScreen` shows it as an Apply/Dismiss banner (`ChatController.onApplySuggestion`/
   `onDismissSuggestion`); the profile only ever changes by hand or by explicit approval.
 - **UI** — the model picker and `ProfilePanel` (every field, the constraint list, a "Reset
   profile" action, and a preset row that loads one of `UserProfile.PRESETS` in one tap) now live
@@ -456,6 +456,14 @@ Details, results and caveats (2 scenarios, one run, same-model judge): [docs/day
    ```
    ./gradlew test        # or: ./gradlew check
    ```
+
+## Documentation
+
+- `docs/architecture.md` — layers, a chat turn, UI/navigation, persistence, KMP path
+- `docs/modules.md` — module table, packages, where new code goes
+- `docs/agent-patterns.md` — conventions for extending the agent (guards, advisors, MCP, RAG, tests)
+- `AGENTS.md` — short rules for AI coding agents
+- `docs/dayNN-*.md` — historical per-day notes
 
 ## Project layout
 

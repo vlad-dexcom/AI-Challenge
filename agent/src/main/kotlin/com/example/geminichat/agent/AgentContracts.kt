@@ -15,7 +15,7 @@ data class AgentMessage(
  *
  * [history] carries the prior turns of the current chat, which [LlmAgent] folds into the
  * prompt (see [LlmAgent.renderHistory]) so the model has conversational context. This is just
- * the in-memory transcript for a single request — the caller ([com.example.geminichat.ChatViewModel])
+ * the in-memory transcript for a single request — the caller ([com.example.geminichat.ChatController])
  * decides what to pass in (currently: a recent tail of the chat — see
  * [com.example.geminichat.agent.memory.MemoryRouter]) and is also responsible for
  * persisting/restoring it across app restarts via [com.example.geminichat.ChatHistoryStore], so

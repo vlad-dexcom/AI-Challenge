@@ -52,7 +52,7 @@ object AgentCatalog {
      * real function-calling tools (`get_exercise_info`, `suggest_workout`) backed by our own
      * MCP server (a Firebase Cloud Function wrapping the wger.de fitness API, see
      * `mcp-server/functions`), so it can look up real exercises/build real workout plans
-     * instead of relying only on the model's own knowledge. See [ChatViewModel]'s agent
+     * instead of relying only on the model's own knowledge. See [ChatController]'s agent
      * construction for where the [id] is used to pick [McpToolCallingAgent] over [LlmAgent].
      */
     val FITNESS_MCP_COACH = AgentConfig(

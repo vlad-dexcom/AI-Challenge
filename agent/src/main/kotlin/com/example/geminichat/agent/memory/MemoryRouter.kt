@@ -50,7 +50,7 @@ private val ROUTER_JSON = Json { ignoreUnknownKeys = true; isLenient = true }
  * questions — cleared by "End task") and [MemoryLayer.LONG_TERM] (durable facts about the
  * *user*: profile, standing decisions, knowledge — cleared only by an explicit user action).
  * [MemoryLayer.SHORT_TERM] (the dialog itself) is handled separately by the existing
- * transcript machinery in [com.example.geminichat.ChatViewModel] and never touched here.
+ * transcript machinery in [com.example.geminichat.ChatController] and never touched here.
  *
  * A suspend step ([route]) does the actual LLM-backed classification, with parsing isolated in
  * [parseRouting] so it's unit-testable without a network dependency, and a deterministic

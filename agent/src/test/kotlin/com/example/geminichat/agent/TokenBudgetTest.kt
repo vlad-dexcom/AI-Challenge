@@ -75,7 +75,7 @@ class TokenBudgetTest {
         val agent = LlmAgent(config = config, client = client)
 
         // Build up a long-running conversation by feeding back growing history each turn,
-        // the same way ChatViewModel.sendMessage snapshots the visible chat before calling
+        // the same way ChatController.sendMessage snapshots the visible chat before calling
         // the agent.
         var history = emptyList<AgentMessage>()
         val promptTokensPerTurn = mutableListOf<Int>()

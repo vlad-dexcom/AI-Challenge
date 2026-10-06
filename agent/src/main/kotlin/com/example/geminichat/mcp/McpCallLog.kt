@@ -20,7 +20,7 @@ data class McpCallLogEntry(
 /**
  * App-wide, in-memory log of every MCP call made by any [KotlinSdkMcpGateway] instance —
  * both the one owned by [McpViewModel]/[McpScreen] (manual connect/browse) and the one owned by
- * [com.example.geminichat.ChatViewModel] (the real tool calls made while chatting with the
+ * [com.example.geminichat.ChatController] (the real tool calls made while chatting with the
  * "Fitness Coach (MCP tools)" persona — see [com.example.geminichat.agent.mcp.McpToolCallingAgent]).
  * A single shared, capped-size log (rather than one per gateway) so [McpScreen] shows tool calls
  * made from the chat screen too, which is exactly what needs to be visible to verify Day 17's

@@ -11,9 +11,9 @@ import com.example.core.llm.GeminiApiClient
 
 /**
  * Day 10: everything needed to resume one conversation *branch* independently of the others —
- * its own transcript and its own token counters. [ChatViewModel] keeps one of these per branch
+ * its own transcript and its own token counters. [ChatController] keeps one of these per branch
  * (only the currently active branch lives "unpacked" in [ChatUiState]; the rest sit here,
- * ready to be swapped back in on [ChatViewModel.onBranchSelected]).
+ * ready to be swapped back in on [ChatController.onBranchSelected]).
  */
 @Serializable
 data class BranchSnapshot(
@@ -41,7 +41,7 @@ data class ChatHistorySnapshot(
     /**
      * Day 10 branching: every branch *other than* the currently active one (whose state is
      * unpacked into the top-level fields above). The active branch's own snapshot is
-     * reconstructed on save from those top-level fields — see [ChatViewModel].
+     * reconstructed on save from those top-level fields — see [ChatController].
      */
     val otherBranches: List<BranchSnapshot> = emptyList(),
     val currentBranchId: String = "main",

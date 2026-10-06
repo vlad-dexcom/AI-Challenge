@@ -18,7 +18,7 @@ private val taskStateJson = Json {
  * Day 13: persists [TaskState] *per conversation branch* — modeled directly on
  * [com.example.geminichat.agent.memory.WorkingMemoryStore], since a task's position (this
  * store) and a task's facts (that store) are scoped identically: switching branches, or
- * forking one from a checkpoint (see [com.example.geminichat.ChatViewModel.onCreateBranchFromCheckpoint]),
+ * forking one from a checkpoint (see [com.example.geminichat.ChatController.onCreateBranchFromCheckpoint]),
  * must carry each branch's own progress along without leaking into another branch.
  *
  * Kept as a single JSON file mapping branch id to [TaskState] (rather than one file per

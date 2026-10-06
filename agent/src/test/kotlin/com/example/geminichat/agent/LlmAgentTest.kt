@@ -150,7 +150,7 @@ class LlmAgentTest {
      * conversation, has long since scrolled out of the recent-history window the ViewModel keeps
      * (see [com.example.geminichat.agent.memory.MemoryRouter.RECENT_CONTEXT_SIZE]) — simulated
      * here by *not* including it in [AgentRequest.history] at all, exactly as
-     * `ChatViewModel.prepareRequestContext` builds `history.takeLast(RECENT_CONTEXT_SIZE)`.
+     * `ChatController.prepareRequestContext` builds `history.takeLast(RECENT_CONTEXT_SIZE)`.
      * Without memory layers the model would simply never see it again. With
      * [AgentRequest.longTermMemory] carrying it forward, it still reaches the prompt — so the
      * agent can still answer correctly.
