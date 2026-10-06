@@ -47,7 +47,7 @@
 «Verification report» в debug. Приложение: под ответом блоки **Sources** и **Quotes**, при «не знаю» — только текст с вопросом.
 
 ## Оценка (реальный Gemini `gemini-3.5-flash` + `gemini-embedding-001`, structure-индекс, 12 вопросов)
-`./gradlew :rag:run --args="citations-eval"` → `rag/eval/citations-report.{md,json}`. Набор: 10 контрольных вопросов (в т. ч. c09 и c10) + `ru01` (в корпусе) +
+`./gradlew :rag:tools:run --args="citations-eval"` → `rag/eval/citations-report.{md,json}`. Набор: 10 контрольных вопросов (в т. ч. c09 и c10) + `ru01` (в корпусе) +
 `ru02` (вне корпуса). Конфиг: порог 0.65, top-10 → top-4, эвристический rerank, rewrite выключен.
 
 | id | кат. | top cosine | «не знаю» | источники | цитаты ок/всего | источник из ожидаемых | meaning (LLM) | вручную |

@@ -48,7 +48,7 @@
 Под каждым ответом: источники, ✓/⚠ цитаты, «ближайшие чанки» для «не знаю», блок «Task memory this turn» (diff памяти, число LLM-вызовов, время), отладочная трасса
 (переписанный запрос, retrieved → filtered → reranked). Сворачиваемая панель **Task memory**: цель (редактируется), ограничения (добавить/исправить/удалить),
 уточнения, открытые вопросы, история изменений, сброс памяти. Режимы With RAG / Without RAG / Compare остаются одиночными (stateless).
-`esc()` теперь принимает не-строки и экранирует кавычки. CLI: `./gradlew :rag:run --args="chat"` (`/memory`, `/goal`, `/reset`, `/new`, `/sessions`, `/quit`).
+`esc()` теперь принимает не-строки и экранирует кавычки. CLI: `./gradlew :rag:tools:run --args="chat"` (`/memory`, `/goal`, `/reset`, `/new`, `/sessions`, `/quit`).
 
 ## Два длинных сценария (`rag/eval/scenarios/*.json`, по 13 реплик)
 1. `knee-strength-plan` — 3-дневная силовая программа для новичка с травмой колена без зала; уточнения, дрейф в питание и сон, возврат к плану, follow-up'ы с местоимениями.
@@ -93,5 +93,5 @@ HISTORY_ONLY близок к FULL на этих сценариях — диал�
 - Веб-интерфейс проверен в headless Chrome с живым Gemini (3 хода: память, источники, цитаты, без JS-ошибок; единственная консольная ошибка — 404 ресурса вроде favicon).
 
 ## Тесты
-`:rag:test` (`TaskMemoryTest`, `MemoryExtractorTest`, `HistoryBudgetTest`, `SessionStoreTest`, `ChatEngineTest`, `SessionApiTest`, `ScenarioRunnerTest`, JS-регрессия `turn-html.test.js` для панели памяти и ходов
+`:rag:core:test :rag:tools:test :web-console:test` (`TaskMemoryTest`, `MemoryExtractorTest`, `HistoryBudgetTest`, `SessionStoreTest`, `ChatEngineTest`, `SessionApiTest`, `ScenarioRunnerTest`, JS-регрессия `turn-html.test.js` для панели памяти и ходов
 structured/IDK/error, `esc` с не-строками) и `:app:testDebugUnitTest` — зелёные; без сети.

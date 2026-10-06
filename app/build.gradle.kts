@@ -1,10 +1,10 @@
 import java.util.Properties
 
 plugins {
-    id("com.android.application")
-    id("org.jetbrains.kotlin.android")
-    id("org.jetbrains.kotlin.plugin.serialization")
-    id("org.jetbrains.kotlin.plugin.compose")
+    alias(libs.plugins.android.application)
+    alias(libs.plugins.kotlin.android)
+    alias(libs.plugins.kotlin.serialization)
+    alias(libs.plugins.kotlin.compose)
 }
 
 val localProperties = Properties().apply {
@@ -16,12 +16,12 @@ val localProperties = Properties().apply {
 
 android {
     namespace = "com.example.geminichat"
-    compileSdk = 34
+    compileSdk = 36
 
     defaultConfig {
         applicationId = "com.example.geminichat"
         minSdk = 26
-        targetSdk = 34
+        targetSdk = 36
         versionCode = 1
         versionName = "1.0"
 
@@ -60,7 +60,7 @@ val copyRagIndex by tasks.registering(Copy::class) {
     into(layout.buildDirectory.dir("generated/ragAssets/rag"))
 }
 android.sourceSets.getByName("main").assets.srcDir(layout.buildDirectory.dir("generated/ragAssets"))
-tasks.matching { it.name.startsWith("merge") && it.name.endsWith("Assets") }.configureEach { dependsOn(copyRagIndex) }
+tasks.matching { (it.name.startsWith("merge") && it.name.endsWith("Assets")) || it.name.contains("Lint", ignoreCase = true) }.configureEach { dependsOn(copyRagIndex) }
 
 kotlin {
     compilerOptions {
@@ -69,56 +69,39 @@ kotlin {
 }
 
 dependencies {
-    // Day 21: pure-JVM RAG indexing module (chunking, embeddings, JSON index store).
-    implementation(project(":rag"))
+    implementation(project(":core:common"))
+    implementation(project(":core:llm"))
+    implementation(project(":rag:core"))
+    implementation(project(":agent"))
 
     // Compose
-    implementation(platform("androidx.compose:compose-bom:2024.06.00"))
-    implementation("androidx.compose.ui:ui")
-    implementation("androidx.compose.ui:ui-graphics")
-    implementation("androidx.compose.ui:ui-tooling-preview")
-    implementation("androidx.compose.material3:material3")
-    implementation("androidx.compose.material:material-icons-core")
-    implementation("androidx.activity:activity-compose:1.9.0")
-    implementation("androidx.lifecycle:lifecycle-runtime-ktx:2.8.2")
-    implementation("androidx.lifecycle:lifecycle-viewmodel-compose:2.8.2")
-    debugImplementation("androidx.compose.ui:ui-tooling")
+    implementation(platform(libs.androidx.compose.bom))
+    implementation(libs.androidx.compose.ui)
+    implementation(libs.androidx.compose.ui.graphics)
+    implementation(libs.androidx.compose.ui.tooling.preview)
+    implementation(libs.androidx.compose.material3)
+    implementation(libs.androidx.compose.material.icons.core)
+    implementation(libs.androidx.activity.compose)
+    implementation(libs.androidx.lifecycle.runtime.ktx)
+    implementation(libs.androidx.lifecycle.viewmodel.compose)
+    implementation(libs.androidx.lifecycle.viewmodel.navigation3)
+    implementation(libs.androidx.navigation3.runtime)
+    implementation(libs.androidx.navigation3.ui)
+    debugImplementation(libs.androidx.compose.ui.tooling)
 
-    // Ktor client (plain REST calls, no Gemini SDK). Uses the OkHttp engine — the
-    // legacy Android engine has known issues where timeouts aren't reliably enforced,
-    // which can cause a stalled connection to hang forever instead of failing.
-    // Ktor 3.5.1 (bumped from 2.3.12 on Day 16) is the version the MCP Kotlin SDK
-    // (io.modelcontextprotocol:kotlin-sdk-client) is compiled against.
-    implementation("io.ktor:ktor-client-core:3.5.1")
-    implementation("io.ktor:ktor-client-okhttp:3.5.1")
-    implementation("io.ktor:ktor-client-content-negotiation:3.5.1")
-    implementation("io.ktor:ktor-serialization-kotlinx-json:3.5.1")
-    // Server-Sent Events plugin, required by the MCP SDK's StreamableHttpClientTransport.
-    implementation("io.ktor:ktor-sse:3.5.1")
-    implementation("org.jetbrains.kotlinx:kotlinx-serialization-json:1.7.3")
+    // Ktor client (plain REST calls, no Gemini SDK). The OkHttp engine is used because the
+    // legacy Android engine does not reliably enforce timeouts. Ktor 3.x is the version the
+    // MCP Kotlin SDK is compiled against.
+    implementation(libs.bundles.ktor.client)
+    implementation(libs.ktor.sse) // required by the MCP SDK's StreamableHttpClientTransport
+    implementation(libs.kotlinx.serialization.json)
 
-    implementation("androidx.core:core-ktx:1.13.1")
+    implementation(libs.androidx.core.ktx)
 
-    // Day 18: schedules the periodic workout-digest aggregation (see
-    // agent/workout/WorkoutDigestWorker.kt) so it keeps running in the background across app
-    // restarts/process death, without a dedicated always-on server.
-    implementation("androidx.work:work-runtime-ktx:2.9.1")
+    // Periodic workout-digest aggregation (see agent/workout/WorkoutDigestWorker.kt).
+    implementation(libs.androidx.work.runtime.ktx)
 
     // Markdown rendering for chat messages (wraps Markwon via an AndroidView TextView).
-    implementation("com.github.jeziellago:compose-markdown:0.7.2")
+    implementation(libs.compose.markdown)
 
-    // Day 16: MCP Kotlin SDK, used as an MCP *client* to connect to remote MCP servers
-    // (see app/src/main/java/com/example/geminichat/mcp/). Client-only artifact — no
-    // server-side APIs are pulled in.
-    implementation("io.modelcontextprotocol:kotlin-sdk-client:0.15.0")
-
-    // Unit tests for the agent layer (plain JVM, no Android/network dependency needed).
-    testImplementation("junit:junit:4.13.2")
-    testImplementation("org.jetbrains.kotlinx:kotlinx-coroutines-test:1.9.0")
-
-    // Day 16 MCP integration test only: an embedded MCP *server* (kotlin-sdk-server + the
-    // lightweight CIO engine) so KotlinSdkMcpGateway can be exercised end-to-end deterministically
-    // against a real (if minimal) local server instead of the public DeepWiki endpoint.
-    testImplementation("io.modelcontextprotocol:kotlin-sdk-server:0.15.0")
-    testImplementation("io.ktor:ktor-server-cio:3.5.1")
 }

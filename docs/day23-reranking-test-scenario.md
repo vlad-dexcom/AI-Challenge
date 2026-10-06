@@ -2,38 +2,38 @@
 
 ## 1. Юнит-тесты (без сети)
 ```bash
-./gradlew :rag:test :app:testDebugUnitTest
+./gradlew :rag:core:test :rag:tools:test :web-console:test :app:testDebugUnitTest
 ```
 Ожидается зелёное: `RerankingTest` (фильтр, эвристический и LLM-реранкер, rewrite и откаты, стадии конвейера, «ничего не прошло» без вызова LLM,
 sweep-метрики, кэши, `Judge`), `ChatApiTest` (поля фильтра/реранка/rewrite и `trace`), `RagAgentTest` (фильтр в приложении).
 
 ## 2. Sweep порога и topK (нужен `GEMINI_API_KEY`, один раз эмбеддит 40 вопросов; потом из кэша `rag/cache/`)
 ```bash
-./gradlew :rag:run --args="sweep --threshold 0.65 --before 10 --after 4"
+./gradlew :rag:tools:run --args="sweep --threshold 0.65 --before 10 --after 4"
 ```
 Ожидается: блок «Top-1 cosine similarity» (min в корпусе ≈ 0.698, вне корпуса до 0.596 и 0.731 у c10), таблицы по threshold/before/after и
 `rag/eval/sweep.{md,json}` на 144 строки; при threshold 0.65 — OOC отсечено 100%, зря отсечено 0%.
 
 ## 3. Один вопрос со стадиями
 ```bash
-./gradlew :rag:run --args='ask "What is the current men raw deadlift world record?" --mode rag --filter on --rerank on --before 10 --after 4 --threshold 0.65'
+./gradlew :rag:tools:run --args='ask "What is the current men raw deadlift world record?" --mode rag --filter on --rerank on --before 10 --after 4 --threshold 0.65'
 ```
 Ожидается: «Retrieved 10 -> filtered 0 -> reranked 0» и ответ «Not enough information: the knowledge base does not cover…» (LLM не вызывался).
 ```bash
-./gradlew :rag:run --args='ask "Сколько белка нужно для набора мышц?" --mode rag --filter on --rerank on --rewrite on'
+./gradlew :rag:tools:run --args='ask "Сколько белка нужно для набора мышц?" --mode rag --filter on --rerank on --rewrite on'
 ```
 Ожидается: `Search query:` на английском (protein/muscle…), источники из `08-nutrition…`, ответ на русском.
 
 ## 4. Сравнение режимов (реальный Gemini; первый прогон ~25 мин, повторный — из кэша `rag/cache/llm`)
 ```bash
-./gradlew :rag:run --args="modes-eval --threshold 0.65 --before 10 --after 4"
-./gradlew :rag:run --args="modes-eval --threshold 0.65 --before 10 --after 4 --questions rag/eval/questions-ru.json --report rag/eval/ru"
+./gradlew :rag:tools:run --args="modes-eval --threshold 0.65 --before 10 --after 4"
+./gradlew :rag:tools:run --args="modes-eval --threshold 0.65 --before 10 --after 4 --questions rag/eval/questions-ru.json --report rag/eval/ru"
 ```
 Ожидается: таблицы A–G как в `docs/day23-reranking.md` (цифры LLM-режимов могут слегка отличаться); файлы `modes-report.md/json`.
 
 ## 5. Веб-чат
 ```bash
-./gradlew :rag:run --args="ui"      # http://localhost:8080
+./gradlew :web-console:run      # http://localhost:8080
 ```
 1. Вкладка **Chat**: в настройках topK after 4, topK before 10, threshold 0.65, галочки filter и rerank включены, rewrite выключен.
 2. С RAG, вопрос c02 (pull-up progressions) → ответ, источники; раскрыть **Pipeline debug**: таблицы «Retrieved (cosine order)», «After filter», «Final (reranked)» с cosine и rerank score, `1 LLM call(s)`.

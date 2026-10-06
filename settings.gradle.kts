@@ -19,4 +19,9 @@ dependencyResolutionManagement {
 
 rootProject.name = "PersonalTrainer"
 include(":app")
-include(":rag")
+include(":core:common")
+include(":core:llm")
+include(":agent")
+include(":rag:core")
+include(":rag:tools")
+include(":web-console")

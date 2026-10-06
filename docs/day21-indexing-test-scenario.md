@@ -2,14 +2,14 @@
 
 ## 1. Юнит-тесты (без сети)
 ```bash
-./gradlew :rag:test
+./gradlew :rag:core:test :rag:tools:test :web-console:test
 ```
 Ожидается: все тесты зелёные (чанкеры, индекс/хранилище, отчёт, `GeminiEmbeddingClient` на MockEngine:
 батчинг, `taskType`, ретраи на 429, отсутствие ретраев на 400).
 
 ## 2. Офлайн-индексация
 ```bash
-./gradlew :rag:run --args="index --embedder offline"
+./gradlew :rag:tools:run --args="index --embedder offline"
 ```
 Ожидается: `17 documents, ~22000 words`, созданы `rag/index/fixed.json` и `rag/index/structure.json`
 (≈200 чанков каждый). В JSON у каждого чанка есть `chunkId`, `source`, `title`, `section`,
@@ -17,7 +17,7 @@
 
 ## 3. Сравнение
 ```bash
-./gradlew :rag:run --args="compare --embedder offline"
+./gradlew :rag:tools:run --args="compare --embedder offline"
 ```
 Ожидается таблица статистики (у `structure` доля «обрыв посреди предложения» заметно ниже, чем у
 `fixed`) и 8 sample-запросов; файл `rag/index/comparison-report.md` обновлён.
@@ -26,8 +26,8 @@
 ## 4. Реальные эмбеддинги Gemini (нужен ключ)
 ```bash
 export GEMINI_API_KEY=...
-./gradlew :rag:run --args="index --embedder gemini"
-./gradlew :rag:run --args="compare --embedder gemini"
+./gradlew :rag:tools:run --args="index --embedder gemini"
+./gradlew :rag:tools:run --args="compare --embedder gemini"
 ```
 Ожидается: `meta.embeddingModel = gemini-embedding-001`, `dimension = 768`; sample-запросы чаще
 возвращают нужную статью на первых местах, чем офлайн-эмбеддер. Индексы пишутся в `rag/index/`
@@ -35,8 +35,8 @@ export GEMINI_API_KEY=...
 
 ### 4a. Eval
 ```bash
-./gradlew :rag:run --args="eval --embedder offline"   # без ключа
-./gradlew :rag:run --args="eval --embedder gemini"    # нужен ключ и gemini-индексы
+./gradlew :rag:tools:run --args="eval --embedder offline"   # без ключа
+./gradlew :rag:tools:run --args="eval --embedder gemini"    # нужен ключ и gemini-индексы
 ```
 Ожидается: таблица hit@1/3/5, MRR, средние top-1 score (in-corpus выше out-of-corpus), список промахов;
 файл `rag/eval/report-<embedder>.md`. Ориентиры: gemini hit@3 ≈ 96%, offline ≈ 70–77%. Эмбеддер, не совпадающий с
@@ -44,7 +44,7 @@ export GEMINI_API_KEY=...
 
 ## 5. Визуализатор чанков (ручной)
 ```bash
-./gradlew :rag:run --args="ui"
+./gradlew :web-console:run
 ```
 1. Откройте http://localhost:8080, выберите файл `01-squat-technique.md` в списке — текст загрузится и
    сразу разобьётся.

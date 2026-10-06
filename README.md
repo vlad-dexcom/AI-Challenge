@@ -1,12 +1,12 @@
 # Personal Trainer
 
-A minimal Android app with a single `ChatScreen` (Jetpack Compose) where a user's message is
+A small Android app (Jetpack Compose + Navigation 3) where a user's message is
 handled by an **agent** (not a bare API call) that talks to the Gemini API and returns a reply.
 
 - **No Gemini SDK** — plain REST calls via [Ktor](https://ktor.io) client (`GeminiApiClient.kt`).
-- **UI**: Jetpack Compose. Main chat screen (`ChatScreen.kt`) plus a dedicated Settings screen
-  (model + profile) and a Branch bottom sheet, reached via the chat screen's app bar; state held
-  in `ChatViewModel`.
+- **UI**: Jetpack Compose with Navigation 3. Separate screens for Chat, Settings, Profile,
+  Invariants, Memory, Task and MCP (see "Navigation" below); the branch switcher is a bottom
+  sheet on the chat screen. Each screen has its own ViewModel over a shared `ChatController`.
 - **Model**: selectable per-message, defaults to `gemini-3.5-flash`.
 - **Endpoint**: `POST https://generativelanguage.googleapis.com/v1beta/interactions`
   (Google's current recommended [Interactions API](https://ai.google.dev/api/interactions-api),
@@ -322,7 +322,7 @@ a manual test walkthrough.
 - **`agent/AgentCatalog.kt`** — new **"Orchestrator Coach (multi-server MCP)"** persona whose
   system instruction lists all 7 tools with their owning server and explicitly warns against
   confusing similarly-named/-themed tools across servers.
-- **`ChatViewModel.buildAgent`** — the orchestrator persona is backed by `McpToolCallingAgent`
+- **`ChatController.buildAgent`** — the orchestrator persona is backed by `McpToolCallingAgent`
   wired to a `CompositeMcpGateway` over `fitnessMcpGateway` (wger), `workoutMcpGateway` (Day 18)
   and `workoutPlannerMcpGateway` (Day 19) — no other agent code changes.
 - **`mcp/CompositeMcpGatewayTest.kt`** — tool aggregation/routing and graceful degradation when a
@@ -335,7 +335,7 @@ a manual test walkthrough.
 ## Document indexing (Day 21)
 
 First step of RAG week: a local, searchable index over a document corpus. The new pure Kotlin/JVM
-module `:rag` (no Android deps; `:app` depends on it) implements chunking → embeddings → JSON index.
+modules `:rag:core` (pipeline) and `:rag:tools` (CLI/evals), no Android deps implements chunking → embeddings → JSON index.
 See `docs/day21-indexing.md` for the design and the strategy comparison, and
 `docs/day21-indexing-test-scenario.md` for a walkthrough.
 
@@ -348,7 +348,7 @@ See `docs/day21-indexing.md` for the design and the strategy comparison, and
   `HashingEmbeddingClient` for tests/demos.
 - **Index** — `VectorIndex` + `IndexStore` JSON files (`rag/index/fixed.json`, `structure.json`) with
   metadata (model, dimension, strategy, created time, source corpus).
-- **Chunk visualiser** — `./gradlew :rag:run --args="ui"` serves a local page (http://localhost:8080)
+- **Chunk visualiser** — `./gradlew :web-console:run` serves a local page (http://localhost:8080)
   showing both chunkers side by side over a pasted/corpus text with tunable parameters, per-chunk
   metadata, stats and a top-k search over the saved indexes.
 - **Index inspection** — in the same UI, *Inspect index* runs a pass/fail checklist on a saved index
@@ -356,17 +356,17 @@ See `docs/day21-indexing.md` for the design and the strategy comparison, and
   the corpus) and *Embedder ping* sanity-checks the embedder matching the index (offline hashing is
   labelled lexical-only).
 - **Retrieval eval** — `rag/eval/questions.json` (30 questions: direct, paraphrased, 4 out-of-corpus) and
-  `./gradlew :rag:run --args="eval"` → hit@1/3/5, MRR, top-1 score stats, report in `rag/eval/`.
+  `./gradlew :rag:tools:run --args="eval"` → hit@1/3/5, MRR, top-1 score stats, report in `rag/eval/`.
   With real Gemini embeddings: hit@3 96% (both strategies); the structure chunker's `section` metadata matches
   the answer far more often (section hit@3 92% vs 73%). See `docs/day21-indexing.md`.
 - `rag/index/` holds the Gemini-embedded indexes; `rag/index-offline/` the lexical-only offline ones.
   Retriever/reranker come in Days 22-23.
 
 ```
-./gradlew :rag:test
-./gradlew :rag:run --args="index"      # GEMINI_API_KEY from env or local.properties; add --embedder offline for no network (uses rag/index-offline)
-./gradlew :rag:run --args="eval"         # retrieval eval over rag/eval/questions.json
-./gradlew :rag:run --args="compare"    # writes rag/index/comparison-report.md
+./gradlew :rag:core:test :rag:tools:test :web-console:test
+./gradlew :rag:tools:run --args="index"      # GEMINI_API_KEY from env or local.properties; add --embedder offline for no network (uses rag/index-offline)
+./gradlew :rag:tools:run --args="eval"         # retrieval eval over rag/eval/questions.json
+./gradlew :rag:tools:run --args="compare"    # writes rag/index/comparison-report.md
 ```
 
 ## First RAG query (Day 22)
@@ -378,21 +378,21 @@ See `docs/day22-rag-query.md` (design, results) and `docs/day22-rag-query-test-s
   add thresholds/reranking), `RagPromptBuilder` (numbered `[file > section]` context, cite `[n]`, admit when the
   context lacks the answer), `RagPipeline` (`NO_RAG` / `RAG` / `compare`), `TextGenerator` +
   `GeminiTextGenerator` (plain REST).
-- **Chat web UI (Day 22+)** — `./gradlew :rag:run --args="ui"` → *Chat* tab: With RAG / Without RAG / Compare, sources and
+- **Chat web UI (Day 22+)** — `./gradlew :web-console:run` → *Chat* tab: With RAG / Without RAG / Compare, sources and
   retrieved chunks under RAG answers, control-question dropdown, topK/index/model settings. History is shown but not yet
   used for answering (Day 25). API: `POST /api/chat` (`Chat.kt`). See `docs/day22-rag-query.md`.
 - **Agent** — "Knowledge Coach (RAG)" in the app (`agent/rag/RagAgent`): chips *With RAG / Without RAG / Compare*
   in Settings, sources listed under the answer; the structure index is bundled as an asset (`copyRagIndex`).
-- **CLI** — `./gradlew :rag:run --args='ask "<question>"'` (both modes) and `--args="rag-eval"`.
+- **CLI** — `./gradlew :rag:tools:run --args='ask "<question>"'` (both modes) and `--args="rag-eval"`.
 - **Control set** — `rag/eval/control-questions.json`: 10 questions with expected facts and sources
   (6 corpus-specific, 2 common, 2 out-of-corpus). Real Gemini run: expected facts 19/34 without RAG vs
   34/34 with RAG; both out-of-corpus questions answered honestly only with RAG. Results (`rag/eval/control-results.json`,
   `control-report.md`) and the manually judged table are in `docs/day22-rag-query.md`.
 
 ```
-./gradlew :rag:test :app:testDebugUnitTest
-./gradlew :rag:run --args='ask "What are the pull-up progressions?" --mode both'
-./gradlew :rag:run --args="rag-eval"
+./gradlew :rag:core:test :rag:tools:test :web-console:test
+./gradlew :rag:tools:run --args='ask "What are the pull-up progressions?" --mode both'
+./gradlew :rag:tools:run --args="rag-eval"
 ```
 
 ## Reranking, filtering and query rewrite (Day 23)
@@ -402,8 +402,8 @@ optional LLM **query rewrite** (the answer still uses the original question). Pl
 `RagConfig.DEFAULT` = threshold 0.65, top-10 → top-4, filter + heuristic rerank, rewrite off (chosen from a documented sweep).
 When the filter rejects everything the model is not called ("not enough information" result).
 
-- `./gradlew :rag:run --args="sweep"` — threshold × topK grid on the 30-question eval set (no LLM) → `rag/eval/sweep.md`.
-- `./gradlew :rag:run --args="modes-eval"` — no RAG / plain / +filter / +rerank / +rewrite / all on eval + control sets with real Gemini
+- `./gradlew :rag:tools:run --args="sweep"` — threshold × topK grid on the 30-question eval set (no LLM) → `rag/eval/sweep.md`.
+- `./gradlew :rag:tools:run --args="modes-eval"` — no RAG / plain / +filter / +rerank / +rewrite / all on eval + control sets with real Gemini
   (LLM-judged, clearly labelled) → `rag/eval/modes-report.md`. Caches in git-ignored `rag/cache/`.
 - `ask "…" --filter on --rerank on --rewrite on` and the web UI **Chat** tab (toggles, thresholds, *Pipeline debug* view).
 - Result (26 in-corpus questions): hit@1 88.5% → 96.2% with rerank, 100% with LLM rerank + rewrite; the filter makes refusals deterministic and saved
@@ -417,7 +417,7 @@ verifies every quote (normalised substring of a retrieved chunk) and every cited
 become an **"I don't know"** (also when no chunk passes the threshold or the model says `answerable=false`), in the user's language, with one clarifying question.
 `RagAnswer.structured` carries the result; the web chat shows sources, ✓/⚠ quotes and the verification report; the `Knowledge Coach (RAG)` agent shows sources + quotes.
 
-- `./gradlew :rag:run --args="citations-eval"` — 12 questions (control set + 2 Russian) with real Gemini → `rag/eval/citations-report.{md,json}`
+- `./gradlew :rag:tools:run --args="citations-eval"` — 12 questions (control set + 2 Russian) with real Gemini → `rag/eval/citations-report.{md,json}`
   (automatic checks in code; meaning-vs-quotes is LLM-judged and labelled so, plus manual verdicts).
 - Result: sources and verbatim quotes in 9/9 answers, "I don't know" exactly on the 3 out-of-corpus questions (including c10, above the cosine threshold).
   Small set, one author — see [docs/day24-citations.md](docs/day24-citations.md) and [the test scenario](docs/day24-citations-test-scenario.md).
@@ -429,9 +429,9 @@ fixed constraints, open questions, change log; conservative merge rules, editabl
 the Day 24 structured answers (sources and verified quotes on every answer, "I don't know" keeps the goal) and a context budget (last N turns verbatim + rolling summary; memory never truncated).
 
 ```bash
-./gradlew :rag:run --args="ui"                 # Chat tab -> "Chat with task memory (Day 25)"
-./gradlew :rag:run --args="chat"               # CLI REPL
-./gradlew :rag:run --args="scenarios-eval"     # two 13-turn scenarios x FULL / HISTORY_ONLY / NONE -> rag/eval/scenarios-report.{md,json}
+./gradlew :web-console:run                 # Chat tab -> "Chat with task memory (Day 25)"
+./gradlew :rag:tools:run --args="chat"               # CLI REPL
+./gradlew :rag:tools:run --args="scenarios-eval"     # two 13-turn scenarios x FULL / HISTORY_ONLY / NONE -> rag/eval/scenarios-report.{md,json}
 ```
 Details, results and caveats (2 scenarios, one run, same-model judge): [docs/day25-rag-chat.md](docs/day25-rag-chat.md), manual steps: [docs/day25-rag-chat-test-scenario.md](docs/day25-rag-chat-test-scenario.md).
 
@@ -452,42 +452,61 @@ Details, results and caveats (2 scenarios, one run, same-model judge): [docs/day
    ```
    ./gradlew installDebug
    ```
-4. Run the agent unit tests:
+4. Run all tests (and the KMP-readiness guard via `check`):
    ```
-   ./gradlew testDebugUnitTest
+   ./gradlew test        # or: ./gradlew check
    ```
 
 ## Project layout
 
-- `agent/` — the agent abstraction: `Agent`, `AgentConfig`/`AgentCatalog`, `AgentRequest`/
-  `AgentResponse`/`AgentMessage`, `LlmClient`/`LlmRequestSpec`, `TokenUsage`/`TokenEstimator`,
-  `ContextWindowExceededException`, and the `LlmAgent` implementation.
-- `agent/memory/` — the Day 11 memory layers (`MemoryLayer`, `MemoryItem`/`MemorySnapshot`,
-  `MemoryRouter`, `MemoryAssembler`, `LongTermMemoryStore`/`WorkingMemoryStore`).
-- `agent/profile/` — the Day 12 personalization profile (`UserProfile`, `ProfileRenderer`,
-  `UserProfileStore`, `PreferenceAdvisor`).
-- `agent/task/` — the Day 13 task state machine (`TaskState`, `TaskStateMachine`,
-  `TaskStateRenderer`, `TaskStateStore`, `TaskStateAdvisor`).
-- `agent/invariant/` — the Day 14 hard invariants (`Invariant`, `InvariantSet`/`InvariantRules`,
-  `InvariantRenderer`, `InvariantGuard`, `InvariantStore`).
-- `agent/planner/` — the Day 19 "Workout Plan Builder" pipeline data (`ExerciseCatalog`,
-  `WorkoutPlanBuilder`, `SavedWorkoutPlan`/`SavedWorkoutPlanStore`).
-- `mcp/` — the Day 16 MCP client (`McpGateway`/`KotlinSdkMcpGateway`, `McpToolMapper`,
-  `McpConnectionController`, `McpViewModel`, `McpScreen`), extended in Day 17 with
-  `McpGateway.callTool`; Day 18 adds the local, no-network `LocalWorkoutMcpGateway`, Day 19 adds
-  the local, three-tool-pipeline `LocalWorkoutPlannerMcpGateway`.
-- `agent/mcp/` — Day 17 client-side tool-calling: `ToolCallingLlmClient`, `McpToolCallingAgent`.
-- `agent/rag/` — Day 22 `RagAgent` (With RAG / Without RAG / Compare) over the `:rag` pipeline (Day 23: `RagConfig.DEFAULT` filter + rerank).
-- `rag/` (Gradle module `:rag`) — Day 21 indexing (+ Day 22 `Retriever`, `RagPromptBuilder`, `RagPipeline`, `TextGenerator`, `ControlSet`, CLI `ask`/`rag-eval`; Day 23 `RagConfig`, `ThresholdFilter`, `HeuristicReranker`/`LlmReranker`, `LlmQueryRewriter`, `Judge`, caches, CLI `sweep`/`modes-eval`): `Chunker`s, `EmbeddingClient`s, `VectorIndex`/`IndexStore`,
-  `Indexer`, comparison report and CLI (`Main.kt`); `rag/corpus/`, `rag/eval/`, `rag/index/` (Gemini) and `rag/index-offline/` hold the data.
-- `GeminiModels.kt` — kotlinx.serialization request/response DTOs for the Gemini Interactions
-  API, including `system_instruction` and `generation_config`.
-- `GeminiApiClient.kt` — Ktor `HttpClient` wrapper implementing `LlmClient`; POSTs the request
-  and parses the `model_output` step's text.
-- `ChatViewModel.kt` — holds chat messages/input/loading state, delegates to the current `Agent`.
-- `ChatScreen.kt` — the chat screen (message list + input + send button, memory panel, branch
-  bottom sheet trigger) plus the Settings screen (model picker, personalization profile).
-- `MainActivity.kt` — hosts `ChatScreen`.
+Gradle modules (everything except `:app` is Android-free and written to be moved to Kotlin
+Multiplatform later; `./gradlew checkKmpReadiness` fails if `java.*`/`android.*` APIs leak into
+`core/*`, `rag/core` or `agent` outside a `platform` package):
+
+```mermaid
+graph TD
+  app[":app — Android UI, Navigation 3, per-screen ViewModels, WorkManager"] --> agent
+  agent[":agent — agents, memory/profile/task/invariants, MCP gateways, ChatController"] --> ragcore
+  agent --> llm
+  ragcore[":rag:core — chunking, index, retrieval, RAG chat engine"] --> llm
+  llm[":core:llm — Gemini REST client, LlmClient/EmbeddingClient"] --> common
+  ragcore --> common
+  common[":core:common — kotlinx-io file helpers, time/uuid, platform seams"]
+  ragtools[":rag:tools — CLI, evals, comparison"] --> ragcore
+  web[":web-console — local web UI (chat + chunk visualiser)"] --> ragtools
+```
+
+- `core/common` — `io/Files.kt` (kotlinx-io `Path` helpers), `time/Time.kt` (`nowMillis`, `newId`),
+  `platform/` (the only place allowed to touch JVM APIs: HTTP engine, Unicode normalization, `File` bridge).
+- `core/llm` — `LlmClient`, `GeminiApiClient`, `GeminiModels`, `EmbeddingClient`/`GeminiEmbeddingClient`, `TextGenerator`.
+- `rag/core` — Day 21–25 RAG: `Chunker`s, `VectorIndex`/`IndexStore`, `Retriever`, `RagPipeline`,
+  `Citations`, `chat/` (`ChatEngine`, `SessionStore`, `TaskMemory`); shared test fixtures in `testFixtures`.
+- `rag/tools` — CLI (`./gradlew :rag:tools:run --args="index|eval|compare|ask|chat|..."`), evals, sweeps.
+- `web-console` — `./gradlew :web-console:run [--args="--port 8080"]`, the former `ui` command.
+- `rag/corpus`, `rag/eval`, `rag/index`, `rag/index-offline`, `rag/sessions` — data (not a Gradle module).
+- `agent` — `agent/` (`Agent`, `AgentConfig`/`AgentCatalog`, `LlmAgent`, `TokenEstimator`), `agent/memory/`
+  (Day 11), `agent/profile/` (Day 12), `agent/task/` (Day 13/15), `agent/invariant/` (Day 14), `agent/planner/`
+  (Day 19), `agent/mcp/` (Day 17 `McpToolCallingAgent`), `agent/rag/` (Day 22 `RagAgent`), `agent/workout/`
+  (Day 18 data), `mcp/` (MCP gateways), `ChatHistoryStore`, and **`ChatController`** — the former
+  `ChatViewModel` logic as a plain class (state in `ChatUiState`, per-screen projections in `ChatUiSlices.kt`).
+- `app` — `MainActivity`, `GeminiChatApplication`/`AppGraph` (wires stores to `filesDir`, assets),
+  `ui/<feature>/` (screen + ViewModel per feature), `ui/navigation/AppNavigation.kt`, `mcp/McpScreen.kt`,
+  `agent/workout/` Worker/Scheduler (WorkManager).
+- `mcp-server/` — Firebase Functions MCP server (TypeScript).
+
+### Navigation (Navigation 3)
+
+`ChatKey` is the start destination. Back stack entries are `@Serializable NavKey`s; every entry
+gets its own ViewModel store.
+
+```mermaid
+graph LR
+  Chat --> Settings --> Profile
+  Settings --> Invariants
+  Chat --> Memory
+  Chat --> Task
+  Chat --> MCP
+```
 
 ## Adding a new agent persona
 

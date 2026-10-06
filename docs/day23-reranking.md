@@ -30,7 +30,7 @@
 задел под structured output Day 24.
 
 ## Подбор параметров (sweep, без LLM)
-`./gradlew :rag:run --args="sweep"` → `rag/eval/sweep.md`/`sweep.json`: сетка threshold × topK-before × topK-after × rerank
+`./gradlew :rag:tools:run --args="sweep"` → `rag/eval/sweep.md`/`sweep.json`: сетка threshold × topK-before × topK-after × rerank
 (144 строки) на 30 вопросах `rag/eval/questions.json` (26 из корпуса + 4 вне). Эмбеддинги вопросов кэшируются в `rag/cache/`
 (в git не попадает). «Правильный» чанк — из ожидаемого файла (как в Day 21). Precision = доля оставшихся чанков из ожидаемого файла.
 
@@ -58,7 +58,7 @@ c10 (0.731) порог не поймает никакой — это темат�
 Оставлено **4** (как в Day 22, сопоставимость; 3 — чуть точнее, но у перефразированных вопросов меньше запас).
 
 ## Сравнение режимов (реальный Gemini: `gemini-3.5-flash` + `gemini-embedding-001`, structure-индекс, один прогон)
-`./gradlew :rag:run --args="modes-eval --threshold 0.65 --before 10 --after 4"` → `rag/eval/modes-report.{md,json}`
+`./gradlew :rag:tools:run --args="modes-eval --threshold 0.65 --before 10 --after 4"` → `rag/eval/modes-report.{md,json}`
 (в json — все ответы и причины вердиктов). Метрики поиска — 26 вопросов из корпуса (hit@k по ожидаемому файлу среди чанков,
 попавших в промпт; при topK-after=4 hit@5 = hit@4); ответы — 10 контрольных вопросов Day 22 + 4 вопроса вне корпуса из eval-набора
 (6 вне корпуса всего). B/C/… — те же вопросы, разные стадии. Режимы: A без RAG; B обычный RAG top-4 (Day 22); C +фильтр; D +реранк

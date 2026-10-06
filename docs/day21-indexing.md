@@ -43,10 +43,10 @@ Ktor/kotlinx-serialization той же версии, что и в `:app`.
 ## Запуск
 ```bash
 export GEMINI_API_KEY=...            # или строка в local.properties
-./gradlew :rag:run --args="index"    # rag/index/fixed.json + structure.json (gemini)
-./gradlew :rag:run --args="compare"  # печатает и пишет rag/index/comparison-report.md
-./gradlew :rag:run --args="eval"     # retrieval eval, rag/eval/report-gemini.md
-./gradlew :rag:test
+./gradlew :rag:tools:run --args="index"    # rag/index/fixed.json + structure.json (gemini)
+./gradlew :rag:tools:run --args="compare"  # печатает и пишет rag/index/comparison-report.md
+./gradlew :rag:tools:run --args="eval"     # retrieval eval, rag/eval/report-gemini.md
+./gradlew :rag:core:test :rag:tools:test :web-console:test
 ```
 `--embedder offline` — без сети и ключа (только лексика, не семантическая модель); по умолчанию пишет/читает
 `rag/index-offline/`, а gemini — `rag/index/` (переопределяется `--out`). Без ключа `--embedder` по умолчанию = offline.
@@ -54,7 +54,7 @@ export GEMINI_API_KEY=...            # или строка в local.properties
 ## Визуализатор чанков (UI)
 
 ```bash
-./gradlew :rag:run --args="ui"        # http://localhost:8080 (--port, --corpus, --out)
+./gradlew :web-console:run        # http://localhost:8080 (--port, --corpus, --out)
 ```
 Локальная страница (JDK `com.sun.net.httpserver`, loopback, одна статическая HTML+JS, без сборки):
 - вход: вставленный текст/markdown или файл из `rag/corpus/`;
@@ -122,8 +122,8 @@ hit@k/MRR). Для каждого in-corpus вопроса указан `expecte
 должно встречаться в заголовке этого файла (проверяется автоматически, тест `EvalTest` валидирует файл против корпуса).
 
 ```bash
-./gradlew :rag:run --args="eval"                                   # оба индекса, эмбеддер = gemini при наличии ключа
-./gradlew :rag:run --args="eval --embedder offline --k 5 --strategy structure"
+./gradlew :rag:tools:run --args="eval"                                   # оба индекса, эмбеддер = gemini при наличии ключа
+./gradlew :rag:tools:run --args="eval --embedder offline --k 5 --strategy structure"
 ```
 Для каждого индекса: hit@1/3/5, MRR (по чанкам; hit = среди top-k есть чанк из ожидаемого файла), section hit@3
 (чанк ещё и из секции с ключевым словом), hit@3 отдельно для direct/paraphrase, средний top-1 score для

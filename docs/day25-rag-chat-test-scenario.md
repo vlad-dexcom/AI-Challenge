@@ -2,13 +2,13 @@
 
 ## 1. Юнит-тесты (без сети)
 ```bash
-./gradlew :rag:test :app:testDebugUnitTest
+./gradlew :rag:core:test :rag:tools:test :web-console:test :app:testDebugUnitTest
 ```
 Ожидается зелёное: правила памяти (добавление, коррекция, цель не теряется, сброс), парсер/фолбэк экстрактора, бюджет истории и сводка, ход диалога, персистентность, `SessionApi`, раннер сценариев, JS-тест страницы.
 
 ## 2. Веб-чат (нужен `GEMINI_API_KEY` в `local.properties`)
 ```bash
-./gradlew :rag:run --args="ui"      # http://localhost:8080 → вкладка Chat, режим «Chat with task memory»
+./gradlew :web-console:run      # http://localhost:8080 → вкладка Chat, режим «Chat with task memory»
 ```
 Диалоги можно вводить по-русски (основной вариант ниже) или по-английски (оригиналы — в свёрнутых блоках). Корпус **английский**: ответы приходят по-русски, но цитаты остаются на английском;
 память задачи (цель, ограничения) экстрактор хранит по-английски (`injury: knee injury`, `diet: vegetarian`) — это нормально.
@@ -71,11 +71,11 @@
 
 ## 3. CLI
 ```bash
-./gradlew :rag:run --args="chat"    # /memory, /goal <text>, /reset, /new, /sessions, /quit
+./gradlew :rag:tools:run --args="chat"    # /memory, /goal <text>, /reset, /new, /sessions, /quit
 ```
 
 ## 4. Автоматический прогон сценариев (живой Gemini, кэшируется в rag/cache/llm)
 ```bash
-./gradlew :rag:run --args="scenarios-eval --variants full,history-only,none --delay-ms 0"
+./gradlew :rag:tools:run --args="scenarios-eval --variants full,history-only,none --delay-ms 0"
 ```
 Результат: `rag/eval/scenarios-report.{md,json}` (таблица по ходам, абляция, ручные вердикты из `rag/eval/scenarios-manual.json`). Первый прогон ≈ 10–25 минут; при лимитах увеличьте `--delay-ms`.

@@ -36,10 +36,10 @@ Day 23 — реранкинг/фильтрация по порогу (сегод
 ## CLI
 
 ```bash
-./gradlew :rag:run --args='ask "How do I fix a deadlift where the bar drifts forward?"'          # оба режима
-./gradlew :rag:run --args='ask "..." --mode rag --k 5 --strategy structure'
-./gradlew :rag:run --args='rag-eval'     # 10 контрольных вопросов в обоих режимах → rag/eval/control-results.json, control-report.md
-./gradlew :rag:test
+./gradlew :rag:tools:run --args='ask "How do I fix a deadlift where the bar drifts forward?"'          # оба режима
+./gradlew :rag:tools:run --args='ask "..." --mode rag --k 5 --strategy structure'
+./gradlew :rag:tools:run --args='rag-eval'     # 10 контрольных вопросов в обоих режимах → rag/eval/control-results.json, control-report.md
+./gradlew :rag:core:test :rag:tools:test :web-console:test
 ```
 Нужен `GEMINI_API_KEY` (env или `local.properties`, в git не попадает).
 
@@ -90,7 +90,7 @@ RAG-ответы везде содержат ссылки `[n]`; на вопро
 
 ## Веб-чат (Day 22+): с RAG / без RAG / сравнение
 
-Вкладка **Chat** в веб-сервере `ui` (`./gradlew :rag:run --args="ui"` → http://localhost:8080; нужен `GEMINI_API_KEY` в env или `local.properties`).
+Вкладка **Chat** в веб-сервере `ui` (`./gradlew :web-console:run` → http://localhost:8080; нужен `GEMINI_API_KEY` в env или `local.properties`).
 Это первый чат-UI: основа для Day 25 (мини-чат с памятью и всегда видимыми источниками).
 
 - **Режимы:** *With RAG*, *Without RAG*, *Compare* (один вопрос → два ответа рядом: без RAG слева, с RAG справа).
@@ -107,20 +107,20 @@ RAG-ответы везде содержат ссылки `[n]`; на вопро
   с понятным текстом. `GET /api/chat/config` — индексы, значения по умолчанию, контрольные вопросы, настроен ли ключ.
 - **Точки расширения (чат отделён от пайплайна):** код — `Chat.kt` (`ChatApi`, `ChatRequest`, `ChatTurn` с `debug`-картой и источниками/чанками,
   `PipelineProvider` — «подготовка контекста»: на Day 23 сюда подключаются rewrite/порог/rerank через другой `Retriever`, на Day 25 — память);
-  фронтенд — `rag/src/main/resources/ui/index.html` (вкладка Chat, только fetch к `/api/chat`). Порогов, rerank, rewrite, цитат и памяти здесь **нет**.
-- **Markdown:** ответы модели и тексты чанков рендерятся самописным рендерером `rag/src/main/resources/ui/markdown.js` (без зависимостей и CDN,
+  фронтенд — `web-console/src/main/resources/ui/index.html` (вкладка Chat, только fetch к `/api/chat`). Порогов, rerank, rewrite, цитат и памяти здесь **нет**.
+- **Markdown:** ответы модели и тексты чанков рендерятся самописным рендерером `web-console/src/main/resources/ui/markdown.js` (без зависимостей и CDN,
   отдаётся сервером как `/ui/markdown.js`): заголовки, **жирный**/*курсив*, `код` и блоки кода, вложенные списки, таблицы, цитаты, ссылки, `---`,
   абзацы/переносы. Безопасность: весь текст экранируется до добавления разметки, наружу попадают только теги, которые генерирует сам рендерер;
   ссылки только `http(s)://`/`mailto:` (`target=_blank rel="noopener noreferrer"`), картинки и сырой HTML показываются как текст. Маркеры `[1]` остаются
-  обычным текстом; ошибки и предупреждение «not found» — простой текст. Проверка: `node rag/src/test/js/markdown.test.js` (формат + XSS-пэйлоады
-  `<script>`, `<img onerror>`, `javascript:` и т. п.; в `:rag:test` не входит, нужен Node) и Kotlin-тест, что страница отдаёт рендерер и не вставляет ответ без него.
+  обычным текстом; ошибки и предупреждение «not found» — простой текст. Проверка: `node web-console/src/test/js/markdown.test.js` (формат + XSS-пэйлоады
+  `<script>`, `<img onerror>`, `javascript:` и т. п.; в `:rag:core:test :rag:tools:test :web-console:test` не входит, нужен Node) и Kotlin-тест, что страница отдаёт рендерер и не вставляет ответ без него.
 - **Проверено:** `ChatApiTest` (три режима, источники/чанки, not-found, пробрасывание модели, ошибка LLM, 400/404, нет ключа, конфиг, страница);
   вручную в headless Chrome (puppeteer-core) на живом Gemini: Compare по контрольному вопросу c09, затем тот же вопрос в режиме RAG — отрисовка
   двух колонок, источников, раскрывающихся чанков и отправки по Enter подтверждена скриншотами. Не проверялось: другие браузеры, мобильная вёрстка,
   ответы с длинным Markdown (ответ показывается как простой текст, без рендера Markdown).
 
 ## Тесты
-- `:rag:test` — `RagPipelineTest` (retriever top-k и проверка модели эмбеддингов, нумерация источников в промпте, NO_RAG не ходит в поиск,
+- `:rag:core:test :rag:tools:test :web-console:test` — `RagPipelineTest` (retriever top-k и проверка модели эмбеддингов, нумерация источников в промпте, NO_RAG не ходит в поиск,
   RAG кладёт чанки в промпт, compare, ошибки, `GeminiTextGenerator` на MockEngine: разбор, systemInstruction, ретрай 429, нет ретрая 400),
   `ControlSetTest` (10 вопросов валидны против корпуса, категории, подсчёт групп, признание «нет информации», покрытие разделов).
 - `ChatApiTest` — эндпоинт `/api/chat` (см. выше).

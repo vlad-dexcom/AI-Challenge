@@ -16,7 +16,7 @@ like extra-careful review. -->
 ## Testing
 
 <!-- How did you verify this works? e.g.:
-- `./gradlew testDebugUnitTest`
+- `./gradlew check`
 - `./gradlew assembleDebug` / `./gradlew installDebug`
 - Manual steps taken in the app
 -->
@@ -29,7 +29,7 @@ recording. Delete this section if not applicable. -->
 ## Checklist
 
 - [ ] Tests added/updated where appropriate
-- [ ] `./gradlew testDebugUnitTest` passes
+- [ ] `./gradlew check` passes
 - [ ] Documentation (README, code comments) updated if behavior changed
 - [ ] No unrelated changes bundled in
 

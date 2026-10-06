@@ -1,5 +1,8 @@
 package com.example.geminichat.agent.workout
 
+import com.example.core.platform.toKxPath
+
+import com.example.core.time.nowMillis
 import android.content.Context
 import android.util.Log
 import androidx.work.CoroutineWorker
@@ -30,14 +33,14 @@ class WorkoutDigestWorker(
     override suspend fun doWork(): Result = withContext(Dispatchers.IO) {
         Log.i(TAG, "doWork started (runAttemptCount=$runAttemptCount)")
         try {
-            val logStore = WorkoutLogStore(File(applicationContext.filesDir, WorkoutLogStore.FILE_NAME))
+            val logStore = WorkoutLogStore(File(applicationContext.filesDir, WorkoutLogStore.FILE_NAME).toKxPath())
             val summaryStore =
-                WorkoutSummaryStore(File(applicationContext.filesDir, WorkoutSummaryStore.FILE_NAME))
+                WorkoutSummaryStore(File(applicationContext.filesDir, WorkoutSummaryStore.FILE_NAME).toKxPath())
 
             val logs = logStore.loadAll()
             val summary = WorkoutDigestAggregator.aggregate(
                 logs = logs,
-                nowEpochMillis = System.currentTimeMillis()
+                nowEpochMillis = nowMillis()
             )
             summaryStore.save(summary)
             Log.i(
