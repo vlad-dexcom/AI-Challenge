@@ -22,5 +22,6 @@ dependencies {
 
     testImplementation(testFixtures(project(":rag:core")))
     testImplementation(libs.junit)
+    testImplementation(libs.ktor.client.mock)
     testImplementation(libs.kotlinx.coroutines.test)
 }
