@@ -36,7 +36,7 @@ data class SendMessageRequest(val text: String, val options: ChatOptions = ChatO
  * Session endpoints of the web UI (HTTP plumbing stays in `UiServer`):
  * GET/POST /api/sessions, GET/DELETE /api/sessions/{id}, POST /api/sessions/{id}/messages,
  * PUT /api/sessions/{id}/memory, POST /api/sessions/{id}/memory/reset, POST /api/sessions/{id}/reset.
- * The server handles one request at a time (JDK HttpServer default executor), so a session is never written concurrently.
+ * `UiApi` serialises all session calls (the server itself is multi-threaded), so a session is never written concurrently.
  */
 class SessionApi(
     private val store: SessionStore,
@@ -44,6 +44,7 @@ class SessionApi(
     private val apiKey: String,
     private val embedderFor: (IndexMeta) -> EmbeddingClient?,
     private val generatorFor: (String) -> TextGenerator?,
+    private val local: LocalRag? = null,
 ) {
     private val json = Json { ignoreUnknownKeys = true; encodeDefaults = true }
 
@@ -102,13 +103,17 @@ class SessionApi(
         if (o.strategy !in listOf("fixed", "structure")) throw ApiException(400, "Unknown strategy '${o.strategy}'")
         if (o.model?.let { !MODEL_RE.matches(it) } == true) throw ApiException(400, "Invalid model name")
 
-        val file = File(indexDir, "${o.strategy}.json")
-        if (!file.isFile) throw ApiException(404, "No saved index for '${o.strategy}'. Run: ./gradlew :rag:run --args=\"index\"")
+        val useLocal = o.provider == ChatApi.LOCAL || o.provider == ChatApi.HYBRID
+        val localAnswer = o.provider == ChatApi.LOCAL
+        if (!useLocal && o.provider != "gemini") throw ApiException(400, "Unknown provider '${o.provider}'")
+        if (useLocal && local == null) throw ApiException(400, "The local provider is not configured")
+        val file = File(if (useLocal) local!!.indexDir else indexDir, "${o.strategy}.json")
+        if (!file.isFile) throw ApiException(404, if (useLocal) "No local index for '${o.strategy}'. Run: ./gradlew :rag:tools:run --args=\"index --provider ollama\"" else "No saved index for '${o.strategy}'. Run: ./gradlew :rag:run --args=\"index\"")
         val index = IndexStore().load(file.toKxPath())
-        val embedder = embedderFor(index.meta)
-            ?: throw ApiException(400, "Index was built with ${index.meta.embeddingModel}; set GEMINI_API_KEY (env var or local.properties) and restart the ui.")
-        val model = o.model ?: GeminiTextGenerator.DEFAULT_MODEL
-        val raw = generatorFor(model) ?: throw ApiException(400, "GEMINI_API_KEY is not set: cannot generate answers. Set the env var or add it to local.properties and restart the ui.")
+        val embedder = (if (useLocal) local!!.embedderFor else embedderFor)(index.meta)
+            ?: throw ApiException(400, if (useLocal) "Index was built with ${index.meta.embeddingModel}, which the local provider cannot query." else "Index was built with ${index.meta.embeddingModel}; set GEMINI_API_KEY (env var or local.properties) and restart the ui.")
+        val model = o.model ?: if (localAnswer) local!!.defaultModel else GeminiTextGenerator.DEFAULT_MODEL
+        val raw = (if (localAnswer) local!!.generatorFor else generatorFor)(model) ?: throw ApiException(400, "GEMINI_API_KEY is not set: cannot generate answers. Set the env var or add it to local.properties and restart the ui.")
         val usage = LlmUsage()
         val engine = ChatEngine(VectorRetriever(embedder, index, o.topKBefore), CachedTextGenerator(raw, model, usage), usage)
         val updated = runBlocking { engine.send(s, text, o) }.getOrElse { throw ApiException(502, "Answer failed: ${it.message?.take(300)}") }
@@ -118,6 +123,6 @@ class SessionApi(
 
     companion object {
         private const val MAX_MESSAGE = 2000
-        private val MODEL_RE = Regex("[A-Za-z0-9._-]{1,64}")
+        private val MODEL_RE = Regex("[A-Za-z0-9._:-]{1,64}")
     }
 }

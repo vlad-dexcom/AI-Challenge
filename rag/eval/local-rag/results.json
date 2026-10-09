@@ -1,0 +1,4507 @@
+{
+ "cloud": {
+  "provider": "gemini",
+  "model": null,
+  "runs": [
+   {
+    "run": [
+     {
+      "id": "c01",
+      "lang": "en",
+      "cat": "specific",
+      "wall_ms": 8310,
+      "latency_ms": 8193,
+      "llm_calls": 2,
+      "answer": "On Day 2 of the beginner 3-day full-body program, the exercises and their prescribed sets and reps are:\n- Trap-bar or kettlebell deadlift: 3 sets of 5 to 8 [1]\n- Dumbbell overhead press: 3 sets of 6 to 10 [1]\n- Lat pulldown: 3 sets of 8 to 12 [1]\n- Reverse lunge: 2 to 3 sets of 8 to 10 each side [1]\n- Dead bug: 2 to 3 sets [1]",
+      "scores": {
+       "idk": false,
+       "idk_correct": true,
+       "facts": 1.0,
+       "source_ok": false,
+       "quotes_ok": true,
+       "lang_ok": true,
+       "first_try": true
+      },
+      "sources": [
+       "13-beginner-program-design.md > Beginner Program Design for Strength and Muscle > A practical 3-day full-body program"
+      ],
+      "quotes": [
+       "- Trap-bar or kettlebell deadlift: 3 sets of 5 to 8\n- Dumbbell overhead press: 3 sets of 6 to 10\n- Lat pulldown: 3 sets "
+      ]
+     },
+     {
+      "id": "c02",
+      "lang": "en",
+      "cat": "specific",
+      "wall_ms": 6114,
+      "latency_ms": 6033,
+      "llm_calls": 2,
+      "answer": "If you cannot perform a strict bodyweight pull-up yet, useful progression options include slow eccentrics, band-assisted pull-ups, machine-assisted pull-ups, isometric holds, and scapular pull-ups [1].",
+      "scores": {
+       "idk": false,
+       "idk_correct": true,
+       "facts": 1.0,
+       "source_ok": true,
+       "quotes_ok": true,
+       "lang_ok": true,
+       "first_try": true
+      },
+      "sources": [
+       "04-pulling-and-back-training.md > Pulling and Back Training > Pull-up progressions"
+      ],
+      "quotes": [
+       "Useful options include:\n\n- slow eccentrics\n- band-assisted pull-ups\n- machine-assisted pull-ups\n- isometric holds\n- scap"
+      ]
+     },
+     {
+      "id": "c03",
+      "lang": "en",
+      "cat": "specific",
+      "wall_ms": 7786,
+      "latency_ms": 7729,
+      "llm_calls": 2,
+      "answer": "If your deadlift stalls above the knee and climbs in stages, it indicates that you likely lost position earlier in the lift [1]. To address this issue, variations such as paused deadlifts, RDLs (Romanian deadlifts), and block pulls can help, depending on where your technique breakdown begins [1].",
+      "scores": {
+       "idk": false,
+       "idk_correct": true,
+       "facts": 1.0,
+       "source_ok": false,
+       "quotes_ok": true,
+       "lang_ok": true,
+       "first_try": true
+      },
+      "sources": [
+       "02-deadlift-technique.md > Deadlift Technique > Romanian deadlift technique"
+      ],
+      "quotes": [
+       "If the bar stalls above the knee and climbs in stages, you likely lost position earlier.",
+       "Paused deadlifts, RDLs, and block pulls can help depending on where the breakdown starts."
+      ]
+     },
+     {
+      "id": "c04",
+      "lang": "en",
+      "cat": "specific",
+      "wall_ms": 6473,
+      "latency_ms": 6408,
+      "llm_calls": 2,
+      "answer": "Template A of the simple core training routine consists of the following exercises, sets, and reps/time:\n- **Dead bug**: 2 to 3 sets of 5 to 8 reps per side [1]\n- **Side plank**: 2 to 3 sets of 15 to 30 seconds per side [1]\n- **Suitcase carry**: 2 to 4 trips per side [1]",
+      "scores": {
+       "idk": false,
+       "idk_correct": true,
+       "facts": 1.0,
+       "source_ok": false,
+       "quotes_ok": true,
+       "lang_ok": true,
+       "first_try": true
+      },
+      "sources": [
+       "15-core-training-and-posture.md > Core Training, Bracing, and Posture Without the Myths > Better advice for desk workers"
+      ],
+      "quotes": [
+       "### Template A\n\n- Dead bug: 2 to 3 sets of 5 to 8 reps per side\n- Side plank: 2 to 3 sets of 15 to 30 seconds per side\n-"
+      ]
+     },
+     {
+      "id": "c05",
+      "lang": "en",
+      "cat": "specific",
+      "wall_ms": 6524,
+      "latency_ms": 6470,
+      "llm_calls": 2,
+      "answer": "I don't know: the knowledge base has no information that reliably answers this question.\n\nClosest topics in the knowledge base (not an answer to your question): «General Warm-Up Versus Specific Warm-Up», «Ramp-Up Sets: The Most Specific Warm-Up Tool», «Making It Efficient».\n\nDid you mean one of these topics? If not, which exercise, program or nutrition aspect do you have in mind?",
+      "scores": {
+       "idk": true,
+       "idk_correct": false,
+       "facts": 0.4,
+       "source_ok": false,
+       "quotes_ok": false,
+       "lang_ok": true,
+       "first_try": true
+      },
+      "sources": [],
+      "quotes": []
+     },
+     {
+      "id": "c06",
+      "lang": "en",
+      "cat": "specific",
+      "wall_ms": 7547,
+      "latency_ms": 7482,
+      "llm_calls": 2,
+      "answer": "According to the knowledge base, the rep ranges assigned to these roles are:\n- 1 to 3 reps for high specificity [1]\n- 3 to 6 reps for repeated strength practice [1]\n- 6 to 12 or more reps for assistance and hypertrophy support [1]",
+      "scores": {
+       "idk": false,
+       "idk_correct": true,
+       "facts": 1.0,
+       "source_ok": true,
+       "quotes_ok": true,
+       "lang_ok": true,
+       "first_try": true
+      },
+      "sources": [
+       "05-strength-programming-basics.md > Strength Programming Basics > Rep ranges for strength development"
+      ],
+      "quotes": [
+       "- 1 to 3 reps for high specificity\n- 3 to 6 reps for repeated strength practice\n- 6 to 12 or more for assistance and hyp"
+      ]
+     },
+     {
+      "id": "c07",
+      "lang": "en",
+      "cat": "common",
+      "wall_ms": 7313,
+      "latency_ms": 7253,
+      "llm_calls": 2,
+      "answer": "An active lifter should aim for a target of about 1.6 to 2.2 grams of protein per kilogram of body weight per day [1]. This intake is often easier to use and digest when it is spread across three to five meals throughout the day, rather than being pushed into a single large serving [2].",
+      "scores": {
+       "idk": false,
+       "idk_correct": true,
+       "facts": 1.0,
+       "source_ok": true,
+       "quotes_ok": true,
+       "lang_ok": true,
+       "first_try": true
+      },
+      "sources": [
+       "08-nutrition-protein-and-calories.md > Nutrition, Protein, and Calories for Fitness Goals > Protein: The Priority Macronutrient for Lifters",
+       "08-nutrition-protein-and-calories.md > Nutrition, Protein, and Calories for Fitness Goals > Protein: The Priority Macronutrient for Lifters > Distributing protein across the day"
+      ],
+      "quotes": [
+       "A useful target for many active adults is about 1.6 to 2.2 grams of protein per kilogram of body weight per day.",
+       "Protein is often easier to use and digest when spread across three to five meals rather than pushed into one huge servin"
+      ]
+     },
+     {
+      "id": "c08",
+      "lang": "en",
+      "cat": "common",
+      "wall_ms": 8137,
+      "latency_ms": 8077,
+      "llm_calls": 2,
+      "answer": "To fix the bar drifting forward, you should recheck your start position, keep the bar over your midfoot, and engage your lats more aggressively [1]. Helpful cues to assist with this include squeezing the bar to your legs and keeping your armpits tight [2].",
+      "scores": {
+       "idk": false,
+       "idk_correct": true,
+       "facts": 1.0,
+       "source_ok": false,
+       "quotes_ok": true,
+       "lang_ok": true,
+       "first_try": true
+      },
+      "sources": [
+       "02-deadlift-technique.md > Deadlift Technique > Romanian deadlift technique",
+       "02-deadlift-technique.md > Deadlift Technique > Common deadlift faults and fixes > Bent arms"
+      ],
+      "quotes": [
+       "Recheck the start position, keep the bar over midfoot, and engage the lats more aggressively.",
+       "- squeeze the bar to the legs",
+       "- keep the armpits tight"
+      ]
+     },
+     {
+      "id": "c09",
+      "lang": "en",
+      "cat": "out_of_corpus",
+      "wall_ms": 2904,
+      "latency_ms": 2854,
+      "llm_calls": 1,
+      "answer": "I don't know: the knowledge base has no information that reliably answers this question.\n\nClosest topics in the knowledge base (not an answer to your question): «Deadlift Technique», «The hinge and first pull», «Final deadlift checklist».\n\nDid you mean one of these topics? If not, which exercise, program or nutrition aspect do you have in mind?",
+      "scores": {
+       "idk": true,
+       "idk_correct": true,
+       "lang_ok": true,
+       "first_try": false
+      },
+      "sources": [],
+      "quotes": []
+     },
+     {
+      "id": "c10",
+      "lang": "en",
+      "cat": "out_of_corpus",
+      "wall_ms": 5543,
+      "latency_ms": 5488,
+      "llm_calls": 2,
+      "answer": "I don't know: the knowledge base has no information that reliably answers this question.\n\nClosest topics in the knowledge base (not an answer to your question): «Protein powder», «Protein powder > When powder earns its place», «Final perspective».\n\nDid you mean one of these topics? If not, which exercise, program or nutrition aspect do you have in mind?",
+      "scores": {
+       "idk": true,
+       "idk_correct": true,
+       "lang_ok": true,
+       "first_try": true
+      },
+      "sources": [],
+      "quotes": []
+     },
+     {
+      "id": "ru-c02",
+      "lang": "ru",
+      "cat": "specific",
+      "wall_ms": 8058,
+      "latency_ms": 7996,
+      "llm_calls": 2,
+      "answer": "Если строгие подтягивания с собственным весом пока не даются, полезными вариантами прогрессии являются [1]:\n\n- медленные эксцентрические опускания (slow eccentrics)\n- подтягивания с помощью резиновой петли (band-assisted pull-ups)\n- подтягивания в тренажере с компенсацией веса (machine-assisted pull-ups)\n- изометрические удержания (isometric holds)\n- лопаточные подтягивания (scapular pull-ups)\n\nЦель этих вариантов — развить качество повторений и уверенность на разных участках амплитуды движения [1].",
+      "scores": {
+       "idk": false,
+       "idk_correct": true,
+       "facts": 1.0,
+       "source_ok": true,
+       "quotes_ok": true,
+       "lang_ok": true,
+       "first_try": true
+      },
+      "sources": [
+       "04-pulling-and-back-training.md > Pulling and Back Training > Pull-up progressions"
+      ],
+      "quotes": [
+       "Useful options include:\n\n- slow eccentrics\n- band-assisted pull-ups\n- machine-assisted pull-ups\n- isometric holds\n- scap",
+       "The goal is to build repetition quality and confidence at different parts of the range."
+      ]
+     },
+     {
+      "id": "ru-c05",
+      "lang": "ru",
+      "cat": "specific",
+      "wall_ms": 8886,
+      "latency_ms": 8815,
+      "llm_calls": 2,
+      "answer": "Практическая формула для эффективной разминки на 10–15 минут состоит из следующих фаз:\n- От 3 до 5 минут общего движения [2];\n- От 3 до 5 минут целевой мобильности или активации [2];\n- От 5 до 10 минут прогрессивно усложняющихся специфических подходов [2].",
+      "scores": {
+       "idk": false,
+       "idk_correct": true,
+       "facts": 1.0,
+       "source_ok": true,
+       "quotes_ok": true,
+       "lang_ok": true,
+       "first_try": true
+      },
+      "sources": [
+       "10-warm-up-and-mobility.md > Warm-Up and Mobility for Safer, Better Training > Making It Efficient"
+      ],
+      "quotes": [
+       "A practical formula is:\n\n- 3 to 5 minutes of general movement\n- 3 to 5 minutes of targeted mobility or activation\n- 5 to"
+      ]
+     },
+     {
+      "id": "ru-c07",
+      "lang": "ru",
+      "cat": "common",
+      "wall_ms": 8312,
+      "latency_ms": 8263,
+      "llm_calls": 2,
+      "answer": "Для активных взрослых полезным ориентиром является примерно от 1,6 до 2,2 грамма белка на килограмм массы тела в день [1]. Белок легче усваивается и переваривается, если распределить его на три-пять приемов пищи в течение дня, а не потреблять в один огромный прием [2].",
+      "scores": {
+       "idk": false,
+       "idk_correct": true,
+       "facts": 1.0,
+       "source_ok": true,
+       "quotes_ok": true,
+       "lang_ok": true,
+       "first_try": true
+      },
+      "sources": [
+       "08-nutrition-protein-and-calories.md > Nutrition, Protein, and Calories for Fitness Goals > Protein: The Priority Macronutrient for Lifters",
+       "08-nutrition-protein-and-calories.md > Nutrition, Protein, and Calories for Fitness Goals > Protein: The Priority Macronutrient for Lifters > Distributing protein across the day"
+      ],
+      "quotes": [
+       "A useful target for many active adults is about 1.6 to 2.2 grams of protein per kilogram of body weight per day.",
+       "Protein is often easier to use and digest when spread across three to five meals rather than pushed into one huge servin"
+      ]
+     },
+     {
+      "id": "ru-c08",
+      "lang": "ru",
+      "cat": "common",
+      "wall_ms": 12165,
+      "latency_ms": 12109,
+      "llm_calls": 2,
+      "answer": "Если во время выполнения становой тяги штанга уходит вперед от тела, это увеличивает нагрузку на поясницу и усложняет фиксацию веса (локаут) [1]. \n\nЧтобы исправить эту ошибку, рекомендуется:\n1. Проверить стартовую позицию [1].\n2. Удерживать штангу над серединой стопы [1].\n3. Более агрессивно задействовать широчайшие мышцы спины [1].\n\nТакже важно следить за тем, чтобы траектория движения штанги была практически вертикальной, а сам гриф проходил вплотную к голеням и бедрам [2]. В качестве ментальной установки (кью) можно использовать совет «прижимать штангу к ногам» [3].",
+      "scores": {
+       "idk": false,
+       "idk_correct": true,
+       "facts": 1.0,
+       "source_ok": false,
+       "quotes_ok": true,
+       "lang_ok": true,
+       "first_try": true
+      },
+      "sources": [
+       "02-deadlift-technique.md > Deadlift Technique > Romanian deadlift technique",
+       "02-deadlift-technique.md > Deadlift Technique > The hinge and first pull",
+       "02-deadlift-technique.md > Deadlift Technique > Common deadlift faults and fixes > Bent arms"
+      ],
+      "quotes": [
+       "Recheck the start position, keep the bar over midfoot, and engage the lats more aggressively.",
+       "The bar should track almost vertically and stay very close to the shins and thighs.",
+       "squeeze the bar to the legs"
+      ]
+     },
+     {
+      "id": "ru01",
+      "lang": "ru",
+      "cat": "specific",
+      "wall_ms": 9690,
+      "latency_ms": 9647,
+      "llm_calls": 2,
+      "answer": "NEAT (термогенез повседневной активности) — это энергия, которую вы тратите на обычные движения вне структурированных тренировок: ходьбу, ерзание, работу по дому, подъем по лестнице, стояние и общую повседневную активность [1]. Во время диеты NEAT часто снижается незаметно для человека, так как из-за снижения уровня энергии вы можете больше сидеть, меньше двигаться или неосознанно избегать физических усилий [1].",
+      "scores": {
+       "idk": false,
+       "idk_correct": true,
+       "facts": 1.0,
+       "source_ok": true,
+       "quotes_ok": true,
+       "lang_ok": true,
+       "first_try": true
+      },
+      "sources": [
+       "09-fat-loss-and-body-composition.md > Fat Loss and Body Composition Without Losing the Plot > NEAT: The Hidden Lever"
+      ],
+      "quotes": [
+       "NEAT stands for non-exercise activity thermogenesis. In plain language, it is the energy you burn through ordinary movem",
+       "You may sit more, move less, or unconsciously avoid effort because energy is lower."
+      ]
+     },
+     {
+      "id": "ru02",
+      "lang": "ru",
+      "cat": "out_of_corpus",
+      "wall_ms": 3484,
+      "latency_ms": 3426,
+      "llm_calls": 1,
+      "answer": "Не знаю: в базе знаний нет информации, которая надёжно отвечает на этот вопрос.\n\nБлижайшие темы в базе (это не ответ на ваш вопрос): «Assistance work for stronger pushing», «Common Mistakes», «A practical shortlist».\n\nВы имели в виду одну из этих тем? Если нет — уточните, о каком упражнении, программе или аспекте питания идёт речь.",
+      "scores": {
+       "idk": true,
+       "idk_correct": true,
+       "lang_ok": true,
+       "first_try": false
+      },
+      "sources": [],
+      "quotes": []
+     }
+    ],
+    "total_s": 117.3
+   },
+   {
+    "run": [
+     {
+      "id": "c01",
+      "lang": "en",
+      "cat": "specific",
+      "wall_ms": 6302,
+      "latency_ms": 6250,
+      "llm_calls": 2,
+      "answer": "On Day 2 of the beginner 3-day full-body program, the exercises, sets, and reps are:\n- Trap-bar or kettlebell deadlift: 3 sets of 5 to 8 [1]\n- Dumbbell overhead press: 3 sets of 6 to 10 [1]\n- Lat pulldown: 3 sets of 8 to 12 [1]\n- Reverse lunge: 2 to 3 sets of 8 to 10 each side [1]\n- Dead bug: 2 to 3 sets [1]",
+      "scores": {
+       "idk": false,
+       "idk_correct": true,
+       "facts": 1.0,
+       "source_ok": false,
+       "quotes_ok": true,
+       "lang_ok": true,
+       "first_try": true
+      },
+      "sources": [
+       "13-beginner-program-design.md > Beginner Program Design for Strength and Muscle > A practical 3-day full-body program"
+      ],
+      "quotes": [
+       "- Trap-bar or kettlebell deadlift: 3 sets of 5 to 8\n- Dumbbell overhead press: 3 sets of 6 to 10\n- Lat pulldown: 3 sets "
+      ]
+     },
+     {
+      "id": "c02",
+      "lang": "en",
+      "cat": "specific",
+      "wall_ms": 6230,
+      "latency_ms": 6169,
+      "llm_calls": 2,
+      "answer": "If you cannot do a strict bodyweight pull-up yet, useful progression options include:\n- Slow eccentrics\n- Band-assisted pull-ups\n- Machine-assisted pull-ups\n- Isometric holds\n- Scapular pull-ups [1].",
+      "scores": {
+       "idk": false,
+       "idk_correct": true,
+       "facts": 1.0,
+       "source_ok": true,
+       "quotes_ok": true,
+       "lang_ok": true,
+       "first_try": true
+      },
+      "sources": [
+       "04-pulling-and-back-training.md > Pulling and Back Training > Pull-up progressions"
+      ],
+      "quotes": [
+       "Useful options include:\n\n- slow eccentrics\n- band-assisted pull-ups\n- machine-assisted pull-ups\n- isometric holds\n- scap"
+      ]
+     },
+     {
+      "id": "c03",
+      "lang": "en",
+      "cat": "specific",
+      "wall_ms": 7938,
+      "latency_ms": 7881,
+      "llm_calls": 2,
+      "answer": "If your deadlift stalls above the knee and climbs in stages, it indicates that you likely lost position earlier in the lift [1]. To address this issue, variations such as paused deadlifts, RDLs (Romanian deadlifts), and block pulls can help, depending on where your technique breakdown begins [1].",
+      "scores": {
+       "idk": false,
+       "idk_correct": true,
+       "facts": 1.0,
+       "source_ok": false,
+       "quotes_ok": true,
+       "lang_ok": true,
+       "first_try": true
+      },
+      "sources": [
+       "02-deadlift-technique.md > Deadlift Technique > Romanian deadlift technique"
+      ],
+      "quotes": [
+       "If the bar stalls above the knee and climbs in stages, you likely lost position earlier.",
+       "Paused deadlifts, RDLs, and block pulls can help depending on where the breakdown starts."
+      ]
+     },
+     {
+      "id": "c04",
+      "lang": "en",
+      "cat": "specific",
+      "wall_ms": 6418,
+      "latency_ms": 6379,
+      "llm_calls": 2,
+      "answer": "Template A of the simple core training routine consists of the following exercises:\n- **Dead bug**: 2 to 3 sets of 5 to 8 reps per side [1]\n- **Side plank**: 2 to 3 sets of 15 to 30 seconds per side [1]\n- **Suitcase carry**: 2 to 4 trips per side [1]",
+      "scores": {
+       "idk": false,
+       "idk_correct": true,
+       "facts": 1.0,
+       "source_ok": false,
+       "quotes_ok": true,
+       "lang_ok": true,
+       "first_try": true
+      },
+      "sources": [
+       "15-core-training-and-posture.md > Core Training, Bracing, and Posture Without the Myths > Better advice for desk workers"
+      ],
+      "quotes": [
+       "### Template A\n\n- Dead bug: 2 to 3 sets of 5 to 8 reps per side\n- Side plank: 2 to 3 sets of 15 to 30 seconds per side\n-"
+      ]
+     },
+     {
+      "id": "c05",
+      "lang": "en",
+      "cat": "specific",
+      "wall_ms": 6585,
+      "latency_ms": 6538,
+      "llm_calls": 2,
+      "answer": "I don't know: the knowledge base has no information that reliably answers this question.\n\nClosest topics in the knowledge base (not an answer to your question): «General Warm-Up Versus Specific Warm-Up», «Ramp-Up Sets: The Most Specific Warm-Up Tool», «Making It Efficient».\n\nDid you mean one of these topics? If not, which exercise, program or nutrition aspect do you have in mind?",
+      "scores": {
+       "idk": true,
+       "idk_correct": false,
+       "facts": 0.4,
+       "source_ok": false,
+       "quotes_ok": false,
+       "lang_ok": true,
+       "first_try": true
+      },
+      "sources": [],
+      "quotes": []
+     },
+     {
+      "id": "c06",
+      "lang": "en",
+      "cat": "specific",
+      "wall_ms": 7183,
+      "latency_ms": 7105,
+      "llm_calls": 2,
+      "answer": "According to the knowledge base, the rep ranges assigned to these roles are:\n- 1 to 3 reps for high specificity [1]\n- 3 to 6 reps for repeated strength practice [1]\n- 6 to 12 or more reps for assistance and hypertrophy support [1]",
+      "scores": {
+       "idk": false,
+       "idk_correct": true,
+       "facts": 1.0,
+       "source_ok": true,
+       "quotes_ok": true,
+       "lang_ok": true,
+       "first_try": true
+      },
+      "sources": [
+       "05-strength-programming-basics.md > Strength Programming Basics > Rep ranges for strength development"
+      ],
+      "quotes": [
+       "- 1 to 3 reps for high specificity\n- 3 to 6 reps for repeated strength practice\n- 6 to 12 or more for assistance and hyp"
+      ]
+     },
+     {
+      "id": "c07",
+      "lang": "en",
+      "cat": "common",
+      "wall_ms": 8471,
+      "latency_ms": 8415,
+      "llm_calls": 2,
+      "answer": "An active lifter should aim for about 1.6 to 2.2 grams of protein per kilogram of body weight per day [1]. This protein is often easier to use and digest when it is spread across three to five meals throughout the day, rather than consumed in one large serving [2].",
+      "scores": {
+       "idk": false,
+       "idk_correct": true,
+       "facts": 1.0,
+       "source_ok": true,
+       "quotes_ok": true,
+       "lang_ok": true,
+       "first_try": true
+      },
+      "sources": [
+       "08-nutrition-protein-and-calories.md > Nutrition, Protein, and Calories for Fitness Goals > Protein: The Priority Macronutrient for Lifters",
+       "08-nutrition-protein-and-calories.md > Nutrition, Protein, and Calories for Fitness Goals > Protein: The Priority Macronutrient for Lifters > Distributing protein across the day"
+      ],
+      "quotes": [
+       "A useful target for many active adults is about 1.6 to 2.2 grams of protein per kilogram of body weight per day.",
+       "Protein is often easier to use and digest when spread across three to five meals rather than pushed into one huge servin"
+      ]
+     },
+     {
+      "id": "c08",
+      "lang": "en",
+      "cat": "common",
+      "wall_ms": 8600,
+      "latency_ms": 8549,
+      "llm_calls": 2,
+      "answer": "To fix the bar drifting forward, you should recheck your start position, keep the bar over your midfoot, and engage your lats more aggressively [1]. It is also important to keep the bar path tight, ensuring the bar tracks almost vertically and stays very close to your shins and thighs [2].",
+      "scores": {
+       "idk": false,
+       "idk_correct": true,
+       "facts": 1.0,
+       "source_ok": false,
+       "quotes_ok": true,
+       "lang_ok": true,
+       "first_try": true
+      },
+      "sources": [
+       "02-deadlift-technique.md > Deadlift Technique > Romanian deadlift technique",
+       "02-deadlift-technique.md > Deadlift Technique > The hinge and first pull"
+      ],
+      "quotes": [
+       "Recheck the start position, keep the bar over midfoot, and engage the lats more aggressively.",
+       "Keep the bar path tight. The bar should track almost vertically and stay very close to the shins and thighs."
+      ]
+     },
+     {
+      "id": "c09",
+      "lang": "en",
+      "cat": "out_of_corpus",
+      "wall_ms": 3059,
+      "latency_ms": 3010,
+      "llm_calls": 1,
+      "answer": "I don't know: the knowledge base has no information that reliably answers this question.\n\nClosest topics in the knowledge base (not an answer to your question): «Deadlift Technique», «The hinge and first pull», «Final deadlift checklist».\n\nDid you mean one of these topics? If not, which exercise, program or nutrition aspect do you have in mind?",
+      "scores": {
+       "idk": true,
+       "idk_correct": true,
+       "lang_ok": true,
+       "first_try": false
+      },
+      "sources": [],
+      "quotes": []
+     },
+     {
+      "id": "c10",
+      "lang": "en",
+      "cat": "out_of_corpus",
+      "wall_ms": 5643,
+      "latency_ms": 5593,
+      "llm_calls": 2,
+      "answer": "I don't know: the knowledge base has no information that reliably answers this question.\n\nClosest topics in the knowledge base (not an answer to your question): «Protein powder», «Protein powder > When powder earns its place», «Final perspective».\n\nDid you mean one of these topics? If not, which exercise, program or nutrition aspect do you have in mind?",
+      "scores": {
+       "idk": true,
+       "idk_correct": true,
+       "lang_ok": true,
+       "first_try": true
+      },
+      "sources": [],
+      "quotes": []
+     },
+     {
+      "id": "ru-c02",
+      "lang": "ru",
+      "cat": "specific",
+      "wall_ms": 6363,
+      "latency_ms": 6316,
+      "llm_calls": 2,
+      "answer": "Если строгие подтягивания с собственным весом пока недоступны, полезными вариантами прогрессий являются [1]:\n\n- медленные эксцентрические подтягивания (slow eccentrics);\n- подтягивания с помощью резиновой петли (band-assisted pull-ups);\n- подтягивания в тренажере (machine-assisted pull-ups);\n- изометрические удержания (isometric holds);\n- лопаточные подтягивания (scapular pull-ups).",
+      "scores": {
+       "idk": false,
+       "idk_correct": true,
+       "facts": 1.0,
+       "source_ok": true,
+       "quotes_ok": true,
+       "lang_ok": true,
+       "first_try": true
+      },
+      "sources": [
+       "04-pulling-and-back-training.md > Pulling and Back Training > Pull-up progressions"
+      ],
+      "quotes": [
+       "Useful options include:\n\n- slow eccentrics\n- band-assisted pull-ups\n- machine-assisted pull-ups\n- isometric holds\n- scap"
+      ]
+     },
+     {
+      "id": "ru-c05",
+      "lang": "ru",
+      "cat": "specific",
+      "wall_ms": 8863,
+      "latency_ms": 8806,
+      "llm_calls": 2,
+      "answer": "Практическая формула для эффективной разминки на 10–15 минут состоит из следующих фаз:\n- От 3 до 5 минут общего движения [2];\n- От 3 до 5 минут целевой мобильности или активации [2];\n- От 5 до 10 минут прогрессивно усложняющихся специфических подходов [2].",
+      "scores": {
+       "idk": false,
+       "idk_correct": true,
+       "facts": 1.0,
+       "source_ok": true,
+       "quotes_ok": true,
+       "lang_ok": true,
+       "first_try": true
+      },
+      "sources": [
+       "10-warm-up-and-mobility.md > Warm-Up and Mobility for Safer, Better Training > Making It Efficient"
+      ],
+      "quotes": [
+       "A practical formula is:\n\n- 3 to 5 minutes of general movement\n- 3 to 5 minutes of targeted mobility or activation\n- 5 to"
+      ]
+     },
+     {
+      "id": "ru-c07",
+      "lang": "ru",
+      "cat": "common",
+      "wall_ms": 8089,
+      "latency_ms": 8038,
+      "llm_calls": 2,
+      "answer": "Для активных взрослых полезным ориентиром является примерно от 1,6 до 2,2 грамма белка на килограмм массы тела в день [1]. Белок легче усваивается и используется организмом, если распределить его на три-пять приемов пищи в течение дня, а не потреблять в один огромный прием [2].",
+      "scores": {
+       "idk": false,
+       "idk_correct": true,
+       "facts": 1.0,
+       "source_ok": true,
+       "quotes_ok": true,
+       "lang_ok": true,
+       "first_try": true
+      },
+      "sources": [
+       "08-nutrition-protein-and-calories.md > Nutrition, Protein, and Calories for Fitness Goals > Protein: The Priority Macronutrient for Lifters",
+       "08-nutrition-protein-and-calories.md > Nutrition, Protein, and Calories for Fitness Goals > Protein: The Priority Macronutrient for Lifters > Distributing protein across the day"
+      ],
+      "quotes": [
+       "A useful target for many active adults is about 1.6 to 2.2 grams of protein per kilogram of body weight per day.",
+       "Protein is often easier to use and digest when spread across three to five meals rather than pushed into one huge servin"
+      ]
+     },
+     {
+      "id": "ru-c08",
+      "lang": "ru",
+      "cat": "common",
+      "wall_ms": 9544,
+      "latency_ms": 9495,
+      "llm_calls": 2,
+      "answer": "Если штанга уходит вперед от тела во время становой тяги, это увеличивает нагрузку на поясницу и усложняет фиксацию (локаут) [1]. Чтобы исправить эту ошибку, рекомендуется:\n\n1. Проверить стартовое положение и удерживать штангу над серединой стопы [1].\n2. Более активно задействовать широчайшие мышцы спины [1].\n3. Следить за тем, чтобы траектория движения штанги была максимально вертикальной и она проходила вплотную к голеням и бедрам [2].\n4. Использовать ментальную подсказку «прижимать штангу к ногам» (squeeze the bar to the legs) для контроля ее положения [3].",
+      "scores": {
+       "idk": false,
+       "idk_correct": true,
+       "facts": 1.0,
+       "source_ok": false,
+       "quotes_ok": true,
+       "lang_ok": true,
+       "first_try": true
+      },
+      "sources": [
+       "02-deadlift-technique.md > Deadlift Technique > Romanian deadlift technique",
+       "02-deadlift-technique.md > Deadlift Technique > The hinge and first pull",
+       "02-deadlift-technique.md > Deadlift Technique > Common deadlift faults and fixes > Bent arms"
+      ],
+      "quotes": [
+       "Recheck the start position, keep the bar over midfoot, and engage the lats more aggressively.",
+       "The bar should track almost vertically and stay very close to the shins and thighs.",
+       "squeeze the bar to the legs"
+      ]
+     },
+     {
+      "id": "ru01",
+      "lang": "ru",
+      "cat": "specific",
+      "wall_ms": 8030,
+      "latency_ms": 7979,
+      "llm_calls": 2,
+      "answer": "NEAT (non-exercise activity thermogenesis) — это энергия, которую вы расходуете на обычные движения вне структурированных тренировок: ходьбу, ерзание, работу по дому, подъем по лестнице, хождение туда-сюда, стояние и общую повседневную активность [1].\n\nВо время диеты NEAT часто снижается незаметно для человека. Это происходит потому, что из-за снижения уровня энергии вы можете больше сидеть, меньше двигаться или неосознанно избегать физических усилий [1].",
+      "scores": {
+       "idk": false,
+       "idk_correct": true,
+       "facts": 1.0,
+       "source_ok": true,
+       "quotes_ok": true,
+       "lang_ok": true,
+       "first_try": true
+      },
+      "sources": [
+       "09-fat-loss-and-body-composition.md > Fat Loss and Body Composition Without Losing the Plot > NEAT: The Hidden Lever"
+      ],
+      "quotes": [
+       "NEAT stands for non-exercise activity thermogenesis. In plain language, it is the energy you burn through ordinary movem",
+       "NEAT often drops during dieting without people noticing. You may sit more, move less, or unconsciously avoid effort beca"
+      ]
+     },
+     {
+      "id": "ru02",
+      "lang": "ru",
+      "cat": "out_of_corpus",
+      "wall_ms": 3205,
+      "latency_ms": 3164,
+      "llm_calls": 1,
+      "answer": "Не знаю: в базе знаний нет информации, которая надёжно отвечает на этот вопрос.\n\nБлижайшие темы в базе (это не ответ на ваш вопрос): «Assistance work for stronger pushing», «Common Mistakes», «A practical shortlist».\n\nВы имели в виду одну из этих тем? Если нет — уточните, о каком упражнении, программе или аспекте питания идёт речь.",
+      "scores": {
+       "idk": true,
+       "idk_correct": true,
+       "lang_ok": true,
+       "first_try": false
+      },
+      "sources": [],
+      "quotes": []
+     }
+    ],
+    "total_s": 110.5
+   },
+   {
+    "run": [
+     {
+      "id": "c01",
+      "lang": "en",
+      "cat": "specific",
+      "wall_ms": 8607,
+      "latency_ms": 8569,
+      "llm_calls": 2,
+      "answer": "On Day 2 of the beginner 3-day full-body program, the exercises and their prescribed sets and reps are:\n- Trap-bar or kettlebell deadlift: 3 sets of 5 to 8 [1]\n- Dumbbell overhead press: 3 sets of 6 to 10 [1]\n- Lat pulldown: 3 sets of 8 to 12 [1]\n- Reverse lunge: 2 to 3 sets of 8 to 10 each side [1]\n- Dead bug: 2 to 3 sets [1]",
+      "scores": {
+       "idk": false,
+       "idk_correct": true,
+       "facts": 1.0,
+       "source_ok": false,
+       "quotes_ok": true,
+       "lang_ok": true,
+       "first_try": true
+      },
+      "sources": [
+       "13-beginner-program-design.md > Beginner Program Design for Strength and Muscle > A practical 3-day full-body program"
+      ],
+      "quotes": [
+       "- Trap-bar or kettlebell deadlift: 3 sets of 5 to 8\n- Dumbbell overhead press: 3 sets of 6 to 10\n- Lat pulldown: 3 sets "
+      ]
+     },
+     {
+      "id": "c02",
+      "lang": "en",
+      "cat": "specific",
+      "wall_ms": 5600,
+      "latency_ms": 5546,
+      "llm_calls": 2,
+      "answer": "If you cannot do a strict bodyweight pull-up yet, useful progression options include:\n- Slow eccentrics\n- Band-assisted pull-ups\n- Machine-assisted pull-ups\n- Isometric holds\n- Scapular pull-ups [1].",
+      "scores": {
+       "idk": false,
+       "idk_correct": true,
+       "facts": 1.0,
+       "source_ok": true,
+       "quotes_ok": true,
+       "lang_ok": true,
+       "first_try": true
+      },
+      "sources": [
+       "04-pulling-and-back-training.md > Pulling and Back Training > Pull-up progressions"
+      ],
+      "quotes": [
+       "Useful options include:\n\n- slow eccentrics\n- band-assisted pull-ups\n- machine-assisted pull-ups\n- isometric holds\n- scap"
+      ]
+     },
+     {
+      "id": "c03",
+      "lang": "en",
+      "cat": "specific",
+      "wall_ms": 7780,
+      "latency_ms": 7723,
+      "llm_calls": 2,
+      "answer": "If the bar stalls above the knee and climbs in stages, it indicates that you likely lost position earlier [1]. To help correct this, variations such as paused deadlifts, RDLs, and block pulls can help depending on where the breakdown starts [1].",
+      "scores": {
+       "idk": false,
+       "idk_correct": true,
+       "facts": 1.0,
+       "source_ok": false,
+       "quotes_ok": true,
+       "lang_ok": true,
+       "first_try": true
+      },
+      "sources": [
+       "02-deadlift-technique.md > Deadlift Technique > Romanian deadlift technique"
+      ],
+      "quotes": [
+       "If the bar stalls above the knee and climbs in stages, you likely lost position earlier.",
+       "Paused deadlifts, RDLs, and block pulls can help depending on where the breakdown starts."
+      ]
+     },
+     {
+      "id": "c04",
+      "lang": "en",
+      "cat": "specific",
+      "wall_ms": 6824,
+      "latency_ms": 6773,
+      "llm_calls": 2,
+      "answer": "Template A of the simple core training routine consists of the following exercises, sets, and reps/time:\n- **Dead bug**: 2 to 3 sets of 5 to 8 reps per side [1]\n- **Side plank**: 2 to 3 sets of 15 to 30 seconds per side [1]\n- **Suitcase carry**: 2 to 4 trips per side [1]",
+      "scores": {
+       "idk": false,
+       "idk_correct": true,
+       "facts": 1.0,
+       "source_ok": false,
+       "quotes_ok": true,
+       "lang_ok": true,
+       "first_try": true
+      },
+      "sources": [
+       "15-core-training-and-posture.md > Core Training, Bracing, and Posture Without the Myths > Better advice for desk workers"
+      ],
+      "quotes": [
+       "### Template A\n\n- Dead bug: 2 to 3 sets of 5 to 8 reps per side\n- Side plank: 2 to 3 sets of 15 to 30 seconds per side\n-"
+      ]
+     },
+     {
+      "id": "c05",
+      "lang": "en",
+      "cat": "specific",
+      "wall_ms": 6916,
+      "latency_ms": 6859,
+      "llm_calls": 2,
+      "answer": "I don't know: the knowledge base has no information that reliably answers this question.\n\nClosest topics in the knowledge base (not an answer to your question): «General Warm-Up Versus Specific Warm-Up», «Ramp-Up Sets: The Most Specific Warm-Up Tool», «Making It Efficient».\n\nDid you mean one of these topics? If not, which exercise, program or nutrition aspect do you have in mind?",
+      "scores": {
+       "idk": true,
+       "idk_correct": false,
+       "facts": 0.4,
+       "source_ok": false,
+       "quotes_ok": false,
+       "lang_ok": true,
+       "first_try": true
+      },
+      "sources": [],
+      "quotes": []
+     },
+     {
+      "id": "c06",
+      "lang": "en",
+      "cat": "specific",
+      "wall_ms": 7148,
+      "latency_ms": 7092,
+      "llm_calls": 2,
+      "answer": "According to the knowledge base, the rep ranges assigned to these roles are:\n- 1 to 3 reps for high specificity [1]\n- 3 to 6 reps for repeated strength practice [1]\n- 6 to 12 or more reps for assistance and hypertrophy support [1]",
+      "scores": {
+       "idk": false,
+       "idk_correct": true,
+       "facts": 1.0,
+       "source_ok": true,
+       "quotes_ok": true,
+       "lang_ok": true,
+       "first_try": true
+      },
+      "sources": [
+       "05-strength-programming-basics.md > Strength Programming Basics > Rep ranges for strength development"
+      ],
+      "quotes": [
+       "- 1 to 3 reps for high specificity\n- 3 to 6 reps for repeated strength practice\n- 6 to 12 or more for assistance and hyp"
+      ]
+     },
+     {
+      "id": "c07",
+      "lang": "en",
+      "cat": "common",
+      "wall_ms": 7136,
+      "latency_ms": 7081,
+      "llm_calls": 2,
+      "answer": "An active lifter should aim for a target of about 1.6 to 2.2 grams of protein per kilogram of body weight per day [1]. This intake is often easier to use and digest when it is spread across three to five meals throughout the day, rather than being pushed into a single large serving [2].",
+      "scores": {
+       "idk": false,
+       "idk_correct": true,
+       "facts": 1.0,
+       "source_ok": true,
+       "quotes_ok": true,
+       "lang_ok": true,
+       "first_try": true
+      },
+      "sources": [
+       "08-nutrition-protein-and-calories.md > Nutrition, Protein, and Calories for Fitness Goals > Protein: The Priority Macronutrient for Lifters",
+       "08-nutrition-protein-and-calories.md > Nutrition, Protein, and Calories for Fitness Goals > Protein: The Priority Macronutrient for Lifters > Distributing protein across the day"
+      ],
+      "quotes": [
+       "A useful target for many active adults is about 1.6 to 2.2 grams of protein per kilogram of body weight per day.",
+       "Protein is often easier to use and digest when spread across three to five meals rather than pushed into one huge servin"
+      ]
+     },
+     {
+      "id": "c08",
+      "lang": "en",
+      "cat": "common",
+      "wall_ms": 9074,
+      "latency_ms": 9028,
+      "llm_calls": 2,
+      "answer": "To fix the bar drifting forward, you should recheck your start position, keep the bar over your midfoot, and engage your lats more aggressively [1]. Helpful cues to assist with this include squeezing the bar to your legs and keeping your armpits tight [2].",
+      "scores": {
+       "idk": false,
+       "idk_correct": true,
+       "facts": 1.0,
+       "source_ok": false,
+       "quotes_ok": true,
+       "lang_ok": true,
+       "first_try": true
+      },
+      "sources": [
+       "02-deadlift-technique.md > Deadlift Technique > Romanian deadlift technique",
+       "02-deadlift-technique.md > Deadlift Technique > Common deadlift faults and fixes > Bent arms"
+      ],
+      "quotes": [
+       "Recheck the start position, keep the bar over midfoot, and engage the lats more aggressively.",
+       "- squeeze the bar to the legs",
+       "- keep the armpits tight"
+      ]
+     },
+     {
+      "id": "c09",
+      "lang": "en",
+      "cat": "out_of_corpus",
+      "wall_ms": 2931,
+      "latency_ms": 2874,
+      "llm_calls": 1,
+      "answer": "I don't know: the knowledge base has no information that reliably answers this question.\n\nClosest topics in the knowledge base (not an answer to your question): «Deadlift Technique», «The hinge and first pull», «Final deadlift checklist».\n\nDid you mean one of these topics? If not, which exercise, program or nutrition aspect do you have in mind?",
+      "scores": {
+       "idk": true,
+       "idk_correct": true,
+       "lang_ok": true,
+       "first_try": false
+      },
+      "sources": [],
+      "quotes": []
+     },
+     {
+      "id": "c10",
+      "lang": "en",
+      "cat": "out_of_corpus",
+      "wall_ms": 5885,
+      "latency_ms": 5836,
+      "llm_calls": 2,
+      "answer": "I don't know: the knowledge base has no information that reliably answers this question.\n\nClosest topics in the knowledge base (not an answer to your question): «Protein powder», «Protein powder > When powder earns its place», «Final perspective».\n\nDid you mean one of these topics? If not, which exercise, program or nutrition aspect do you have in mind?",
+      "scores": {
+       "idk": true,
+       "idk_correct": true,
+       "lang_ok": true,
+       "first_try": true
+      },
+      "sources": [],
+      "quotes": []
+     },
+     {
+      "id": "ru-c02",
+      "lang": "ru",
+      "cat": "specific",
+      "wall_ms": 6529,
+      "latency_ms": 6478,
+      "llm_calls": 2,
+      "answer": "Если строгие подтягивания с собственным весом пока недоступны, полезными вариантами прогрессий являются [1]:\n\n- медленные эксцентрические подтягивания (slow eccentrics);\n- подтягивания с помощью резиновой петли (band-assisted pull-ups);\n- подтягивания в тренажере (machine-assisted pull-ups);\n- изометрические удержания (isometric holds);\n- лопаточные подтягивания (scapular pull-ups).",
+      "scores": {
+       "idk": false,
+       "idk_correct": true,
+       "facts": 1.0,
+       "source_ok": true,
+       "quotes_ok": true,
+       "lang_ok": true,
+       "first_try": true
+      },
+      "sources": [
+       "04-pulling-and-back-training.md > Pulling and Back Training > Pull-up progressions"
+      ],
+      "quotes": [
+       "Useful options include:\n\n- slow eccentrics\n- band-assisted pull-ups\n- machine-assisted pull-ups\n- isometric holds\n- scap"
+      ]
+     },
+     {
+      "id": "ru-c05",
+      "lang": "ru",
+      "cat": "specific",
+      "wall_ms": 8881,
+      "latency_ms": 8833,
+      "llm_calls": 2,
+      "answer": "Для эффективной разминки длительностью от 10 до 15 минут можно использовать практическую формулу, разделенную на следующие фазы [2]:\n\n* **3–5 минут** — общие движения (general movement) [2];\n* **3–5 минут** — целевая мобильность или активация (targeted mobility or activation) [2];\n* **5–10 минут** — прогрессивно усложняющиеся специфические подходы (progressively specific sets) [2].",
+      "scores": {
+       "idk": false,
+       "idk_correct": true,
+       "facts": 1.0,
+       "source_ok": true,
+       "quotes_ok": true,
+       "lang_ok": true,
+       "first_try": true
+      },
+      "sources": [
+       "10-warm-up-and-mobility.md > Warm-Up and Mobility for Safer, Better Training > Making It Efficient"
+      ],
+      "quotes": [
+       "A practical formula is:\n\n- 3 to 5 minutes of general movement\n- 3 to 5 minutes of targeted mobility or activation\n- 5 to"
+      ]
+     },
+     {
+      "id": "ru-c07",
+      "lang": "ru",
+      "cat": "common",
+      "wall_ms": 8460,
+      "latency_ms": 8409,
+      "llm_calls": 2,
+      "answer": "Для активных взрослых полезным ориентиром является примерно от 1,6 до 2,2 грамма белка на килограмм массы тела в день [1]. Белок легче усваивается и переваривается, если распределить его на три-пять приемов пищи в течение дня, а не потреблять в один огромный прием [2].",
+      "scores": {
+       "idk": false,
+       "idk_correct": true,
+       "facts": 1.0,
+       "source_ok": true,
+       "quotes_ok": true,
+       "lang_ok": true,
+       "first_try": true
+      },
+      "sources": [
+       "08-nutrition-protein-and-calories.md > Nutrition, Protein, and Calories for Fitness Goals > Protein: The Priority Macronutrient for Lifters",
+       "08-nutrition-protein-and-calories.md > Nutrition, Protein, and Calories for Fitness Goals > Protein: The Priority Macronutrient for Lifters > Distributing protein across the day"
+      ],
+      "quotes": [
+       "A useful target for many active adults is about 1.6 to 2.2 grams of protein per kilogram of body weight per day.",
+       "Protein is often easier to use and digest when spread across three to five meals rather than pushed into one huge servin"
+      ]
+     },
+     {
+      "id": "ru-c08",
+      "lang": "ru",
+      "cat": "common",
+      "wall_ms": 13408,
+      "latency_ms": 13356,
+      "llm_calls": 2,
+      "answer": "Если штанга уходит вперед от тела в становой тяге, это увеличивает нагрузку на поясницу и усложняет локаут [3]. Чтобы исправить эту ошибку:\n\n1. Проверьте стартовую позицию, удерживайте штангу над серединой стопы и более агрессивно задействуйте широчайшие мышцы спины [3].\n2. Следите за тем, чтобы траектория штанги была практически вертикальной, и она оставалась очень близко к голеням и бедрам [1].\n3. Используйте ментальные подсказки (кью): «прижимать штангу к ногам» (squeeze the bar to the legs) и «держать подмышки зажатыми» (keep the armpits tight) [2].",
+      "scores": {
+       "idk": false,
+       "idk_correct": true,
+       "facts": 1.0,
+       "source_ok": false,
+       "quotes_ok": true,
+       "lang_ok": true,
+       "first_try": true
+      },
+      "sources": [
+       "02-deadlift-technique.md > Deadlift Technique > The hinge and first pull",
+       "02-deadlift-technique.md > Deadlift Technique > Common deadlift faults and fixes > Bent arms",
+       "02-deadlift-technique.md > Deadlift Technique > Romanian deadlift technique"
+      ],
+      "quotes": [
+       "Recheck the start position, keep the bar over midfoot, and engage the lats more aggressively.",
+       "Keep the bar path tight. The bar should track almost vertically and stay very close to the shins and thighs.",
+       "- squeeze the bar to the legs"
+      ]
+     },
+     {
+      "id": "ru01",
+      "lang": "ru",
+      "cat": "specific",
+      "wall_ms": 8511,
+      "latency_ms": 8460,
+      "llm_calls": 2,
+      "answer": "NEAT (термогенез повседневной активности) — это энергия, которую вы тратите на обычные движения вне структурированных тренировок: ходьбу, ерзание, работу по дому, подъем по лестнице, стояние и общую повседневную активность [1]. Во время диеты NEAT часто снижается незаметно для человека, так как из-за снижения уровня энергии вы можете больше сидеть, меньше двигаться или неосознанно избегать физических усилий [1].",
+      "scores": {
+       "idk": false,
+       "idk_correct": true,
+       "facts": 1.0,
+       "source_ok": true,
+       "quotes_ok": true,
+       "lang_ok": true,
+       "first_try": true
+      },
+      "sources": [
+       "09-fat-loss-and-body-composition.md > Fat Loss and Body Composition Without Losing the Plot > NEAT: The Hidden Lever"
+      ],
+      "quotes": [
+       "NEAT stands for non-exercise activity thermogenesis. In plain language, it is the energy you burn through ordinary movem",
+       "You may sit more, move less, or unconsciously avoid effort because energy is lower."
+      ]
+     },
+     {
+      "id": "ru02",
+      "lang": "ru",
+      "cat": "out_of_corpus",
+      "wall_ms": 4084,
+      "latency_ms": 4033,
+      "llm_calls": 1,
+      "answer": "Не знаю: в базе знаний нет информации, которая надёжно отвечает на этот вопрос.\n\nБлижайшие темы в базе (это не ответ на ваш вопрос): «Assistance work for stronger pushing», «A practical shortlist», «Common Mistakes».\n\nВы имели в виду одну из этих тем? Если нет — уточните, о каком упражнении, программе или аспекте питания идёт речь.",
+      "scores": {
+       "idk": true,
+       "idk_correct": true,
+       "lang_ok": true,
+       "first_try": false
+      },
+      "sources": [],
+      "quotes": []
+     }
+    ],
+    "total_s": 117.8
+   }
+  ],
+  "cold_start_ms": null
+ },
+ "hybrid": {
+  "provider": "hybrid",
+  "model": null,
+  "runs": [
+   {
+    "run": [
+     {
+      "id": "c01",
+      "lang": "en",
+      "cat": "specific",
+      "wall_ms": 7855,
+      "latency_ms": 7798,
+      "llm_calls": 2,
+      "answer": "In the beginner 3-day full-body program, Day 2 consists of the following exercises, sets, and reps [1]:\n- Trap-bar or kettlebell deadlift: 3 sets of 5 to 8\n- Dumbbell overhead press: 3 sets of 6 to 10\n- Lat pulldown: 3 sets of 8 to 12\n- Reverse lunge: 2 to 3 sets of 8 to 10 each side\n- Dead bug: 2 to 3 sets",
+      "scores": {
+       "idk": false,
+       "idk_correct": true,
+       "facts": 1.0,
+       "source_ok": false,
+       "quotes_ok": true,
+       "lang_ok": true,
+       "first_try": true
+      },
+      "sources": [
+       "13-beginner-program-design.md > Beginner Program Design for Strength and Muscle > A practical 3-day full-body program"
+      ],
+      "quotes": [
+       "## Day 2\n\n- Trap-bar or kettlebell deadlift: 3 sets of 5 to 8\n- Dumbbell overhead press: 3 sets of 6 to 10\n- Lat pulldow"
+      ]
+     },
+     {
+      "id": "c02",
+      "lang": "en",
+      "cat": "specific",
+      "wall_ms": 6567,
+      "latency_ms": 6512,
+      "llm_calls": 2,
+      "answer": "If you cannot perform a strict bodyweight pull-up yet, useful progression options include slow eccentrics, band-assisted pull-ups, machine-assisted pull-ups, isometric holds, and scapular pull-ups [1].",
+      "scores": {
+       "idk": false,
+       "idk_correct": true,
+       "facts": 1.0,
+       "source_ok": true,
+       "quotes_ok": true,
+       "lang_ok": true,
+       "first_try": true
+      },
+      "sources": [
+       "04-pulling-and-back-training.md > Pulling and Back Training > Pull-up progressions"
+      ],
+      "quotes": [
+       "Useful options include:\n\n- slow eccentrics\n- band-assisted pull-ups\n- machine-assisted pull-ups\n- isometric holds\n- scap"
+      ]
+     },
+     {
+      "id": "c03",
+      "lang": "en",
+      "cat": "specific",
+      "wall_ms": 7817,
+      "latency_ms": 7764,
+      "llm_calls": 2,
+      "answer": "If your deadlift stalls above the knee and the bar climbs in stages, it indicates that you likely lost position earlier in the lift [2]. To help correct this, variations such as paused deadlifts, RDLs, and block pulls can be useful, depending on where the breakdown starts [2].",
+      "scores": {
+       "idk": false,
+       "idk_correct": true,
+       "facts": 1.0,
+       "source_ok": false,
+       "quotes_ok": true,
+       "lang_ok": true,
+       "first_try": true
+      },
+      "sources": [
+       "02-deadlift-technique.md > Deadlift Technique > Romanian deadlift technique"
+      ],
+      "quotes": [
+       "If the bar stalls above the knee and climbs in stages, you likely lost position earlier. Paused deadlifts, RDLs, and blo"
+      ]
+     },
+     {
+      "id": "c04",
+      "lang": "en",
+      "cat": "specific",
+      "wall_ms": 8365,
+      "latency_ms": 8310,
+      "llm_calls": 2,
+      "answer": "Template A of the simple core training routine consists of the following exercises [1]:\n- **Dead bug**: 2 to 3 sets of 5 to 8 reps per side [1]\n- **Side plank**: 2 to 3 sets of 15 to 30 seconds per side [1]\n- **Suitcase carry**: 2 to 4 trips per side [1]",
+      "scores": {
+       "idk": false,
+       "idk_correct": true,
+       "facts": 1.0,
+       "source_ok": false,
+       "quotes_ok": true,
+       "lang_ok": true,
+       "first_try": true
+      },
+      "sources": [
+       "15-core-training-and-posture.md > Core Training, Bracing, and Posture Without the Myths > Better advice for desk workers"
+      ],
+      "quotes": [
+       "- Dead bug: 2 to 3 sets of 5 to 8 reps per side\n- Side plank: 2 to 3 sets of 15 to 30 seconds per side\n- Suitcase carry:"
+      ]
+     },
+     {
+      "id": "c05",
+      "lang": "en",
+      "cat": "specific",
+      "wall_ms": 6077,
+      "latency_ms": 6029,
+      "llm_calls": 2,
+      "answer": "I don't know: the knowledge base has no information that reliably answers this question.\n\nClosest topics in the knowledge base (not an answer to your question): «Ramp-Up Sets: The Most Specific Warm-Up Tool», «General Warm-Up Versus Specific Warm-Up», «Making It Efficient».\n\nDid you mean one of these topics? If not, which exercise, program or nutrition aspect do you have in mind?",
+      "scores": {
+       "idk": true,
+       "idk_correct": false,
+       "facts": 0.4,
+       "source_ok": false,
+       "quotes_ok": false,
+       "lang_ok": true,
+       "first_try": true
+      },
+      "sources": [],
+      "quotes": []
+     },
+     {
+      "id": "c06",
+      "lang": "en",
+      "cat": "specific",
+      "wall_ms": 7274,
+      "latency_ms": 7221,
+      "llm_calls": 2,
+      "answer": "According to the strength programming guidelines, the rep ranges assigned to these roles are:\n- 1 to 3 reps for high specificity [1]\n- 3 to 6 reps for repeated strength practice [1]\n- 6 to 12 or more reps for assistance and hypertrophy support [1]",
+      "scores": {
+       "idk": false,
+       "idk_correct": true,
+       "facts": 1.0,
+       "source_ok": true,
+       "quotes_ok": true,
+       "lang_ok": true,
+       "first_try": true
+      },
+      "sources": [
+       "05-strength-programming-basics.md > Strength Programming Basics > Rep ranges for strength development"
+      ],
+      "quotes": [
+       "1 to 3 reps for high specificity",
+       "3 to 6 reps for repeated strength practice",
+       "6 to 12 or more for assistance and hypertrophy support"
+      ]
+     },
+     {
+      "id": "c07",
+      "lang": "en",
+      "cat": "common",
+      "wall_ms": 7616,
+      "latency_ms": 7560,
+      "llm_calls": 2,
+      "answer": "An active adult should aim for about 1.6 to 2.2 grams of protein per kilogram of body weight per day [1]. This intake is often easier to use and digest when spread across three to five meals rather than consumed in one huge serving [2].",
+      "scores": {
+       "idk": false,
+       "idk_correct": true,
+       "facts": 1.0,
+       "source_ok": true,
+       "quotes_ok": true,
+       "lang_ok": true,
+       "first_try": true
+      },
+      "sources": [
+       "08-nutrition-protein-and-calories.md > Nutrition, Protein, and Calories for Fitness Goals > Protein: The Priority Macronutrient for Lifters",
+       "08-nutrition-protein-and-calories.md > Nutrition, Protein, and Calories for Fitness Goals > Protein: The Priority Macronutrient for Lifters > Distributing protein across the day"
+      ],
+      "quotes": [
+       "A useful target for many active adults is about 1.6 to 2.2 grams of protein per kilogram of body weight per day.",
+       "Protein is often easier to use and digest when spread across three to five meals rather than pushed into one huge servin"
+      ]
+     },
+     {
+      "id": "c08",
+      "lang": "en",
+      "cat": "common",
+      "wall_ms": 6552,
+      "latency_ms": 6502,
+      "llm_calls": 2,
+      "answer": "To fix the bar drifting forward during a deadlift, you should recheck your start position, keep the bar over your midfoot, and engage your lats more aggressively [2].",
+      "scores": {
+       "idk": false,
+       "idk_correct": true,
+       "facts": 1.0,
+       "source_ok": false,
+       "quotes_ok": true,
+       "lang_ok": true,
+       "first_try": true
+      },
+      "sources": [
+       "02-deadlift-technique.md > Deadlift Technique > Romanian deadlift technique"
+      ],
+      "quotes": [
+       "Recheck the start position, keep the bar over midfoot, and engage the lats more aggressively."
+      ]
+     },
+     {
+      "id": "c09",
+      "lang": "en",
+      "cat": "out_of_corpus",
+      "wall_ms": 4778,
+      "latency_ms": 4730,
+      "llm_calls": 2,
+      "answer": "I don't know: the knowledge base has no information that reliably answers this question.\n\nClosest topics in the knowledge base (not an answer to your question): «Deadlift Technique», «Final deadlift checklist», «Conventional deadlift setup».\n\nDid you mean one of these topics? If not, which exercise, program or nutrition aspect do you have in mind?",
+      "scores": {
+       "idk": true,
+       "idk_correct": true,
+       "lang_ok": true,
+       "first_try": true
+      },
+      "sources": [],
+      "quotes": []
+     },
+     {
+      "id": "c10",
+      "lang": "en",
+      "cat": "out_of_corpus",
+      "wall_ms": 4665,
+      "latency_ms": 4609,
+      "llm_calls": 2,
+      "answer": "I don't know: the knowledge base has no information that reliably answers this question.\n\nClosest topics in the knowledge base (not an answer to your question): «Protein powder», «Protein powder > When powder earns its place», «A practical shortlist».\n\nDid you mean one of these topics? If not, which exercise, program or nutrition aspect do you have in mind?",
+      "scores": {
+       "idk": true,
+       "idk_correct": true,
+       "lang_ok": true,
+       "first_try": true
+      },
+      "sources": [],
+      "quotes": []
+     },
+     {
+      "id": "ru-c02",
+      "lang": "ru",
+      "cat": "specific",
+      "wall_ms": 7691,
+      "latency_ms": 7637,
+      "llm_calls": 2,
+      "answer": "Если вам нужны промежуточные шаги перед тем, как вы сможете выполнять строгие подтягивания с собственным весом, полезными вариантами прогрессий являются [1]:\n\n- медленные эксцентрические опускания (slow eccentrics) [1];\n- подтягивания с помощью фитнес-резины (band-assisted pull-ups) [1];\n- подтягивания в тренажере/гравитроне (machine-assisted pull-ups) [1];\n- изометрические удержания (isometric holds) [1];\n- лопаточные подтягивания (scapular pull-ups) [1].",
+      "scores": {
+       "idk": false,
+       "idk_correct": true,
+       "facts": 1.0,
+       "source_ok": true,
+       "quotes_ok": true,
+       "lang_ok": true,
+       "first_try": true
+      },
+      "sources": [
+       "04-pulling-and-back-training.md > Pulling and Back Training > Pull-up progressions"
+      ],
+      "quotes": [
+       "Useful options include:\n\n- slow eccentrics\n- band-assisted pull-ups\n- machine-assisted pull-ups\n- isometric holds\n- scap"
+      ]
+     },
+     {
+      "id": "ru-c05",
+      "lang": "ru",
+      "cat": "specific",
+      "wall_ms": 7667,
+      "latency_ms": 7610,
+      "llm_calls": 2,
+      "answer": "Практичная формула для разделения 10–15-минутной разминки на фазы выглядит следующим образом [2]:\n\n* **3–5 минут** — общая двигательная активность (general movement) [2];\n* **3–5 минут** — целевая мобильность или активация (targeted mobility or activation) [2];\n* **5–10 минут** — прогрессивные специфические подходы (progressively specific sets) [2].",
+      "scores": {
+       "idk": false,
+       "idk_correct": true,
+       "facts": 1.0,
+       "source_ok": true,
+       "quotes_ok": true,
+       "lang_ok": true,
+       "first_try": true
+      },
+      "sources": [
+       "10-warm-up-and-mobility.md > Warm-Up and Mobility for Safer, Better Training > Making It Efficient"
+      ],
+      "quotes": [
+       "A practical formula is:\n\n- 3 to 5 minutes of general movement\n- 3 to 5 minutes of targeted mobility or activation\n- 5 to"
+      ]
+     },
+     {
+      "id": "ru-c07",
+      "lang": "ru",
+      "cat": "common",
+      "wall_ms": 7885,
+      "latency_ms": 7832,
+      "llm_calls": 2,
+      "answer": "Для активных взрослых полезным ориентиром является около 1,6–2,2 грамма белка на килограмм массы тела в день [1]. Распределять белок в течение дня рекомендуется на три-пять приемов пищи вместо одного огромного приема, так как это облегчает его усвоение и пищеварение [3].",
+      "scores": {
+       "idk": false,
+       "idk_correct": true,
+       "facts": 1.0,
+       "source_ok": true,
+       "quotes_ok": true,
+       "lang_ok": true,
+       "first_try": true
+      },
+      "sources": [
+       "08-nutrition-protein-and-calories.md > Nutrition, Protein, and Calories for Fitness Goals > Protein: The Priority Macronutrient for Lifters",
+       "08-nutrition-protein-and-calories.md > Nutrition, Protein, and Calories for Fitness Goals > Protein: The Priority Macronutrient for Lifters > Distributing protein across the day"
+      ],
+      "quotes": [
+       "A useful target for many active adults is about 1.6 to 2.2 grams of protein per kilogram of body weight per day.",
+       "Protein is often easier to use and digest when spread across three to five meals rather than pushed into one huge servin"
+      ]
+     },
+     {
+      "id": "ru-c08",
+      "lang": "ru",
+      "cat": "common",
+      "wall_ms": 9159,
+      "latency_ms": 9097,
+      "llm_calls": 2,
+      "answer": "Если штанга уходит вперёд от тела во время становой тяги, это увеличивает нагрузку на поясницу и усложняет локаут [2]. Чтобы исправить эту ошибку, выполните следующие действия:\n\n1. Проверьте стартовое положение [2].\n2. Удерживайте штангу над серединой стопы [2].\n3. Более агрессивно задействуйте широчайшие мышцы спины [2].\n\nТакже важно сохранять траекторию движения штанги плотной: она должна проходить практически вертикально и находиться очень близко к голеням и бедрам [1].",
+      "scores": {
+       "idk": false,
+       "idk_correct": true,
+       "facts": 1.0,
+       "source_ok": false,
+       "quotes_ok": true,
+       "lang_ok": true,
+       "first_try": true
+      },
+      "sources": [
+       "02-deadlift-technique.md > Deadlift Technique > The hinge and first pull",
+       "02-deadlift-technique.md > Deadlift Technique > Romanian deadlift technique"
+      ],
+      "quotes": [
+       "This increases the load on the lower back and makes lockout harder. Recheck the start position, keep the bar over midfoo",
+       "Keep the bar path tight. The bar should track almost vertically and stay very close to the shins and thighs."
+      ]
+     },
+     {
+      "id": "ru01",
+      "lang": "ru",
+      "cat": "specific",
+      "wall_ms": 9052,
+      "latency_ms": 8995,
+      "llm_calls": 2,
+      "answer": "NEAT (термогенез повседневной активности) — это энергия, которую вы тратите на обычные движения вне структурированных тренировок: ходьбу, ерзание, домашние дела, лестницы, ходьбу туда-сюда, стояние и общую повседневную активность [1]. Во время диеты NEAT часто снижается незаметно для человека, так как уровень энергии падает, из-за чего вы можете больше сидеть, меньше двигаться или неосознанно избегать физических усилий [1].",
+      "scores": {
+       "idk": false,
+       "idk_correct": true,
+       "facts": 1.0,
+       "source_ok": true,
+       "quotes_ok": true,
+       "lang_ok": true,
+       "first_try": true
+      },
+      "sources": [
+       "09-fat-loss-and-body-composition.md > Fat Loss and Body Composition Without Losing the Plot > NEAT: The Hidden Lever"
+      ],
+      "quotes": [
+       "NEAT stands for non-exercise activity thermogenesis. In plain language, it is the energy you burn through ordinary movem",
+       "NEAT often drops during dieting without people noticing. You may sit more, move less, or unconsciously avoid effort beca"
+      ]
+     },
+     {
+      "id": "ru02",
+      "lang": "ru",
+      "cat": "out_of_corpus",
+      "wall_ms": 3892,
+      "latency_ms": 3840,
+      "llm_calls": 1,
+      "answer": "Не знаю: в базе знаний нет информации, которая надёжно отвечает на этот вопрос.\n\nБлижайшие темы в базе (это не ответ на ваш вопрос): «Tracking and adjustment», «Tempo and execution quality», «Breathing and trunk control».\n\nВы имели в виду одну из этих тем? Если нет — уточните, о каком упражнении, программе или аспекте питания идёт речь.",
+      "scores": {
+       "idk": true,
+       "idk_correct": true,
+       "lang_ok": true,
+       "first_try": false
+      },
+      "sources": [],
+      "quotes": []
+     }
+    ],
+    "total_s": 112.9
+   },
+   {
+    "run": [
+     {
+      "id": "c01",
+      "lang": "en",
+      "cat": "specific",
+      "wall_ms": 7803,
+      "latency_ms": 7751,
+      "llm_calls": 2,
+      "answer": "In the beginner 3-day full-body program, Day 2 consists of the following exercises, sets, and reps [1]:\n- Trap-bar or kettlebell deadlift: 3 sets of 5 to 8\n- Dumbbell overhead press: 3 sets of 6 to 10\n- Lat pulldown: 3 sets of 8 to 12\n- Reverse lunge: 2 to 3 sets of 8 to 10 each side\n- Dead bug: 2 to 3 sets",
+      "scores": {
+       "idk": false,
+       "idk_correct": true,
+       "facts": 1.0,
+       "source_ok": false,
+       "quotes_ok": true,
+       "lang_ok": true,
+       "first_try": true
+      },
+      "sources": [
+       "13-beginner-program-design.md > Beginner Program Design for Strength and Muscle > A practical 3-day full-body program"
+      ],
+      "quotes": [
+       "## Day 2\n\n- Trap-bar or kettlebell deadlift: 3 sets of 5 to 8\n- Dumbbell overhead press: 3 sets of 6 to 10\n- Lat pulldow"
+      ]
+     },
+     {
+      "id": "c02",
+      "lang": "en",
+      "cat": "specific",
+      "wall_ms": 6027,
+      "latency_ms": 5981,
+      "llm_calls": 2,
+      "answer": "If you cannot perform a strict bodyweight pull-up yet, useful progression options include slow eccentrics, band-assisted pull-ups, machine-assisted pull-ups, isometric holds, and scapular pull-ups [1].",
+      "scores": {
+       "idk": false,
+       "idk_correct": true,
+       "facts": 1.0,
+       "source_ok": true,
+       "quotes_ok": true,
+       "lang_ok": true,
+       "first_try": true
+      },
+      "sources": [
+       "04-pulling-and-back-training.md > Pulling and Back Training > Pull-up progressions"
+      ],
+      "quotes": [
+       "Useful options include:\n\n- slow eccentrics\n- band-assisted pull-ups\n- machine-assisted pull-ups\n- isometric holds\n- scap"
+      ]
+     },
+     {
+      "id": "c03",
+      "lang": "en",
+      "cat": "specific",
+      "wall_ms": 8108,
+      "latency_ms": 8058,
+      "llm_calls": 2,
+      "answer": "If your deadlift stalls above the knee and the bar climbs in stages, it indicates that you likely lost position earlier in the lift [2]. To help correct this, variations such as paused deadlifts, RDLs, and block pulls can be useful, depending on where the breakdown starts [2].",
+      "scores": {
+       "idk": false,
+       "idk_correct": true,
+       "facts": 1.0,
+       "source_ok": false,
+       "quotes_ok": true,
+       "lang_ok": true,
+       "first_try": true
+      },
+      "sources": [
+       "02-deadlift-technique.md > Deadlift Technique > Romanian deadlift technique"
+      ],
+      "quotes": [
+       "If the bar stalls above the knee and climbs in stages, you likely lost position earlier. Paused deadlifts, RDLs, and blo"
+      ]
+     },
+     {
+      "id": "c04",
+      "lang": "en",
+      "cat": "specific",
+      "wall_ms": 7047,
+      "latency_ms": 7003,
+      "llm_calls": 2,
+      "answer": "Template A of the simple core training routine consists of the following exercises, sets, and reps/time:\n- **Dead bug**: 2 to 3 sets of 5 to 8 reps per side [1]\n- **Side plank**: 2 to 3 sets of 15 to 30 seconds per side [1]\n- **Suitcase carry**: 2 to 4 trips per side [1]",
+      "scores": {
+       "idk": false,
+       "idk_correct": true,
+       "facts": 1.0,
+       "source_ok": false,
+       "quotes_ok": true,
+       "lang_ok": true,
+       "first_try": true
+      },
+      "sources": [
+       "15-core-training-and-posture.md > Core Training, Bracing, and Posture Without the Myths > Better advice for desk workers"
+      ],
+      "quotes": [
+       "- Dead bug: 2 to 3 sets of 5 to 8 reps per side\n- Side plank: 2 to 3 sets of 15 to 30 seconds per side\n- Suitcase carry:"
+      ]
+     },
+     {
+      "id": "c05",
+      "lang": "en",
+      "cat": "specific",
+      "wall_ms": 6445,
+      "latency_ms": 6390,
+      "llm_calls": 2,
+      "answer": "I don't know: the knowledge base has no information that reliably answers this question.\n\nClosest topics in the knowledge base (not an answer to your question): «Ramp-Up Sets: The Most Specific Warm-Up Tool», «General Warm-Up Versus Specific Warm-Up», «Making It Efficient».\n\nDid you mean one of these topics? If not, which exercise, program or nutrition aspect do you have in mind?",
+      "scores": {
+       "idk": true,
+       "idk_correct": false,
+       "facts": 0.4,
+       "source_ok": false,
+       "quotes_ok": false,
+       "lang_ok": true,
+       "first_try": true
+      },
+      "sources": [],
+      "quotes": []
+     },
+     {
+      "id": "c06",
+      "lang": "en",
+      "cat": "specific",
+      "wall_ms": 7892,
+      "latency_ms": 7845,
+      "llm_calls": 2,
+      "answer": "According to the strength programming guidelines, the rep ranges assigned to these roles are:\n- 1 to 3 reps for high specificity [1]\n- 3 to 6 reps for repeated strength practice [1]\n- 6 to 12 or more reps for assistance and hypertrophy support [1]",
+      "scores": {
+       "idk": false,
+       "idk_correct": true,
+       "facts": 1.0,
+       "source_ok": true,
+       "quotes_ok": true,
+       "lang_ok": true,
+       "first_try": true
+      },
+      "sources": [
+       "05-strength-programming-basics.md > Strength Programming Basics > Rep ranges for strength development"
+      ],
+      "quotes": [
+       "1 to 3 reps for high specificity",
+       "3 to 6 reps for repeated strength practice",
+       "6 to 12 or more for assistance and hypertrophy support"
+      ]
+     },
+     {
+      "id": "c07",
+      "lang": "en",
+      "cat": "common",
+      "wall_ms": 7471,
+      "latency_ms": 7420,
+      "llm_calls": 2,
+      "answer": "An active adult should aim for about 1.6 to 2.2 grams of protein per kilogram of body weight per day [1]. To make it easier to use and digest, this protein should ideally be spread across three to five meals rather than consumed in one single large serving [2].",
+      "scores": {
+       "idk": false,
+       "idk_correct": true,
+       "facts": 1.0,
+       "source_ok": true,
+       "quotes_ok": true,
+       "lang_ok": true,
+       "first_try": true
+      },
+      "sources": [
+       "08-nutrition-protein-and-calories.md > Nutrition, Protein, and Calories for Fitness Goals > Protein: The Priority Macronutrient for Lifters",
+       "08-nutrition-protein-and-calories.md > Nutrition, Protein, and Calories for Fitness Goals > Protein: The Priority Macronutrient for Lifters > Distributing protein across the day"
+      ],
+      "quotes": [
+       "A useful target for many active adults is about 1.6 to 2.2 grams of protein per kilogram of body weight per day.",
+       "Protein is often easier to use and digest when spread across three to five meals rather than pushed into one huge servin"
+      ]
+     },
+     {
+      "id": "c08",
+      "lang": "en",
+      "cat": "common",
+      "wall_ms": 6794,
+      "latency_ms": 6746,
+      "llm_calls": 2,
+      "answer": "To fix the bar drifting forward during a deadlift, you should recheck your start position, keep the bar over your midfoot, and engage your lats more aggressively [2].",
+      "scores": {
+       "idk": false,
+       "idk_correct": true,
+       "facts": 1.0,
+       "source_ok": false,
+       "quotes_ok": true,
+       "lang_ok": true,
+       "first_try": true
+      },
+      "sources": [
+       "02-deadlift-technique.md > Deadlift Technique > Romanian deadlift technique"
+      ],
+      "quotes": [
+       "Recheck the start position, keep the bar over midfoot, and engage the lats more aggressively."
+      ]
+     },
+     {
+      "id": "c09",
+      "lang": "en",
+      "cat": "out_of_corpus",
+      "wall_ms": 4648,
+      "latency_ms": 4599,
+      "llm_calls": 2,
+      "answer": "I don't know: the knowledge base has no information that reliably answers this question.\n\nClosest topics in the knowledge base (not an answer to your question): «Deadlift Technique», «Final deadlift checklist», «Conventional deadlift setup».\n\nDid you mean one of these topics? If not, which exercise, program or nutrition aspect do you have in mind?",
+      "scores": {
+       "idk": true,
+       "idk_correct": true,
+       "lang_ok": true,
+       "first_try": true
+      },
+      "sources": [],
+      "quotes": []
+     },
+     {
+      "id": "c10",
+      "lang": "en",
+      "cat": "out_of_corpus",
+      "wall_ms": 5111,
+      "latency_ms": 5060,
+      "llm_calls": 2,
+      "answer": "I don't know: the knowledge base has no information that reliably answers this question.\n\nClosest topics in the knowledge base (not an answer to your question): «Protein powder», «Protein powder > When powder earns its place», «A practical shortlist».\n\nDid you mean one of these topics? If not, which exercise, program or nutrition aspect do you have in mind?",
+      "scores": {
+       "idk": true,
+       "idk_correct": true,
+       "lang_ok": true,
+       "first_try": true
+      },
+      "sources": [],
+      "quotes": []
+     },
+     {
+      "id": "ru-c02",
+      "lang": "ru",
+      "cat": "specific",
+      "wall_ms": 7627,
+      "latency_ms": 7584,
+      "llm_calls": 2,
+      "answer": "Если вы пока не можете выполнять строгие подтягивания с собственным весом, полезными промежуточными прогрессиями являются:\n\n- медленные эксцентрические опускания (slow eccentrics);\n- подтягивания с помощью резиновой петли (band-assisted pull-ups);\n- подтягивания в тренажере/гравитроне (machine-assisted pull-ups);\n- изометрические удержания (isometric holds);\n- лопаточные подтягивания (scapular pull-ups) [1].",
+      "scores": {
+       "idk": false,
+       "idk_correct": true,
+       "facts": 1.0,
+       "source_ok": true,
+       "quotes_ok": true,
+       "lang_ok": true,
+       "first_try": true
+      },
+      "sources": [
+       "04-pulling-and-back-training.md > Pulling and Back Training > Pull-up progressions"
+      ],
+      "quotes": [
+       "Useful options include:\n\n- slow eccentrics\n- band-assisted pull-ups\n- machine-assisted pull-ups\n- isometric holds\n- scap"
+      ]
+     },
+     {
+      "id": "ru-c05",
+      "lang": "ru",
+      "cat": "specific",
+      "wall_ms": 7695,
+      "latency_ms": 7652,
+      "llm_calls": 2,
+      "answer": "Практичная формула для разделения 10–15-минутной разминки на фазы выглядит следующим образом [2]:\n\n* **От 3 до 5 минут** — общая двигательная активность (general movement) [2];\n* **От 3 до 5 минут** — целевая мобильность или активация (targeted mobility or activation) [2];\n* **От 5 до 10 минут** — прогрессивно усложняющиеся специфические подходы (progressively specific sets) [2].",
+      "scores": {
+       "idk": false,
+       "idk_correct": true,
+       "facts": 1.0,
+       "source_ok": true,
+       "quotes_ok": true,
+       "lang_ok": true,
+       "first_try": true
+      },
+      "sources": [
+       "10-warm-up-and-mobility.md > Warm-Up and Mobility for Safer, Better Training > Making It Efficient"
+      ],
+      "quotes": [
+       "A practical formula is:\n\n- 3 to 5 minutes of general movement\n- 3 to 5 minutes of targeted mobility or activation\n- 5 to"
+      ]
+     },
+     {
+      "id": "ru-c07",
+      "lang": "ru",
+      "cat": "common",
+      "wall_ms": 6737,
+      "latency_ms": 6685,
+      "llm_calls": 2,
+      "answer": "Для активных взрослых полезным ориентиром является примерно от 1,6 до 2,2 грамма белка на килограмм массы тела в день [1]. Распределять белок рекомендуется на три-пять приемов пищи в течение дня, а не потреблять его за один огромный прием, так как это облегчает его усвоение и пищеварение [2].",
+      "scores": {
+       "idk": false,
+       "idk_correct": true,
+       "facts": 1.0,
+       "source_ok": true,
+       "quotes_ok": true,
+       "lang_ok": true,
+       "first_try": true
+      },
+      "sources": [
+       "08-nutrition-protein-and-calories.md > Nutrition, Protein, and Calories for Fitness Goals > Protein: The Priority Macronutrient for Lifters",
+       "08-nutrition-protein-and-calories.md > Nutrition, Protein, and Calories for Fitness Goals > Protein: The Priority Macronutrient for Lifters > Distributing protein across the day"
+      ],
+      "quotes": [
+       "A useful target for many active adults is about 1.6 to 2.2 grams of protein per kilogram of body weight per day.",
+       "Protein is often easier to use and digest when spread across three to five meals rather than pushed into one huge servin"
+      ]
+     },
+     {
+      "id": "ru-c08",
+      "lang": "ru",
+      "cat": "common",
+      "wall_ms": 9515,
+      "latency_ms": 9461,
+      "llm_calls": 2,
+      "answer": "Если штанга уходит вперёд от тела во время становой тяги, это увеличивает нагрузку на поясницу и усложняет фиксацию (локаут) [2]. Чтобы исправить эту ошибку, выполните следующие действия:\n\n1. Проверьте стартовую позицию [2].\n2. Удерживайте штангу над серединой стопы [2].\n3. Более агрессивно задействуйте широчайшие мышцы спины [2].\n4. Следите за тем, чтобы траектория штанги была плотной: она должна идти практически вертикально и находиться очень близко к голеням и бедрам [1].",
+      "scores": {
+       "idk": false,
+       "idk_correct": true,
+       "facts": 1.0,
+       "source_ok": false,
+       "quotes_ok": true,
+       "lang_ok": true,
+       "first_try": true
+      },
+      "sources": [
+       "02-deadlift-technique.md > Deadlift Technique > The hinge and first pull",
+       "02-deadlift-technique.md > Deadlift Technique > Romanian deadlift technique"
+      ],
+      "quotes": [
+       "Recheck the start position, keep the bar over midfoot, and engage the lats more aggressively.",
+       "Keep the bar path tight. The bar should track almost vertically and stay very close to the shins and thighs."
+      ]
+     },
+     {
+      "id": "ru01",
+      "lang": "ru",
+      "cat": "specific",
+      "wall_ms": 7971,
+      "latency_ms": 7924,
+      "llm_calls": 2,
+      "answer": "NEAT (non-exercise activity thermogenesis) — это энергия, которую вы расходуете на обычные движения вне структурированных тренировок: ходьбу, ерзание, домашние дела, лестницы, ходьбу на месте, стояние и общую повседневную активность [1]. Во время диеты NEAT часто снижается незаметно для человека, так как из-за снижения уровня энергии вы можете больше сидеть, меньше двигаться или неосознанно избегать физических усилий [1].",
+      "scores": {
+       "idk": false,
+       "idk_correct": true,
+       "facts": 1.0,
+       "source_ok": true,
+       "quotes_ok": true,
+       "lang_ok": true,
+       "first_try": true
+      },
+      "sources": [
+       "09-fat-loss-and-body-composition.md > Fat Loss and Body Composition Without Losing the Plot > NEAT: The Hidden Lever"
+      ],
+      "quotes": [
+       "NEAT stands for non-exercise activity thermogenesis. In plain language, it is the energy you burn through ordinary movem",
+       "NEAT often drops during dieting without people noticing. You may sit more, move less, or unconsciously avoid effort beca"
+      ]
+     },
+     {
+      "id": "ru02",
+      "lang": "ru",
+      "cat": "out_of_corpus",
+      "wall_ms": 3183,
+      "latency_ms": 3136,
+      "llm_calls": 1,
+      "answer": "Не знаю: в базе знаний нет информации, которая надёжно отвечает на этот вопрос.\n\nБлижайшие темы в базе (это не ответ на ваш вопрос): «Tracking and adjustment», «Breathing and trunk control», «Tempo and execution quality».\n\nВы имели в виду одну из этих тем? Если нет — уточните, о каком упражнении, программе или аспекте питания идёт речь.",
+      "scores": {
+       "idk": true,
+       "idk_correct": true,
+       "lang_ok": true,
+       "first_try": false
+      },
+      "sources": [],
+      "quotes": []
+     }
+    ],
+    "total_s": 110.1
+   },
+   {
+    "run": [
+     {
+      "id": "c01",
+      "lang": "en",
+      "cat": "specific",
+      "wall_ms": 8058,
+      "latency_ms": 8007,
+      "llm_calls": 2,
+      "answer": "In the beginner 3-day full-body program, Day 2 consists of the following exercises, sets, and reps [1]:\n- Trap-bar or kettlebell deadlift: 3 sets of 5 to 8\n- Dumbbell overhead press: 3 sets of 6 to 10\n- Lat pulldown: 3 sets of 8 to 12\n- Reverse lunge: 2 to 3 sets of 8 to 10 each side\n- Dead bug: 2 to 3 sets",
+      "scores": {
+       "idk": false,
+       "idk_correct": true,
+       "facts": 1.0,
+       "source_ok": false,
+       "quotes_ok": true,
+       "lang_ok": true,
+       "first_try": true
+      },
+      "sources": [
+       "13-beginner-program-design.md > Beginner Program Design for Strength and Muscle > A practical 3-day full-body program"
+      ],
+      "quotes": [
+       "## Day 2\n\n- Trap-bar or kettlebell deadlift: 3 sets of 5 to 8\n- Dumbbell overhead press: 3 sets of 6 to 10\n- Lat pulldow"
+      ]
+     },
+     {
+      "id": "c02",
+      "lang": "en",
+      "cat": "specific",
+      "wall_ms": 6661,
+      "latency_ms": 6602,
+      "llm_calls": 2,
+      "answer": "If you cannot perform a strict bodyweight pull-up yet, useful progression options include slow eccentrics, band-assisted pull-ups, machine-assisted pull-ups, isometric holds, and scapular pull-ups [1].",
+      "scores": {
+       "idk": false,
+       "idk_correct": true,
+       "facts": 1.0,
+       "source_ok": true,
+       "quotes_ok": true,
+       "lang_ok": true,
+       "first_try": true
+      },
+      "sources": [
+       "04-pulling-and-back-training.md > Pulling and Back Training > Pull-up progressions"
+      ],
+      "quotes": [
+       "Useful options include:\n\n- slow eccentrics\n- band-assisted pull-ups\n- machine-assisted pull-ups\n- isometric holds\n- scap"
+      ]
+     },
+     {
+      "id": "c03",
+      "lang": "en",
+      "cat": "specific",
+      "wall_ms": 7371,
+      "latency_ms": 7314,
+      "llm_calls": 2,
+      "answer": "If your deadlift stalls above the knee and climbs in stages (known as hitching at lockout), it indicates that you likely lost position earlier in the lift [2]. To help correct this, variations such as paused deadlifts, Romanian deadlifts (RDLs), and block pulls can be useful, depending on where the breakdown begins [2].",
+      "scores": {
+       "idk": false,
+       "idk_correct": true,
+       "facts": 1.0,
+       "source_ok": false,
+       "quotes_ok": true,
+       "lang_ok": true,
+       "first_try": true
+      },
+      "sources": [
+       "02-deadlift-technique.md > Deadlift Technique > Romanian deadlift technique"
+      ],
+      "quotes": [
+       "If the bar stalls above the knee and climbs in stages, you likely lost position earlier. Paused deadlifts, RDLs, and blo"
+      ]
+     },
+     {
+      "id": "c04",
+      "lang": "en",
+      "cat": "specific",
+      "wall_ms": 6794,
+      "latency_ms": 6745,
+      "llm_calls": 2,
+      "answer": "Template A of the simple core training routine consists of the following exercises, sets, and reps/time:\n- **Dead bug**: 2 to 3 sets of 5 to 8 reps per side [1]\n- **Side plank**: 2 to 3 sets of 15 to 30 seconds per side [1]\n- **Suitcase carry**: 2 to 4 trips per side [1]",
+      "scores": {
+       "idk": false,
+       "idk_correct": true,
+       "facts": 1.0,
+       "source_ok": false,
+       "quotes_ok": true,
+       "lang_ok": true,
+       "first_try": true
+      },
+      "sources": [
+       "15-core-training-and-posture.md > Core Training, Bracing, and Posture Without the Myths > Better advice for desk workers"
+      ],
+      "quotes": [
+       "- Dead bug: 2 to 3 sets of 5 to 8 reps per side\n- Side plank: 2 to 3 sets of 15 to 30 seconds per side\n- Suitcase carry:"
+      ]
+     },
+     {
+      "id": "c05",
+      "lang": "en",
+      "cat": "specific",
+      "wall_ms": 7547,
+      "latency_ms": 7490,
+      "llm_calls": 2,
+      "answer": "To efficiently structure a 10 to 15-minute warm-up, you can use the following three-phase formula:\n\n1. **General movement**: 3 to 5 minutes [3].\n2. **Targeted mobility or activation**: 3 to 5 minutes [3].\n3. **Progressively specific sets**: 5 to 10 minutes [3].",
+      "scores": {
+       "idk": false,
+       "idk_correct": true,
+       "facts": 1.0,
+       "source_ok": true,
+       "quotes_ok": true,
+       "lang_ok": true,
+       "first_try": true
+      },
+      "sources": [
+       "10-warm-up-and-mobility.md > Warm-Up and Mobility for Safer, Better Training > Making It Efficient"
+      ],
+      "quotes": [
+       "A practical formula is:\n\n- 3 to 5 minutes of general movement\n- 3 to 5 minutes of targeted mobility or activation\n- 5 to"
+      ]
+     },
+     {
+      "id": "c06",
+      "lang": "en",
+      "cat": "specific",
+      "wall_ms": 7299,
+      "latency_ms": 7250,
+      "llm_calls": 2,
+      "answer": "According to the strength programming guidelines, the rep ranges assigned to these roles are:\n- 1 to 3 reps for high specificity [1]\n- 3 to 6 reps for repeated strength practice [1]\n- 6 to 12 or more reps for assistance and hypertrophy support [1]",
+      "scores": {
+       "idk": false,
+       "idk_correct": true,
+       "facts": 1.0,
+       "source_ok": true,
+       "quotes_ok": true,
+       "lang_ok": true,
+       "first_try": true
+      },
+      "sources": [
+       "05-strength-programming-basics.md > Strength Programming Basics > Rep ranges for strength development"
+      ],
+      "quotes": [
+       "- 1 to 3 reps for high specificity\n- 3 to 6 reps for repeated strength practice\n- 6 to 12 or more for assistance and hyp"
+      ]
+     },
+     {
+      "id": "c07",
+      "lang": "en",
+      "cat": "common",
+      "wall_ms": 7331,
+      "latency_ms": 7282,
+      "llm_calls": 2,
+      "answer": "An active adult should aim for about 1.6 to 2.2 grams of protein per kilogram of body weight per day [1]. This intake is often easier to use and digest when spread across three to five meals rather than consumed in one huge serving [2].",
+      "scores": {
+       "idk": false,
+       "idk_correct": true,
+       "facts": 1.0,
+       "source_ok": true,
+       "quotes_ok": true,
+       "lang_ok": true,
+       "first_try": true
+      },
+      "sources": [
+       "08-nutrition-protein-and-calories.md > Nutrition, Protein, and Calories for Fitness Goals > Protein: The Priority Macronutrient for Lifters",
+       "08-nutrition-protein-and-calories.md > Nutrition, Protein, and Calories for Fitness Goals > Protein: The Priority Macronutrient for Lifters > Distributing protein across the day"
+      ],
+      "quotes": [
+       "A useful target for many active adults is about 1.6 to 2.2 grams of protein per kilogram of body weight per day.",
+       "Protein is often easier to use and digest when spread across three to five meals rather than pushed into one huge servin"
+      ]
+     },
+     {
+      "id": "c08",
+      "lang": "en",
+      "cat": "common",
+      "wall_ms": 8114,
+      "latency_ms": 8060,
+      "llm_calls": 2,
+      "answer": "If the bar drifts forward during the deadlift, you can fix this issue by rechecking your start position, keeping the bar over your midfoot, and engaging your lats more aggressively [1]. A helpful practical cue to keep the bar tight to your body is to \"squeeze the bar to the legs\" [3].",
+      "scores": {
+       "idk": false,
+       "idk_correct": true,
+       "facts": 1.0,
+       "source_ok": false,
+       "quotes_ok": true,
+       "lang_ok": true,
+       "first_try": true
+      },
+      "sources": [
+       "02-deadlift-technique.md > Deadlift Technique > Romanian deadlift technique",
+       "02-deadlift-technique.md > Deadlift Technique > Common deadlift faults and fixes > Bent arms"
+      ],
+      "quotes": [
+       "Recheck the start position, keep the bar over midfoot, and engage the lats more aggressively.",
+       "squeeze the bar to the legs"
+      ]
+     },
+     {
+      "id": "c09",
+      "lang": "en",
+      "cat": "out_of_corpus",
+      "wall_ms": 5024,
+      "latency_ms": 4974,
+      "llm_calls": 2,
+      "answer": "I don't know: the knowledge base has no information that reliably answers this question.\n\nClosest topics in the knowledge base (not an answer to your question): «Deadlift Technique», «Final deadlift checklist», «Conventional deadlift setup».\n\nDid you mean one of these topics? If not, which exercise, program or nutrition aspect do you have in mind?",
+      "scores": {
+       "idk": true,
+       "idk_correct": true,
+       "lang_ok": true,
+       "first_try": true
+      },
+      "sources": [],
+      "quotes": []
+     },
+     {
+      "id": "c10",
+      "lang": "en",
+      "cat": "out_of_corpus",
+      "wall_ms": 5121,
+      "latency_ms": 5071,
+      "llm_calls": 2,
+      "answer": "I don't know: the knowledge base has no information that reliably answers this question.\n\nClosest topics in the knowledge base (not an answer to your question): «Protein powder», «Protein powder > When powder earns its place», «A practical shortlist».\n\nDid you mean one of these topics? If not, which exercise, program or nutrition aspect do you have in mind?",
+      "scores": {
+       "idk": true,
+       "idk_correct": true,
+       "lang_ok": true,
+       "first_try": true
+      },
+      "sources": [],
+      "quotes": []
+     },
+     {
+      "id": "ru-c02",
+      "lang": "ru",
+      "cat": "specific",
+      "wall_ms": 8051,
+      "latency_ms": 8001,
+      "llm_calls": 2,
+      "answer": "Если вам нужны промежуточные шаги перед тем, как вы сможете выполнять строгие подтягивания с собственным весом, полезными вариантами прогрессий являются [1]:\n\n- медленные эксцентрические опускания (slow eccentrics) [1];\n- подтягивания с помощью фитнес-резины (band-assisted pull-ups) [1];\n- подтягивания в тренажере/гравитроне (machine-assisted pull-ups) [1];\n- изометрические удержания (isometric holds) [1];\n- лопаточные подтягивания (scapular pull-ups) [1].",
+      "scores": {
+       "idk": false,
+       "idk_correct": true,
+       "facts": 1.0,
+       "source_ok": true,
+       "quotes_ok": true,
+       "lang_ok": true,
+       "first_try": true
+      },
+      "sources": [
+       "04-pulling-and-back-training.md > Pulling and Back Training > Pull-up progressions"
+      ],
+      "quotes": [
+       "Useful options include:\n\n- slow eccentrics\n- band-assisted pull-ups\n- machine-assisted pull-ups\n- isometric holds\n- scap"
+      ]
+     },
+     {
+      "id": "ru-c05",
+      "lang": "ru",
+      "cat": "specific",
+      "wall_ms": 8485,
+      "latency_ms": 8432,
+      "llm_calls": 2,
+      "answer": "Для эффективной разминки на 10–15 минут можно использовать следующую практическую формулу разделения на фазы:\n- от 3 до 5 минут общего движения [1];\n- от 3 до 5 минут целевой мобильности или активации [1];\n- от 5 до 10 минут прогрессивно усложняющихся специфических подходов [1].",
+      "scores": {
+       "idk": false,
+       "idk_correct": true,
+       "facts": 1.0,
+       "source_ok": true,
+       "quotes_ok": true,
+       "lang_ok": true,
+       "first_try": true
+      },
+      "sources": [
+       "10-warm-up-and-mobility.md > Warm-Up and Mobility for Safer, Better Training > Making It Efficient"
+      ],
+      "quotes": [
+       "A practical formula is:\n\n- 3 to 5 minutes of general movement\n- 3 to 5 minutes of targeted mobility or activation\n- 5 to"
+      ]
+     },
+     {
+      "id": "ru-c07",
+      "lang": "ru",
+      "cat": "common",
+      "wall_ms": 8274,
+      "latency_ms": 8223,
+      "llm_calls": 2,
+      "answer": "Для активных взрослых полезным ориентиром является около 1,6–2,2 грамма белка на килограмм массы тела в день [1]. Распределять белок в течение дня рекомендуется на три-пять приемов пищи вместо одного огромного приема, так как это облегчает его усвоение и пищеварение [3].",
+      "scores": {
+       "idk": false,
+       "idk_correct": true,
+       "facts": 1.0,
+       "source_ok": true,
+       "quotes_ok": true,
+       "lang_ok": true,
+       "first_try": true
+      },
+      "sources": [
+       "08-nutrition-protein-and-calories.md > Nutrition, Protein, and Calories for Fitness Goals > Protein: The Priority Macronutrient for Lifters",
+       "08-nutrition-protein-and-calories.md > Nutrition, Protein, and Calories for Fitness Goals > Protein: The Priority Macronutrient for Lifters > Distributing protein across the day"
+      ],
+      "quotes": [
+       "A useful target for many active adults is about 1.6 to 2.2 grams of protein per kilogram of body weight per day.",
+       "Protein is often easier to use and digest when spread across three to five meals rather than pushed into one huge servin"
+      ]
+     },
+     {
+      "id": "ru-c08",
+      "lang": "ru",
+      "cat": "common",
+      "wall_ms": 9589,
+      "latency_ms": 9538,
+      "llm_calls": 2,
+      "answer": "Если штанга уходит вперёд от тела во время становой тяги, это увеличивает нагрузку на поясницу и усложняет фиксацию (локаут) [2]. Чтобы исправить эту ошибку, выполните следующие действия:\n\n1. Проверьте стартовую позицию [2].\n2. Удерживайте штангу над серединой стопы [2].\n3. Более агрессивно задействуйте широчайшие мышцы спины [2].\n4. Следите за тем, чтобы траектория штанги была плотной: она должна идти практически вертикально и находиться очень близко к голеням и бедрам [1].",
+      "scores": {
+       "idk": false,
+       "idk_correct": true,
+       "facts": 1.0,
+       "source_ok": false,
+       "quotes_ok": true,
+       "lang_ok": true,
+       "first_try": true
+      },
+      "sources": [
+       "02-deadlift-technique.md > Deadlift Technique > The hinge and first pull",
+       "02-deadlift-technique.md > Deadlift Technique > Romanian deadlift technique"
+      ],
+      "quotes": [
+       "Recheck the start position, keep the bar over midfoot, and engage the lats more aggressively.",
+       "Keep the bar path tight. The bar should track almost vertically and stay very close to the shins and thighs."
+      ]
+     },
+     {
+      "id": "ru01",
+      "lang": "ru",
+      "cat": "specific",
+      "wall_ms": 8403,
+      "latency_ms": 8353,
+      "llm_calls": 2,
+      "answer": "NEAT (non-exercise activity thermogenesis) — это энергия, которую вы расходуете на обычные движения вне структурированных тренировок: ходьбу, ерзание, работу по дому, лестницы, хождение туда-сюда, стояние и общую повседневную активность [1]. Во время диеты NEAT часто снижается незаметно для человека, поскольку из-за снижения уровня энергии вы можете больше сидеть, меньше двигаться или неосознанно избегать физических усилий [1].",
+      "scores": {
+       "idk": false,
+       "idk_correct": true,
+       "facts": 1.0,
+       "source_ok": true,
+       "quotes_ok": true,
+       "lang_ok": true,
+       "first_try": true
+      },
+      "sources": [
+       "09-fat-loss-and-body-composition.md > Fat Loss and Body Composition Without Losing the Plot > NEAT: The Hidden Lever"
+      ],
+      "quotes": [
+       "NEAT stands for non-exercise activity thermogenesis. In plain language, it is the energy you burn through ordinary movem",
+       "NEAT often drops during dieting without people noticing. You may sit more, move less, or unconsciously avoid effort beca"
+      ]
+     },
+     {
+      "id": "ru02",
+      "lang": "ru",
+      "cat": "out_of_corpus",
+      "wall_ms": 3277,
+      "latency_ms": 3227,
+      "llm_calls": 1,
+      "answer": "Не знаю: в базе знаний нет информации, которая надёжно отвечает на этот вопрос.\n\nБлижайшие темы в базе (это не ответ на ваш вопрос): «Tracking and adjustment», «Breathing and trunk control», «Tempo and execution quality».\n\nВы имели в виду одну из этих тем? Если нет — уточните, о каком упражнении, программе или аспекте питания идёт речь.",
+      "scores": {
+       "idk": true,
+       "idk_correct": true,
+       "lang_ok": true,
+       "first_try": false
+      },
+      "sources": [],
+      "quotes": []
+     }
+    ],
+    "total_s": 115.4
+   }
+  ],
+  "cold_start_ms": null
+ },
+ "local-fast": {
+  "provider": "ollama",
+  "model": "gemma4:26b-a4b-it-qat",
+  "runs": [
+   {
+    "run": [
+     {
+      "id": "c01",
+      "lang": "en",
+      "cat": "specific",
+      "wall_ms": 11339,
+      "latency_ms": 11295,
+      "llm_calls": 2,
+      "answer": "Day 2 of the 3-day full-body program consists of the following exercises:\n- Trap-bar or kettlebell deadlift: 3 sets of 5 to 8 [1]\n- Dumbbell overhead press: 3 sets of 6 to 10 [1]\n- Lat pulldown: 3 sets of 8 to 12 [1]\n- Reverse lunge: 2 to 3 sets of 8 to 10 each side [1]\n- Dead bug: 2 to 3 sets [1]",
+      "scores": {
+       "idk": false,
+       "idk_correct": true,
+       "facts": 1.0,
+       "source_ok": false,
+       "quotes_ok": true,
+       "lang_ok": true,
+       "first_try": true
+      },
+      "sources": [
+       "13-beginner-program-design.md > Beginner Program Design for Strength and Muscle > A practical 3-day full-body program"
+      ],
+      "quotes": [
+       "Trap-bar or kettlebell deadlift: 3 sets of 5 to 8\nDumbbell overhead press: 3 sets of 6 to 10\nLat pulldown: 3 sets of 8 t"
+      ]
+     },
+     {
+      "id": "c02",
+      "lang": "en",
+      "cat": "specific",
+      "wall_ms": 7469,
+      "latency_ms": 7411,
+      "llm_calls": 2,
+      "answer": "If you cannot perform a strict bodyweight pull-up, useful progressions include slow eccentrics, band-assisted pull-ups, machine-assisted pull-ups, isometric holds, and scapular pull-ups [1].",
+      "scores": {
+       "idk": false,
+       "idk_correct": true,
+       "facts": 1.0,
+       "source_ok": true,
+       "quotes_ok": true,
+       "lang_ok": true,
+       "first_try": true
+      },
+      "sources": [
+       "04-pulling-and-back-training.md > Pulling and Back Training > Pull-up progressions"
+      ],
+      "quotes": [
+       "Useful options include:\n\n- slow eccentrics\n- band-assisted pull-ups\n- machine-assisted pull-ups\n- isometric holds\n- scap"
+      ]
+     },
+     {
+      "id": "c03",
+      "lang": "en",
+      "cat": "specific",
+      "wall_ms": 8182,
+      "latency_ms": 8115,
+      "llm_calls": 2,
+      "answer": "If the bar stalls above the knee and climbs in stages during lockout, it indicates you likely lost position earlier [1]. To help with this, you can use paused deadlifts, RDLs, or block pulls, depending on where the breakdown begins [1].",
+      "scores": {
+       "idk": false,
+       "idk_correct": true,
+       "facts": 1.0,
+       "source_ok": false,
+       "quotes_ok": true,
+       "lang_ok": true,
+       "first_try": true
+      },
+      "sources": [
+       "02-deadlift-technique.md > Deadlift Technique > Romanian deadlift technique"
+      ],
+      "quotes": [
+       "If the bar stalls above the knee and climbs in stages, you likely lost position earlier. Paused deadlifts, RDLs, and blo"
+      ]
+     },
+     {
+      "id": "c04",
+      "lang": "en",
+      "cat": "specific",
+      "wall_ms": 9009,
+      "latency_ms": 8954,
+      "llm_calls": 2,
+      "answer": "Template A for a simple core training routine consists of: \n- Dead bug: 2 to 3 sets of 5 to 8 reps per side [1]\n- Side plank: 2 to 3 sets of 15 to 30 seconds per side [1]\n- Suitcase carry: 2 to 4 trips per side [1]",
+      "scores": {
+       "idk": false,
+       "idk_correct": true,
+       "facts": 1.0,
+       "source_ok": false,
+       "quotes_ok": true,
+       "lang_ok": true,
+       "first_try": true
+      },
+      "sources": [
+       "15-core-training-and-posture.md > Core Training, Bracing, and Posture Without the Myths > Better advice for desk workers"
+      ],
+      "quotes": [
+       "- Dead bug: 2 to 3 sets of 5 to 8 reps per side\n- Side plank: 2 to 3 sets of 15 to 30 seconds per side\n- Suitcase carry:"
+      ]
+     },
+     {
+      "id": "c05",
+      "lang": "en",
+      "cat": "specific",
+      "wall_ms": 8880,
+      "latency_ms": 8830,
+      "llm_calls": 2,
+      "answer": "A 10 to 15 minute warm-up can be split into three phases [1]:\n\n1.  **General movement**: 3 to 5 minutes [1].\n2.  **Targeted mobility or activation**: 3 to 5 minutes [1].\n3.  **Progressively specific sets**: 5 to 10 minutes [1].",
+      "scores": {
+       "idk": false,
+       "idk_correct": true,
+       "facts": 1.0,
+       "source_ok": true,
+       "quotes_ok": true,
+       "lang_ok": true,
+       "first_try": true
+      },
+      "sources": [
+       "10-warm-up-and-mobility.md > Warm-Up and Mobility for Safer, Better Training > Making It Efficient"
+      ],
+      "quotes": [
+       "3 to 5 minutes of general movement\n- 3 to 5 minutes of targeted mobility or activation\n- 5 to 10 minutes of progressivel"
+      ]
+     },
+     {
+      "id": "c06",
+      "lang": "en",
+      "cat": "specific",
+      "wall_ms": 7565,
+      "latency_ms": 7517,
+      "llm_calls": 2,
+      "answer": "The following rep ranges are assigned to these roles: 1 to 3 reps for high specificity [1], 3 to 6 reps for repeated strength practice [1], and 6 to 12 or more for assistance [1].",
+      "scores": {
+       "idk": false,
+       "idk_correct": true,
+       "facts": 1.0,
+       "source_ok": true,
+       "quotes_ok": true,
+       "lang_ok": true,
+       "first_try": true
+      },
+      "sources": [
+       "05-strength-programming-basics.md > Strength Programming Basics > Rep ranges for strength development"
+      ],
+      "quotes": [
+       "- 1 to 3 reps for high specificity\n- 3 to 6 reps for repeated strength practice\n- 6 to 12 or more for assistance and hyp"
+      ]
+     },
+     {
+      "id": "c07",
+      "lang": "en",
+      "cat": "common",
+      "wall_ms": 3621,
+      "latency_ms": 3570,
+      "llm_calls": 2,
+      "answer": "I don't know: the knowledge base has no information that reliably answers this question.\n\nClosest topics in the knowledge base (not an answer to your question): «Protein: The Priority Macronutrient for Lifters», «Nutrition, Protein, and Calories for Fitness Goals», «Protein: The Priority Macronutrient for Lifters > Distributing protein across the day».\n\nDid you mean one of these topics? If not, which exercise, program or nutrition aspect do you have in mind?",
+      "scores": {
+       "idk": true,
+       "idk_correct": false,
+       "facts": 0.0,
+       "source_ok": false,
+       "quotes_ok": false,
+       "lang_ok": true,
+       "first_try": true
+      },
+      "sources": [],
+      "quotes": []
+     },
+     {
+      "id": "c08",
+      "lang": "en",
+      "cat": "common",
+      "wall_ms": 11812,
+      "latency_ms": 11758,
+      "llm_calls": 2,
+      "answer": "To fix a bar that drifts forward, you should recheck your starting position, keep the bar positioned over your midfoot, and engage your lats more aggressively [2]. Additionally, ensure the bar stays close to your body and tracks almost vertically, staying very close to your shins and thighs [1, 3].",
+      "scores": {
+       "idk": false,
+       "idk_correct": true,
+       "facts": 1.0,
+       "source_ok": false,
+       "quotes_ok": true,
+       "lang_ok": true,
+       "first_try": true
+      },
+      "sources": [
+       "02-deadlift-technique.md > Deadlift Technique",
+       "02-deadlift-technique.md > Deadlift Technique > Romanian deadlift technique",
+       "02-deadlift-technique.md > Deadlift Technique > The hinge and first pull"
+      ],
+      "quotes": [
+       "Recheck the start position, keep the bar over midfoot, and engage the lats more aggressively.",
+       "A good deadlift keeps the bar close to the body",
+       "The bar should track almost vertically and stay very close to the shins and thighs."
+      ]
+     },
+     {
+      "id": "c09",
+      "lang": "en",
+      "cat": "out_of_corpus",
+      "wall_ms": 2537,
+      "latency_ms": 2483,
+      "llm_calls": 2,
+      "answer": "I don't know: the knowledge base has no information that reliably answers this question.\n\nClosest topics in the knowledge base (not an answer to your question): «Deadlift Technique», «Final deadlift checklist», «Conventional deadlift setup».\n\nDid you mean one of these topics? If not, which exercise, program or nutrition aspect do you have in mind?",
+      "scores": {
+       "idk": true,
+       "idk_correct": true,
+       "lang_ok": true,
+       "first_try": true
+      },
+      "sources": [],
+      "quotes": []
+     },
+     {
+      "id": "c10",
+      "lang": "en",
+      "cat": "out_of_corpus",
+      "wall_ms": 2974,
+      "latency_ms": 2920,
+      "llm_calls": 2,
+      "answer": "I don't know: the knowledge base has no information that reliably answers this question.\n\nClosest topics in the knowledge base (not an answer to your question): «Protein: The Priority Macronutrient for Lifters», «A practical shortlist», «Exercise selection».\n\nDid you mean one of these topics? If not, which exercise, program or nutrition aspect do you have in mind?",
+      "scores": {
+       "idk": true,
+       "idk_correct": true,
+       "lang_ok": true,
+       "first_try": true
+      },
+      "sources": [],
+      "quotes": []
+     },
+     {
+      "id": "ru-c02",
+      "lang": "ru",
+      "cat": "specific",
+      "wall_ms": 11427,
+      "latency_ms": 11375,
+      "llm_calls": 2,
+      "answer": "Если вы пока не можете выполнять строгие подтягивания, полезными прогрессиями являются: медленные эксцентрические движения (slow eccentrics) [1], подтягивания с помощью фитнес-резинок (band-assisted pull-ups) [1], подтягивания на тренажере (machine-assisted pull-ups) [1], изометрические удержания (isometric holds) [1] и подтягивания лопатками (scapular pull-ups) [1]. Также можно использовать ассистированные подтягивания, если у вас есть перекладина [4].",
+      "scores": {
+       "idk": false,
+       "idk_correct": true,
+       "facts": 1.0,
+       "source_ok": true,
+       "quotes_ok": true,
+       "lang_ok": true,
+       "first_try": true
+      },
+      "sources": [
+       "04-pulling-and-back-training.md > Pulling and Back Training > Pull-up progressions",
+       "14-home-workouts-and-bodyweight.md > Home Workouts with Dumbbells, Bands, and Bodyweight > Pull progressions"
+      ],
+      "quotes": [
+       "- slow eccentrics\n- band-assisted pull-ups\n- machine-assisted pull-ups\n- isometric holds\n- scapular pull-ups",
+       "- assisted pull-up if you have a bar"
+      ]
+     },
+     {
+      "id": "ru-c05",
+      "lang": "ru",
+      "cat": "specific",
+      "wall_ms": 12660,
+      "latency_ms": 12617,
+      "llm_calls": 3,
+      "answer": "A complete warm-up does not need to be long; ten to fifteen focused minutes is often sufficient [1]. A practical formula for this duration is: 3 to 5 minutes of general movement, 3 to 5 minutes of targeted mobility or activation, and 5 to 10 minutes of progressively specific sets [1].",
+      "scores": {
+       "idk": false,
+       "idk_correct": true,
+       "facts": 1.0,
+       "source_ok": true,
+       "quotes_ok": true,
+       "lang_ok": false,
+       "first_try": true
+      },
+      "sources": [
+       "10-warm-up-and-mobility.md > Warm-Up and Mobility for Safer, Better Training > Making It Efficient"
+      ],
+      "quotes": [
+       "For many sessions, ten to fifteen focused minutes is enough."
+      ]
+     },
+     {
+      "id": "ru-c07",
+      "lang": "ru",
+      "cat": "common",
+      "wall_ms": 10959,
+      "latency_ms": 10918,
+      "llm_calls": 2,
+      "answer": "Для активных взрослых полезной нормой является потребление примерно 1,6–2,2 грамма белка на килограмм массы тела в день [1]. Белок легче усваивается, если распределить его между тремя-пятью приемами пищи, а не употреблять за один раз [2].",
+      "scores": {
+       "idk": false,
+       "idk_correct": true,
+       "facts": 1.0,
+       "source_ok": true,
+       "quotes_ok": true,
+       "lang_ok": true,
+       "first_try": true
+      },
+      "sources": [
+       "08-nutrition-protein-and-calories.md > Nutrition, Protein, and Calories for Fitness Goals > Protein: The Priority Macronutrient for Lifters",
+       "08-nutrition-protein-and-calories.md > Nutrition, Protein, and Calories for Fitness Goals > Protein: The Priority Macronutrient for Lifters > Distributing protein across the day"
+      ],
+      "quotes": [
+       "A useful target for many active adults is about 1.6 to 2.2 grams of protein per kilogram of body weight per day.",
+       "Protein is often easier to use and digest when spread across three to five meals rather than pushed into one huge servin"
+      ]
+     },
+     {
+      "id": "ru-c08",
+      "lang": "ru",
+      "cat": "common",
+      "wall_ms": 4661,
+      "latency_ms": 4618,
+      "llm_calls": 3,
+      "answer": "Не знаю: в базе знаний нет информации, которая надёжно отвечает на этот вопрос.\n\nБлижайшие темы в базе (это не ответ на ваш вопрос): «Deadlift Technique», «Romanian deadlift technique», «The hinge and first pull».\n\nВы имели в виду одну из этих тем? Если нет — уточните, о каком упражнении, программе или аспекте питания идёт речь.",
+      "scores": {
+       "idk": true,
+       "idk_correct": false,
+       "facts": 0.0,
+       "source_ok": false,
+       "quotes_ok": false,
+       "lang_ok": true,
+       "first_try": true
+      },
+      "sources": [],
+      "quotes": []
+     },
+     {
+      "id": "ru01",
+      "lang": "ru",
+      "cat": "specific",
+      "wall_ms": 10037,
+      "latency_ms": 9990,
+      "llm_calls": 2,
+      "answer": "NEAT (non-exercise activity thermogenesis) — это энергия, которую вы сжигаете во время обычной повседневной деятельности вне структурированных упражнений: ходьба, ерзанье, домашние дела, подъем по лестнице, ходьба из стороны в сторону, стояние и общая ежедневная активность [1]. Во время диеты уровень NEAT может снижаться, так как вы можете больше сидеть, меньше двигаться или неосознанно избегать усилий из-за снижения уровня энергии [1].",
+      "scores": {
+       "idk": false,
+       "idk_correct": true,
+       "facts": 1.0,
+       "source_ok": true,
+       "quotes_ok": true,
+       "lang_ok": true,
+       "first_try": true
+      },
+      "sources": [
+       "09-fat-loss-and-body-composition.md > Fat Loss and Body Composition Without Losing the Plot > NEAT: The Hidden Lever"
+      ],
+      "quotes": [
+       "NEAT stands for non-exercise activity thermogenesis. In plain language, it is the energy you burn through ordinary movem"
+      ]
+     },
+     {
+      "id": "ru02",
+      "lang": "ru",
+      "cat": "out_of_corpus",
+      "wall_ms": 1043,
+      "latency_ms": 996,
+      "llm_calls": 1,
+      "answer": "Не знаю: в базе знаний нет информации, которая надёжно отвечает на этот вопрос.\n\nБлижайшие темы в базе (это не ответ на ваш вопрос): «Breathing and trunk control», «Tempo and execution quality», «Depth and bottom position».\n\nВы имели в виду одну из этих тем? Если нет — уточните, о каком упражнении, программе или аспекте питания идёт речь.",
+      "scores": {
+       "idk": true,
+       "idk_correct": true,
+       "lang_ok": true,
+       "first_try": false
+      },
+      "sources": [],
+      "quotes": []
+     }
+    ],
+    "total_s": 124.2
+   },
+   {
+    "run": [
+     {
+      "id": "c01",
+      "lang": "en",
+      "cat": "specific",
+      "wall_ms": 8857,
+      "latency_ms": 8814,
+      "llm_calls": 2,
+      "answer": "Day 2 of the 3-day full-body program consists of the following exercises:\n- Trap-bar or kettlebell deadlift: 3 sets of 5 to 8 [1]\n- Dumbbell overhead press: 3 sets of 6 to 10 [1]\n- Lat pulldown: 3 sets of 8 to 12 [1]\n- Reverse lunge: 2 to 3 sets of 8 to 10 each side [1]\n- Dead bug: 2 to 3 sets [1]",
+      "scores": {
+       "idk": false,
+       "idk_correct": true,
+       "facts": 1.0,
+       "source_ok": false,
+       "quotes_ok": true,
+       "lang_ok": true,
+       "first_try": true
+      },
+      "sources": [
+       "13-beginner-program-design.md > Beginner Program Design for Strength and Muscle > A practical 3-day full-body program"
+      ],
+      "quotes": [
+       "Trap-bar or kettlebell deadlift: 3 sets of 5 to 8\nDumbbell overhead press: 3 sets of 6 to 10\nLat pulldown: 3 sets of 8 t"
+      ]
+     },
+     {
+      "id": "c02",
+      "lang": "en",
+      "cat": "specific",
+      "wall_ms": 6899,
+      "latency_ms": 6852,
+      "llm_calls": 2,
+      "answer": "If you cannot perform a strict bodyweight pull-up, useful progressions include slow eccentrics, band-assisted pull-ups, machine-assisted pull-ups, isometric holds, and scapular pull-ups [1].",
+      "scores": {
+       "idk": false,
+       "idk_correct": true,
+       "facts": 1.0,
+       "source_ok": true,
+       "quotes_ok": true,
+       "lang_ok": true,
+       "first_try": true
+      },
+      "sources": [
+       "04-pulling-and-back-training.md > Pulling and Back Training > Pull-up progressions"
+      ],
+      "quotes": [
+       "Useful options include:\n\n- slow eccentrics\n- band-assisted pull-ups\n- machine-assisted pull-ups\n- isometric holds\n- scap"
+      ]
+     },
+     {
+      "id": "c03",
+      "lang": "en",
+      "cat": "specific",
+      "wall_ms": 5737,
+      "latency_ms": 5685,
+      "llm_calls": 2,
+      "answer": "If the bar stalls above the knee and climbs in stages during lockout, it indicates you likely lost position earlier [1]. To help with this, you can use paused deadlifts, RDLs, or block pulls, depending on where the breakdown begins [1].",
+      "scores": {
+       "idk": false,
+       "idk_correct": true,
+       "facts": 1.0,
+       "source_ok": false,
+       "quotes_ok": true,
+       "lang_ok": true,
+       "first_try": true
+      },
+      "sources": [
+       "02-deadlift-technique.md > Deadlift Technique > Romanian deadlift technique"
+      ],
+      "quotes": [
+       "If the bar stalls above the knee and climbs in stages, you likely lost position earlier. Paused deadlifts, RDLs, and blo"
+      ]
+     },
+     {
+      "id": "c04",
+      "lang": "en",
+      "cat": "specific",
+      "wall_ms": 7166,
+      "latency_ms": 7117,
+      "llm_calls": 2,
+      "answer": "Template A for a simple core training routine consists of: \n- Dead bug: 2 to 3 sets of 5 to 8 reps per side [1]\n- Side plank: 2 to 3 sets of 15 to 30 seconds per side [1]\n- Suitcase carry: 2 to 4 trips per side [1]",
+      "scores": {
+       "idk": false,
+       "idk_correct": true,
+       "facts": 1.0,
+       "source_ok": false,
+       "quotes_ok": true,
+       "lang_ok": true,
+       "first_try": true
+      },
+      "sources": [
+       "15-core-training-and-posture.md > Core Training, Bracing, and Posture Without the Myths > Better advice for desk workers"
+      ],
+      "quotes": [
+       "- Dead bug: 2 to 3 sets of 5 to 8 reps per side\n- Side plank: 2 to 3 sets of 15 to 30 seconds per side\n- Suitcase carry:"
+      ]
+     },
+     {
+      "id": "c05",
+      "lang": "en",
+      "cat": "specific",
+      "wall_ms": 8064,
+      "latency_ms": 7995,
+      "llm_calls": 2,
+      "answer": "A 10 to 15 minute warm-up can be split into three phases [1]:\n\n1.  **General movement**: 3 to 5 minutes [1].\n2.  **Targeted mobility or activation**: 3 to 5 minutes [1].\n3.  **Progressively specific sets**: 5 to 10 minutes [1].",
+      "scores": {
+       "idk": false,
+       "idk_correct": true,
+       "facts": 1.0,
+       "source_ok": true,
+       "quotes_ok": true,
+       "lang_ok": true,
+       "first_try": true
+      },
+      "sources": [
+       "10-warm-up-and-mobility.md > Warm-Up and Mobility for Safer, Better Training > Making It Efficient"
+      ],
+      "quotes": [
+       "3 to 5 minutes of general movement\n- 3 to 5 minutes of targeted mobility or activation\n- 5 to 10 minutes of progressivel"
+      ]
+     },
+     {
+      "id": "c06",
+      "lang": "en",
+      "cat": "specific",
+      "wall_ms": 5640,
+      "latency_ms": 5587,
+      "llm_calls": 2,
+      "answer": "The following rep ranges are assigned to these roles: 1 to 3 reps for high specificity [1], 3 to 6 reps for repeated strength practice [1], and 6 to 12 or more for assistance [1].",
+      "scores": {
+       "idk": false,
+       "idk_correct": true,
+       "facts": 1.0,
+       "source_ok": true,
+       "quotes_ok": true,
+       "lang_ok": true,
+       "first_try": true
+      },
+      "sources": [
+       "05-strength-programming-basics.md > Strength Programming Basics > Rep ranges for strength development"
+      ],
+      "quotes": [
+       "- 1 to 3 reps for high specificity\n- 3 to 6 reps for repeated strength practice\n- 6 to 12 or more for assistance and hyp"
+      ]
+     },
+     {
+      "id": "c07",
+      "lang": "en",
+      "cat": "common",
+      "wall_ms": 3806,
+      "latency_ms": 3754,
+      "llm_calls": 2,
+      "answer": "I don't know: the knowledge base has no information that reliably answers this question.\n\nClosest topics in the knowledge base (not an answer to your question): «Protein: The Priority Macronutrient for Lifters», «Nutrition, Protein, and Calories for Fitness Goals», «Protein: The Priority Macronutrient for Lifters > Distributing protein across the day».\n\nDid you mean one of these topics? If not, which exercise, program or nutrition aspect do you have in mind?",
+      "scores": {
+       "idk": true,
+       "idk_correct": false,
+       "facts": 0.0,
+       "source_ok": false,
+       "quotes_ok": false,
+       "lang_ok": true,
+       "first_try": true
+      },
+      "sources": [],
+      "quotes": []
+     },
+     {
+      "id": "c08",
+      "lang": "en",
+      "cat": "common",
+      "wall_ms": 10634,
+      "latency_ms": 10544,
+      "llm_calls": 2,
+      "answer": "To fix a bar that drifts forward, you should recheck your starting position, keep the bar positioned over your midfoot, and engage your lats more aggressively [2]. Additionally, ensure the bar stays close to your body and tracks almost vertically, staying very close to your shins and thighs [1, 3].",
+      "scores": {
+       "idk": false,
+       "idk_correct": true,
+       "facts": 1.0,
+       "source_ok": false,
+       "quotes_ok": true,
+       "lang_ok": true,
+       "first_try": true
+      },
+      "sources": [
+       "02-deadlift-technique.md > Deadlift Technique",
+       "02-deadlift-technique.md > Deadlift Technique > Romanian deadlift technique",
+       "02-deadlift-technique.md > Deadlift Technique > The hinge and first pull"
+      ],
+      "quotes": [
+       "Recheck the start position, keep the bar over midfoot, and engage the lats more aggressively.",
+       "A good deadlift keeps the bar close to the body",
+       "The bar should track almost vertically and stay very close to the shins and thighs."
+      ]
+     },
+     {
+      "id": "c09",
+      "lang": "en",
+      "cat": "out_of_corpus",
+      "wall_ms": 2540,
+      "latency_ms": 2486,
+      "llm_calls": 2,
+      "answer": "I don't know: the knowledge base has no information that reliably answers this question.\n\nClosest topics in the knowledge base (not an answer to your question): «Deadlift Technique», «Final deadlift checklist», «Conventional deadlift setup».\n\nDid you mean one of these topics? If not, which exercise, program or nutrition aspect do you have in mind?",
+      "scores": {
+       "idk": true,
+       "idk_correct": true,
+       "lang_ok": true,
+       "first_try": true
+      },
+      "sources": [],
+      "quotes": []
+     },
+     {
+      "id": "c10",
+      "lang": "en",
+      "cat": "out_of_corpus",
+      "wall_ms": 3036,
+      "latency_ms": 2985,
+      "llm_calls": 2,
+      "answer": "I don't know: the knowledge base has no information that reliably answers this question.\n\nClosest topics in the knowledge base (not an answer to your question): «Protein: The Priority Macronutrient for Lifters», «A practical shortlist», «Exercise selection».\n\nDid you mean one of these topics? If not, which exercise, program or nutrition aspect do you have in mind?",
+      "scores": {
+       "idk": true,
+       "idk_correct": true,
+       "lang_ok": true,
+       "first_try": true
+      },
+      "sources": [],
+      "quotes": []
+     },
+     {
+      "id": "ru-c02",
+      "lang": "ru",
+      "cat": "specific",
+      "wall_ms": 11582,
+      "latency_ms": 11530,
+      "llm_calls": 2,
+      "answer": "Если вы пока не можете выполнять строгие подтягивания, полезными прогрессиями являются: медленные эксцентрические движения (slow eccentrics) [1], подтягивания с помощью фитнес-резинок (band-assisted pull-ups) [1], подтягивания на тренажере (machine-assisted pull-ups) [1], изометрические удержания (isometric holds) [1] и подтягивания лопатками (scapular pull-ups) [1]. Также можно использовать ассистированные подтягивания, если у вас есть перекладина [4].",
+      "scores": {
+       "idk": false,
+       "idk_correct": true,
+       "facts": 1.0,
+       "source_ok": true,
+       "quotes_ok": true,
+       "lang_ok": true,
+       "first_try": true
+      },
+      "sources": [
+       "04-pulling-and-back-training.md > Pulling and Back Training > Pull-up progressions",
+       "14-home-workouts-and-bodyweight.md > Home Workouts with Dumbbells, Bands, and Bodyweight > Pull progressions"
+      ],
+      "quotes": [
+       "- slow eccentrics\n- band-assisted pull-ups\n- machine-assisted pull-ups\n- isometric holds\n- scapular pull-ups",
+       "- assisted pull-up if you have a bar"
+      ]
+     },
+     {
+      "id": "ru-c05",
+      "lang": "ru",
+      "cat": "specific",
+      "wall_ms": 12070,
+      "latency_ms": 12025,
+      "llm_calls": 3,
+      "answer": "A complete warm-up does not need to be long; ten to fifteen focused minutes is often sufficient [1]. A practical formula for this duration is: 3 to 5 minutes of general movement, 3 to 5 minutes of targeted mobility or activation, and 5 to 10 minutes of progressively specific sets [1].",
+      "scores": {
+       "idk": false,
+       "idk_correct": true,
+       "facts": 1.0,
+       "source_ok": true,
+       "quotes_ok": true,
+       "lang_ok": false,
+       "first_try": true
+      },
+      "sources": [
+       "10-warm-up-and-mobility.md > Warm-Up and Mobility for Safer, Better Training > Making It Efficient"
+      ],
+      "quotes": [
+       "For many sessions, ten to fifteen focused minutes is enough."
+      ]
+     },
+     {
+      "id": "ru-c07",
+      "lang": "ru",
+      "cat": "common",
+      "wall_ms": 10661,
+      "latency_ms": 10617,
+      "llm_calls": 2,
+      "answer": "Для активных взрослых полезной нормой является потребление примерно 1,6–2,2 грамма белка на килограмм массы тела в день [1]. Белок легче усваивается, если распределить его между тремя-пятью приемами пищи, а не употреблять за один раз [2].",
+      "scores": {
+       "idk": false,
+       "idk_correct": true,
+       "facts": 1.0,
+       "source_ok": true,
+       "quotes_ok": true,
+       "lang_ok": true,
+       "first_try": true
+      },
+      "sources": [
+       "08-nutrition-protein-and-calories.md > Nutrition, Protein, and Calories for Fitness Goals > Protein: The Priority Macronutrient for Lifters",
+       "08-nutrition-protein-and-calories.md > Nutrition, Protein, and Calories for Fitness Goals > Protein: The Priority Macronutrient for Lifters > Distributing protein across the day"
+      ],
+      "quotes": [
+       "A useful target for many active adults is about 1.6 to 2.2 grams of protein per kilogram of body weight per day.",
+       "Protein is often easier to use and digest when spread across three to five meals rather than pushed into one huge servin"
+      ]
+     },
+     {
+      "id": "ru-c08",
+      "lang": "ru",
+      "cat": "common",
+      "wall_ms": 4334,
+      "latency_ms": 4289,
+      "llm_calls": 3,
+      "answer": "Не знаю: в базе знаний нет информации, которая надёжно отвечает на этот вопрос.\n\nБлижайшие темы в базе (это не ответ на ваш вопрос): «Deadlift Technique», «Romanian deadlift technique», «The hinge and first pull».\n\nВы имели в виду одну из этих тем? Если нет — уточните, о каком упражнении, программе или аспекте питания идёт речь.",
+      "scores": {
+       "idk": true,
+       "idk_correct": false,
+       "facts": 0.0,
+       "source_ok": false,
+       "quotes_ok": false,
+       "lang_ok": true,
+       "first_try": true
+      },
+      "sources": [],
+      "quotes": []
+     },
+     {
+      "id": "ru01",
+      "lang": "ru",
+      "cat": "specific",
+      "wall_ms": 7952,
+      "latency_ms": 7909,
+      "llm_calls": 2,
+      "answer": "NEAT (non-exercise activity thermogenesis) — это энергия, которую вы сжигаете во время обычной повседневной деятельности вне структурированных упражнений: ходьба, ерзанье, домашние дела, подъем по лестнице, ходьба из стороны в сторону, стояние и общая ежедневная активность [1]. Во время диеты уровень NEAT может снижаться, так как вы можете больше сидеть, меньше двигаться или неосознанно избегать усилий из-за снижения уровня энергии [1].",
+      "scores": {
+       "idk": false,
+       "idk_correct": true,
+       "facts": 1.0,
+       "source_ok": true,
+       "quotes_ok": true,
+       "lang_ok": true,
+       "first_try": true
+      },
+      "sources": [
+       "09-fat-loss-and-body-composition.md > Fat Loss and Body Composition Without Losing the Plot > NEAT: The Hidden Lever"
+      ],
+      "quotes": [
+       "NEAT stands for non-exercise activity thermogenesis. In plain language, it is the energy you burn through ordinary movem"
+      ]
+     },
+     {
+      "id": "ru02",
+      "lang": "ru",
+      "cat": "out_of_corpus",
+      "wall_ms": 1076,
+      "latency_ms": 1022,
+      "llm_calls": 1,
+      "answer": "Не знаю: в базе знаний нет информации, которая надёжно отвечает на этот вопрос.\n\nБлижайшие темы в базе (это не ответ на ваш вопрос): «Breathing and trunk control», «Tempo and execution quality», «Depth and bottom position».\n\nВы имели в виду одну из этих тем? Если нет — уточните, о каком упражнении, программе или аспекте питания идёт речь.",
+      "scores": {
+       "idk": true,
+       "idk_correct": true,
+       "lang_ok": true,
+       "first_try": false
+      },
+      "sources": [],
+      "quotes": []
+     }
+    ],
+    "total_s": 110.1
+   },
+   {
+    "run": [
+     {
+      "id": "c01",
+      "lang": "en",
+      "cat": "specific",
+      "wall_ms": 8980,
+      "latency_ms": 8928,
+      "llm_calls": 2,
+      "answer": "Day 2 of the 3-day full-body program consists of the following exercises:\n- Trap-bar or kettlebell deadlift: 3 sets of 5 to 8 [1]\n- Dumbbell overhead press: 3 sets of 6 to 10 [1]\n- Lat pulldown: 3 sets of 8 to 12 [1]\n- Reverse lunge: 2 to 3 sets of 8 to 10 each side [1]\n- Dead bug: 2 to 3 sets [1]",
+      "scores": {
+       "idk": false,
+       "idk_correct": true,
+       "facts": 1.0,
+       "source_ok": false,
+       "quotes_ok": true,
+       "lang_ok": true,
+       "first_try": true
+      },
+      "sources": [
+       "13-beginner-program-design.md > Beginner Program Design for Strength and Muscle > A practical 3-day full-body program"
+      ],
+      "quotes": [
+       "Trap-bar or kettlebell deadlift: 3 sets of 5 to 8\nDumbbell overhead press: 3 sets of 6 to 10\nLat pulldown: 3 sets of 8 t"
+      ]
+     },
+     {
+      "id": "c02",
+      "lang": "en",
+      "cat": "specific",
+      "wall_ms": 6868,
+      "latency_ms": 6820,
+      "llm_calls": 2,
+      "answer": "If you cannot perform a strict bodyweight pull-up, useful progressions include slow eccentrics, band-assisted pull-ups, machine-assisted pull-ups, isometric holds, and scapular pull-ups [1].",
+      "scores": {
+       "idk": false,
+       "idk_correct": true,
+       "facts": 1.0,
+       "source_ok": true,
+       "quotes_ok": true,
+       "lang_ok": true,
+       "first_try": true
+      },
+      "sources": [
+       "04-pulling-and-back-training.md > Pulling and Back Training > Pull-up progressions"
+      ],
+      "quotes": [
+       "Useful options include:\n\n- slow eccentrics\n- band-assisted pull-ups\n- machine-assisted pull-ups\n- isometric holds\n- scap"
+      ]
+     },
+     {
+      "id": "c03",
+      "lang": "en",
+      "cat": "specific",
+      "wall_ms": 5774,
+      "latency_ms": 5724,
+      "llm_calls": 2,
+      "answer": "If the bar stalls above the knee and climbs in stages during lockout, it indicates you likely lost position earlier [1]. To help with this, you can use paused deadlifts, RDLs, or block pulls, depending on where the breakdown begins [1].",
+      "scores": {
+       "idk": false,
+       "idk_correct": true,
+       "facts": 1.0,
+       "source_ok": false,
+       "quotes_ok": true,
+       "lang_ok": true,
+       "first_try": true
+      },
+      "sources": [
+       "02-deadlift-technique.md > Deadlift Technique > Romanian deadlift technique"
+      ],
+      "quotes": [
+       "If the bar stalls above the knee and climbs in stages, you likely lost position earlier. Paused deadlifts, RDLs, and blo"
+      ]
+     },
+     {
+      "id": "c04",
+      "lang": "en",
+      "cat": "specific",
+      "wall_ms": 7157,
+      "latency_ms": 7104,
+      "llm_calls": 2,
+      "answer": "Template A for a simple core training routine consists of: \n- Dead bug: 2 to 3 sets of 5 to 8 reps per side [1]\n- Side plank: 2 to 3 sets of 15 to 30 seconds per side [1]\n- Suitcase carry: 2 to 4 trips per side [1]",
+      "scores": {
+       "idk": false,
+       "idk_correct": true,
+       "facts": 1.0,
+       "source_ok": false,
+       "quotes_ok": true,
+       "lang_ok": true,
+       "first_try": true
+      },
+      "sources": [
+       "15-core-training-and-posture.md > Core Training, Bracing, and Posture Without the Myths > Better advice for desk workers"
+      ],
+      "quotes": [
+       "- Dead bug: 2 to 3 sets of 5 to 8 reps per side\n- Side plank: 2 to 3 sets of 15 to 30 seconds per side\n- Suitcase carry:"
+      ]
+     },
+     {
+      "id": "c05",
+      "lang": "en",
+      "cat": "specific",
+      "wall_ms": 7619,
+      "latency_ms": 7564,
+      "llm_calls": 2,
+      "answer": "A 10 to 15 minute warm-up can be split into three phases [1]:\n\n1.  **General movement**: 3 to 5 minutes [1].\n2.  **Targeted mobility or activation**: 3 to 5 minutes [1].\n3.  **Progressively specific sets**: 5 to 10 minutes [1].",
+      "scores": {
+       "idk": false,
+       "idk_correct": true,
+       "facts": 1.0,
+       "source_ok": true,
+       "quotes_ok": true,
+       "lang_ok": true,
+       "first_try": true
+      },
+      "sources": [
+       "10-warm-up-and-mobility.md > Warm-Up and Mobility for Safer, Better Training > Making It Efficient"
+      ],
+      "quotes": [
+       "3 to 5 minutes of general movement\n- 3 to 5 minutes of targeted mobility or activation\n- 5 to 10 minutes of progressivel"
+      ]
+     },
+     {
+      "id": "c06",
+      "lang": "en",
+      "cat": "specific",
+      "wall_ms": 5662,
+      "latency_ms": 5602,
+      "llm_calls": 2,
+      "answer": "The following rep ranges are assigned to these roles: 1 to 3 reps for high specificity [1], 3 to 6 reps for repeated strength practice [1], and 6 to 12 or more for assistance [1].",
+      "scores": {
+       "idk": false,
+       "idk_correct": true,
+       "facts": 1.0,
+       "source_ok": true,
+       "quotes_ok": true,
+       "lang_ok": true,
+       "first_try": true
+      },
+      "sources": [
+       "05-strength-programming-basics.md > Strength Programming Basics > Rep ranges for strength development"
+      ],
+      "quotes": [
+       "- 1 to 3 reps for high specificity\n- 3 to 6 reps for repeated strength practice\n- 6 to 12 or more for assistance and hyp"
+      ]
+     },
+     {
+      "id": "c07",
+      "lang": "en",
+      "cat": "common",
+      "wall_ms": 3756,
+      "latency_ms": 3703,
+      "llm_calls": 2,
+      "answer": "I don't know: the knowledge base has no information that reliably answers this question.\n\nClosest topics in the knowledge base (not an answer to your question): «Protein: The Priority Macronutrient for Lifters», «Nutrition, Protein, and Calories for Fitness Goals», «Protein: The Priority Macronutrient for Lifters > Distributing protein across the day».\n\nDid you mean one of these topics? If not, which exercise, program or nutrition aspect do you have in mind?",
+      "scores": {
+       "idk": true,
+       "idk_correct": false,
+       "facts": 0.0,
+       "source_ok": false,
+       "quotes_ok": false,
+       "lang_ok": true,
+       "first_try": true
+      },
+      "sources": [],
+      "quotes": []
+     },
+     {
+      "id": "c08",
+      "lang": "en",
+      "cat": "common",
+      "wall_ms": 10467,
+      "latency_ms": 10408,
+      "llm_calls": 2,
+      "answer": "To fix a bar that drifts forward, you should recheck your starting position, keep the bar positioned over your midfoot, and engage your lats more aggressively [2]. Additionally, ensure the bar stays close to your body and tracks almost vertically, staying very close to your shins and thighs [1, 3].",
+      "scores": {
+       "idk": false,
+       "idk_correct": true,
+       "facts": 1.0,
+       "source_ok": false,
+       "quotes_ok": true,
+       "lang_ok": true,
+       "first_try": true
+      },
+      "sources": [
+       "02-deadlift-technique.md > Deadlift Technique",
+       "02-deadlift-technique.md > Deadlift Technique > Romanian deadlift technique",
+       "02-deadlift-technique.md > Deadlift Technique > The hinge and first pull"
+      ],
+      "quotes": [
+       "Recheck the start position, keep the bar over midfoot, and engage the lats more aggressively.",
+       "A good deadlift keeps the bar close to the body",
+       "The bar should track almost vertically and stay very close to the shins and thighs."
+      ]
+     },
+     {
+      "id": "c09",
+      "lang": "en",
+      "cat": "out_of_corpus",
+      "wall_ms": 2296,
+      "latency_ms": 2244,
+      "llm_calls": 2,
+      "answer": "I don't know: the knowledge base has no information that reliably answers this question.\n\nClosest topics in the knowledge base (not an answer to your question): «Deadlift Technique», «Final deadlift checklist», «Conventional deadlift setup».\n\nDid you mean one of these topics? If not, which exercise, program or nutrition aspect do you have in mind?",
+      "scores": {
+       "idk": true,
+       "idk_correct": true,
+       "lang_ok": true,
+       "first_try": true
+      },
+      "sources": [],
+      "quotes": []
+     },
+     {
+      "id": "c10",
+      "lang": "en",
+      "cat": "out_of_corpus",
+      "wall_ms": 3378,
+      "latency_ms": 3339,
+      "llm_calls": 2,
+      "answer": "I don't know: the knowledge base has no information that reliably answers this question.\n\nClosest topics in the knowledge base (not an answer to your question): «Protein: The Priority Macronutrient for Lifters», «A practical shortlist», «Exercise selection».\n\nDid you mean one of these topics? If not, which exercise, program or nutrition aspect do you have in mind?",
+      "scores": {
+       "idk": true,
+       "idk_correct": true,
+       "lang_ok": true,
+       "first_try": true
+      },
+      "sources": [],
+      "quotes": []
+     },
+     {
+      "id": "ru-c02",
+      "lang": "ru",
+      "cat": "specific",
+      "wall_ms": 11695,
+      "latency_ms": 11651,
+      "llm_calls": 2,
+      "answer": "Если вы пока не можете выполнять строгие подтягивания, полезными прогрессиями являются: медленные эксцентрические движения (slow eccentrics) [1], подтягивания с помощью фитнес-резинок (band-assisted pull-ups) [1], подтягивания на тренажере (machine-assisted pull-ups) [1], изометрические удержания (isometric holds) [1] и подтягивания лопатками (scapular pull-ups) [1]. Также можно использовать ассистированные подтягивания, если у вас есть перекладина [4].",
+      "scores": {
+       "idk": false,
+       "idk_correct": true,
+       "facts": 1.0,
+       "source_ok": true,
+       "quotes_ok": true,
+       "lang_ok": true,
+       "first_try": true
+      },
+      "sources": [
+       "04-pulling-and-back-training.md > Pulling and Back Training > Pull-up progressions",
+       "14-home-workouts-and-bodyweight.md > Home Workouts with Dumbbells, Bands, and Bodyweight > Pull progressions"
+      ],
+      "quotes": [
+       "- slow eccentrics\n- band-assisted pull-ups\n- machine-assisted pull-ups\n- isometric holds\n- scapular pull-ups",
+       "- assisted pull-up if you have a bar"
+      ]
+     },
+     {
+      "id": "ru-c05",
+      "lang": "ru",
+      "cat": "specific",
+      "wall_ms": 12156,
+      "latency_ms": 12108,
+      "llm_calls": 3,
+      "answer": "A complete warm-up does not need to be long; ten to fifteen focused minutes is often sufficient [1]. A practical formula for this duration is: 3 to 5 minutes of general movement, 3 to 5 minutes of targeted mobility or activation, and 5 to 10 minutes of progressively specific sets [1].",
+      "scores": {
+       "idk": false,
+       "idk_correct": true,
+       "facts": 1.0,
+       "source_ok": true,
+       "quotes_ok": true,
+       "lang_ok": false,
+       "first_try": true
+      },
+      "sources": [
+       "10-warm-up-and-mobility.md > Warm-Up and Mobility for Safer, Better Training > Making It Efficient"
+      ],
+      "quotes": [
+       "For many sessions, ten to fifteen focused minutes is enough."
+      ]
+     },
+     {
+      "id": "ru-c07",
+      "lang": "ru",
+      "cat": "common",
+      "wall_ms": 10758,
+      "latency_ms": 10705,
+      "llm_calls": 2,
+      "answer": "Для активных взрослых полезной нормой является потребление примерно 1,6–2,2 грамма белка на килограмм массы тела в день [1]. Белок легче усваивается, если распределить его между тремя-пятью приемами пищи, а не употреблять за один раз [2].",
+      "scores": {
+       "idk": false,
+       "idk_correct": true,
+       "facts": 1.0,
+       "source_ok": true,
+       "quotes_ok": true,
+       "lang_ok": true,
+       "first_try": true
+      },
+      "sources": [
+       "08-nutrition-protein-and-calories.md > Nutrition, Protein, and Calories for Fitness Goals > Protein: The Priority Macronutrient for Lifters",
+       "08-nutrition-protein-and-calories.md > Nutrition, Protein, and Calories for Fitness Goals > Protein: The Priority Macronutrient for Lifters > Distributing protein across the day"
+      ],
+      "quotes": [
+       "A useful target for many active adults is about 1.6 to 2.2 grams of protein per kilogram of body weight per day.",
+       "Protein is often easier to use and digest when spread across three to five meals rather than pushed into one huge servin"
+      ]
+     },
+     {
+      "id": "ru-c08",
+      "lang": "ru",
+      "cat": "common",
+      "wall_ms": 4316,
+      "latency_ms": 4271,
+      "llm_calls": 3,
+      "answer": "Не знаю: в базе знаний нет информации, которая надёжно отвечает на этот вопрос.\n\nБлижайшие темы в базе (это не ответ на ваш вопрос): «Deadlift Technique», «Romanian deadlift technique», «The hinge and first pull».\n\nВы имели в виду одну из этих тем? Если нет — уточните, о каком упражнении, программе или аспекте питания идёт речь.",
+      "scores": {
+       "idk": true,
+       "idk_correct": false,
+       "facts": 0.0,
+       "source_ok": false,
+       "quotes_ok": false,
+       "lang_ok": true,
+       "first_try": true
+      },
+      "sources": [],
+      "quotes": []
+     },
+     {
+      "id": "ru01",
+      "lang": "ru",
+      "cat": "specific",
+      "wall_ms": 8054,
+      "latency_ms": 8007,
+      "llm_calls": 2,
+      "answer": "NEAT (non-exercise activity thermogenesis) — это энергия, которую вы сжигаете во время обычной повседневной деятельности вне структурированных упражнений: ходьба, ерзанье, домашние дела, подъем по лестнице, ходьба из стороны в сторону, стояние и общая ежедневная активность [1]. Во время диеты уровень NEAT может снижаться, так как вы можете больше сидеть, меньше двигаться или неосознанно избегать усилий из-за снижения уровня энергии [1].",
+      "scores": {
+       "idk": false,
+       "idk_correct": true,
+       "facts": 1.0,
+       "source_ok": true,
+       "quotes_ok": true,
+       "lang_ok": true,
+       "first_try": true
+      },
+      "sources": [
+       "09-fat-loss-and-body-composition.md > Fat Loss and Body Composition Without Losing the Plot > NEAT: The Hidden Lever"
+      ],
+      "quotes": [
+       "NEAT stands for non-exercise activity thermogenesis. In plain language, it is the energy you burn through ordinary movem"
+      ]
+     },
+     {
+      "id": "ru02",
+      "lang": "ru",
+      "cat": "out_of_corpus",
+      "wall_ms": 1034,
+      "latency_ms": 983,
+      "llm_calls": 1,
+      "answer": "Не знаю: в базе знаний нет информации, которая надёжно отвечает на этот вопрос.\n\nБлижайшие темы в базе (это не ответ на ваш вопрос): «Breathing and trunk control», «Tempo and execution quality», «Depth and bottom position».\n\nВы имели в виду одну из этих тем? Если нет — уточните, о каком упражнении, программе или аспекте питания идёт речь.",
+      "scores": {
+       "idk": true,
+       "idk_correct": true,
+       "lang_ok": true,
+       "first_try": false
+      },
+      "sources": [],
+      "quotes": []
+     }
+    ],
+    "total_s": 110.0
+   }
+  ],
+  "cold_start_ms": 6305
+ },
+ "local-smart": {
+  "provider": "ollama",
+  "model": "gemma4:31b-mlx",
+  "runs": [
+   {
+    "run": [
+     {
+      "id": "c01",
+      "lang": "en",
+      "cat": "specific",
+      "wall_ms": 40451,
+      "latency_ms": 40329,
+      "llm_calls": 2,
+      "answer": "Day 2 of the beginner 3-day full-body program consists of the following exercises: Trap-bar or kettlebell deadlift (3 sets of 5 to 8), Dumbbell overhead press (3 sets of 6 to 10), Lat pulldown (3 sets of 8 to 12), Reverse lunge (2 to 3 sets of 8 to 10 each side), and Dead bug (2 to 3 sets) [1].",
+      "scores": {
+       "idk": false,
+       "idk_correct": true,
+       "facts": 1.0,
+       "source_ok": false,
+       "quotes_ok": true,
+       "lang_ok": true,
+       "first_try": true
+      },
+      "sources": [
+       "13-beginner-program-design.md > Beginner Program Design for Strength and Muscle > A practical 3-day full-body program"
+      ],
+      "quotes": [
+       "- Trap-bar or kettlebell deadlift: 3 sets of 5 to 8\n- Dumbbell overhead press: 3 sets of 6 to 10\n- Lat pulldown: 3 sets "
+      ]
+     },
+     {
+      "id": "c02",
+      "lang": "en",
+      "cat": "specific",
+      "wall_ms": 26757,
+      "latency_ms": 26708,
+      "llm_calls": 2,
+      "answer": "If you cannot yet perform strict bodyweight pull-ups, useful progressions to build confidence and repetition quality include slow eccentrics, isometric holds, scapular pull-ups, and pull-ups assisted by bands or machines [1].",
+      "scores": {
+       "idk": false,
+       "idk_correct": true,
+       "facts": 1.0,
+       "source_ok": true,
+       "quotes_ok": true,
+       "lang_ok": true,
+       "first_try": true
+      },
+      "sources": [
+       "04-pulling-and-back-training.md > Pulling and Back Training > Pull-up progressions"
+      ],
+      "quotes": [
+       "Useful options include:\n\n- slow eccentrics\n- band-assisted pull-ups\n- machine-assisted pull-ups\n- isometric holds\n- scap"
+      ]
+     },
+     {
+      "id": "c03",
+      "lang": "en",
+      "cat": "specific",
+      "wall_ms": 27727,
+      "latency_ms": 27650,
+      "llm_calls": 2,
+      "answer": "This behavior, known as hitching at lockout, indicates that you likely lost your position earlier in the lift [1]. To address this, you can use variations such as RDLs, paused deadlifts, and block pulls, depending on where the breakdown begins [1].",
+      "scores": {
+       "idk": false,
+       "idk_correct": true,
+       "facts": 1.0,
+       "source_ok": false,
+       "quotes_ok": true,
+       "lang_ok": true,
+       "first_try": true
+      },
+      "sources": [
+       "02-deadlift-technique.md > Deadlift Technique > Romanian deadlift technique"
+      ],
+      "quotes": [
+       "If the bar stalls above the knee and climbs in stages, you likely lost position earlier. Paused deadlifts, RDLs, and blo"
+      ]
+     },
+     {
+      "id": "c04",
+      "lang": "en",
+      "cat": "specific",
+      "wall_ms": 26535,
+      "latency_ms": 26489,
+      "llm_calls": 2,
+      "answer": "Template A of the simple core training routine consists of the following: \n- Dead bug: 2 to 3 sets of 5 to 8 reps per side [1]\n- Side plank: 2 to 3 sets of 15 to 30 seconds per side [1]\n- Suitcase carry: 2 to 4 trips per side [1]",
+      "scores": {
+       "idk": false,
+       "idk_correct": true,
+       "facts": 1.0,
+       "source_ok": false,
+       "quotes_ok": true,
+       "lang_ok": true,
+       "first_try": true
+      },
+      "sources": [
+       "15-core-training-and-posture.md > Core Training, Bracing, and Posture Without the Myths > Better advice for desk workers"
+      ],
+      "quotes": [
+       "Template A\n\n- Dead bug: 2 to 3 sets of 5 to 8 reps per side\n- Side plank: 2 to 3 sets of 15 to 30 seconds per side\n- Sui"
+      ]
+     },
+     {
+      "id": "c05",
+      "lang": "en",
+      "cat": "specific",
+      "wall_ms": 26951,
+      "latency_ms": 26918,
+      "llm_calls": 2,
+      "answer": "A 10 to 15 minute warm-up can be split into three phases: 3 to 5 minutes of general movement, 3 to 5 minutes of targeted activation or mobility, and 5 to 10 minutes of progressively specific sets [1].",
+      "scores": {
+       "idk": false,
+       "idk_correct": true,
+       "facts": 1.0,
+       "source_ok": true,
+       "quotes_ok": true,
+       "lang_ok": true,
+       "first_try": true
+      },
+      "sources": [
+       "10-warm-up-and-mobility.md > Warm-Up and Mobility for Safer, Better Training > Making It Efficient"
+      ],
+      "quotes": [
+       "- 3 to 5 minutes of general movement\n- 3 to 5 minutes of targeted mobility or activation\n- 5 to 10 minutes of progressiv"
+      ]
+     },
+     {
+      "id": "c06",
+      "lang": "en",
+      "cat": "specific",
+      "wall_ms": 21868,
+      "latency_ms": 21815,
+      "llm_calls": 2,
+      "answer": "The knowledge base assigns the following rep ranges: 1 to 3 reps for high specificity, 3 to 6 reps for repeated strength practice, and 6 to 12 or more reps for assistance and hypertrophy support [1].",
+      "scores": {
+       "idk": false,
+       "idk_correct": true,
+       "facts": 1.0,
+       "source_ok": true,
+       "quotes_ok": true,
+       "lang_ok": true,
+       "first_try": true
+      },
+      "sources": [
+       "05-strength-programming-basics.md > Strength Programming Basics > Rep ranges for strength development"
+      ],
+      "quotes": [
+       "- 1 to 3 reps for high specificity\n- 3 to 6 reps for repeated strength practice\n- 6 to 12 or more for assistance and hyp"
+      ]
+     },
+     {
+      "id": "c07",
+      "lang": "en",
+      "cat": "common",
+      "wall_ms": 29152,
+      "latency_ms": 29110,
+      "llm_calls": 2,
+      "answer": "Active adults should target approximately 1.6 to 2.2 grams of protein per kilogram of body weight daily [1]. For better digestion and appetite control, it is often easier to spread this intake across three to five meals rather than consuming one large serving [3].",
+      "scores": {
+       "idk": false,
+       "idk_correct": true,
+       "facts": 1.0,
+       "source_ok": true,
+       "quotes_ok": true,
+       "lang_ok": true,
+       "first_try": true
+      },
+      "sources": [
+       "08-nutrition-protein-and-calories.md > Nutrition, Protein, and Calories for Fitness Goals > Protein: The Priority Macronutrient for Lifters",
+       "08-nutrition-protein-and-calories.md > Nutrition, Protein, and Calories for Fitness Goals > Protein: The Priority Macronutrient for Lifters > Distributing protein across the day"
+      ],
+      "quotes": [
+       "A useful target for many active adults is about 1.6 to 2.2 grams of protein per kilogram of body weight per day.",
+       "Protein is often easier to use and digest when spread across three to five meals rather than pushed into one huge servin"
+      ]
+     },
+     {
+      "id": "c08",
+      "lang": "en",
+      "cat": "common",
+      "wall_ms": 23196,
+      "latency_ms": 23141,
+      "llm_calls": 2,
+      "answer": "To fix the bar drifting forward, you should recheck your start position, ensure the bar remains over the midfoot, and engage your lats more aggressively [1].",
+      "scores": {
+       "idk": false,
+       "idk_correct": true,
+       "facts": 1.0,
+       "source_ok": false,
+       "quotes_ok": true,
+       "lang_ok": true,
+       "first_try": true
+      },
+      "sources": [
+       "02-deadlift-technique.md > Deadlift Technique > Romanian deadlift technique"
+      ],
+      "quotes": [
+       "Recheck the start position, keep the bar over midfoot, and engage the lats more aggressively."
+      ]
+     },
+     {
+      "id": "c09",
+      "lang": "en",
+      "cat": "out_of_corpus",
+      "wall_ms": 6994,
+      "latency_ms": 6935,
+      "llm_calls": 2,
+      "answer": "I don't know: the knowledge base has no information that reliably answers this question.\n\nClosest topics in the knowledge base (not an answer to your question): «Deadlift Technique», «Final deadlift checklist», «Conventional deadlift setup».\n\nDid you mean one of these topics? If not, which exercise, program or nutrition aspect do you have in mind?",
+      "scores": {
+       "idk": true,
+       "idk_correct": true,
+       "lang_ok": true,
+       "first_try": true
+      },
+      "sources": [],
+      "quotes": []
+     },
+     {
+      "id": "c10",
+      "lang": "en",
+      "cat": "out_of_corpus",
+      "wall_ms": 11573,
+      "latency_ms": 11532,
+      "llm_calls": 2,
+      "answer": "I don't know: the knowledge base has no information that reliably answers this question.\n\nClosest topics in the knowledge base (not an answer to your question): «Protein powder», «Protein powder > When powder earns its place», «A practical shortlist».\n\nDid you mean one of these topics? If not, which exercise, program or nutrition aspect do you have in mind?",
+      "scores": {
+       "idk": true,
+       "idk_correct": true,
+       "lang_ok": true,
+       "first_try": true
+      },
+      "sources": [],
+      "quotes": []
+     },
+     {
+      "id": "ru-c02",
+      "lang": "ru",
+      "cat": "specific",
+      "wall_ms": 25938,
+      "latency_ms": 25885,
+      "llm_calls": 2,
+      "answer": "Если вы пока не можете выполнять строгие подтягивания, полезными вариантами прогрессий являются: медленные эксцентрические фазы (опускания), подтягивания с помощью резин или тренажера, изометрические удержания и скапулярные подтягивания [1].",
+      "scores": {
+       "idk": false,
+       "idk_correct": true,
+       "facts": 1.0,
+       "source_ok": true,
+       "quotes_ok": true,
+       "lang_ok": true,
+       "first_try": true
+      },
+      "sources": [
+       "04-pulling-and-back-training.md > Pulling and Back Training > Pull-up progressions"
+      ],
+      "quotes": [
+       "Useful options include:\n\n- slow eccentrics\n- band-assisted pull-ups\n- machine-assisted pull-ups\n- isometric holds\n- scap"
+      ]
+     },
+     {
+      "id": "ru-c05",
+      "lang": "ru",
+      "cat": "specific",
+      "wall_ms": 27718,
+      "latency_ms": 27610,
+      "llm_calls": 2,
+      "answer": "Разминка на 10-15 минут можно разделить на следующие фазы: 3-5 минут общей двигательной активности, 3-5 минут целевой мобильности или активации и 5-10 минут постепенно специфических сетов [1].",
+      "scores": {
+       "idk": false,
+       "idk_correct": true,
+       "facts": 1.0,
+       "source_ok": true,
+       "quotes_ok": true,
+       "lang_ok": true,
+       "first_try": true
+      },
+      "sources": [
+       "10-warm-up-and-mobility.md > Warm-Up and Mobility for Safer, Better Training > Making It Efficient"
+      ],
+      "quotes": [
+       "- 3 to 5 minutes of general movement\n- 3 to 5 minutes of targeted mobility or activation\n- 5 to 10 minutes of progressiv"
+      ]
+     },
+     {
+      "id": "ru-c07",
+      "lang": "ru",
+      "cat": "common",
+      "wall_ms": 30869,
+      "latency_ms": 30669,
+      "llm_calls": 2,
+      "answer": "Активному взрослому человеку рекомендуется употреблять от 1,6 до 2,2 граммов белка на килограмм массы тела в день [1]. Для более эффективного усвоения и переваривания, а также для контроля аппетита, белок рекомендуется распределять между тремя и пятью приемами пищи [2].",
+      "scores": {
+       "idk": false,
+       "idk_correct": true,
+       "facts": 1.0,
+       "source_ok": true,
+       "quotes_ok": true,
+       "lang_ok": true,
+       "first_try": true
+      },
+      "sources": [
+       "08-nutrition-protein-and-calories.md > Nutrition, Protein, and Calories for Fitness Goals > Protein: The Priority Macronutrient for Lifters",
+       "08-nutrition-protein-and-calories.md > Nutrition, Protein, and Calories for Fitness Goals > Protein: The Priority Macronutrient for Lifters > Distributing protein across the day"
+      ],
+      "quotes": [
+       "A useful target for many active adults is about 1.6 to 2.2 grams of protein per kilogram of body weight per day.",
+       "Protein is often easier to use and digest when spread across three to five meals rather than pushed into one huge servin"
+      ]
+     },
+     {
+      "id": "ru-c08",
+      "lang": "ru",
+      "cat": "common",
+      "wall_ms": 25948,
+      "latency_ms": 25844,
+      "llm_calls": 2,
+      "answer": "Чтобы исправить уход штанги вперёд в становой тяге, необходимо перепроверить исходное положение, удерживать штангу над серединой стопы и более агрессивно задействовать широчайшие мышцы спины [2].",
+      "scores": {
+       "idk": false,
+       "idk_correct": true,
+       "facts": 1.0,
+       "source_ok": false,
+       "quotes_ok": true,
+       "lang_ok": true,
+       "first_try": true
+      },
+      "sources": [
+       "02-deadlift-technique.md > Deadlift Technique > Romanian deadlift technique"
+      ],
+      "quotes": [
+       "Recheck the start position, keep the bar over midfoot, and engage the lats more aggressively."
+      ]
+     },
+     {
+      "id": "ru01",
+      "lang": "ru",
+      "cat": "specific",
+      "wall_ms": 33474,
+      "latency_ms": 33335,
+      "llm_calls": 2,
+      "answer": "NEAT (non-exercise activity thermogenesis) — это энергия, которую вы тратите на обычные движения вне структурированных тренировок, такие как ходьба, уборка, использование лестниц и общая повседневная активность [1]. Во время диеты NEAT часто снижается незаметно для человека, так как из-за низкого уровня энергии вы можете больше сидеть, меньше двигаться или неосознанно избегать усилий [1].",
+      "scores": {
+       "idk": false,
+       "idk_correct": true,
+       "facts": 1.0,
+       "source_ok": true,
+       "quotes_ok": true,
+       "lang_ok": true,
+       "first_try": true
+      },
+      "sources": [
+       "09-fat-loss-and-body-composition.md > Fat Loss and Body Composition Without Losing the Plot > NEAT: The Hidden Lever"
+      ],
+      "quotes": [
+       "NEAT stands for non-exercise activity thermogenesis. In plain language, it is the energy you burn through ordinary movem",
+       "NEAT often drops during dieting without people noticing. You may sit more, move less, or unconsciously avoid effort beca"
+      ]
+     },
+     {
+      "id": "ru02",
+      "lang": "ru",
+      "cat": "out_of_corpus",
+      "wall_ms": 2416,
+      "latency_ms": 2206,
+      "llm_calls": 1,
+      "answer": "Не знаю: в базе знаний нет информации, которая надёжно отвечает на этот вопрос.\n\nБлижайшие темы в базе (это не ответ на ваш вопрос): «Tempo and execution quality», «Tracking and adjustment», «Who should be more cautious».\n\nВы имели в виду одну из этих тем? Если нет — уточните, о каком упражнении, программе или аспекте питания идёт речь.",
+      "scores": {
+       "idk": true,
+       "idk_correct": true,
+       "lang_ok": true,
+       "first_try": false
+      },
+      "sources": [],
+      "quotes": []
+     }
+    ],
+    "total_s": 387.6
+   },
+   {
+    "run": [
+     {
+      "id": "c01",
+      "lang": "en",
+      "cat": "specific",
+      "wall_ms": 33762,
+      "latency_ms": 33613,
+      "llm_calls": 2,
+      "answer": "Day 2 of the beginner 3-day full-body program consists of the following exercises: Trap-bar or kettlebell deadlift (3 sets of 5 to 8), Dumbbell overhead press (3 sets of 6 to 10), Lat pulldown (3 sets of 8 to 12), Reverse lunge (2 to 3 sets of 8 to 10 each side), and Dead bug (2 to 3 sets) [1].",
+      "scores": {
+       "idk": false,
+       "idk_correct": true,
+       "facts": 1.0,
+       "source_ok": false,
+       "quotes_ok": true,
+       "lang_ok": true,
+       "first_try": true
+      },
+      "sources": [
+       "13-beginner-program-design.md > Beginner Program Design for Strength and Muscle > A practical 3-day full-body program"
+      ],
+      "quotes": [
+       "- Trap-bar or kettlebell deadlift: 3 sets of 5 to 8\n- Dumbbell overhead press: 3 sets of 6 to 10\n- Lat pulldown: 3 sets "
+      ]
+     },
+     {
+      "id": "c02",
+      "lang": "en",
+      "cat": "specific",
+      "wall_ms": 23581,
+      "latency_ms": 23445,
+      "llm_calls": 2,
+      "answer": "If you cannot yet perform strict bodyweight pull-ups, useful progressions to build confidence and repetition quality include slow eccentrics, isometric holds, scapular pull-ups, and pull-ups assisted by bands or machines [1].",
+      "scores": {
+       "idk": false,
+       "idk_correct": true,
+       "facts": 1.0,
+       "source_ok": true,
+       "quotes_ok": true,
+       "lang_ok": true,
+       "first_try": true
+      },
+      "sources": [
+       "04-pulling-and-back-training.md > Pulling and Back Training > Pull-up progressions"
+      ],
+      "quotes": [
+       "Useful options include:\n\n- slow eccentrics\n- band-assisted pull-ups\n- machine-assisted pull-ups\n- isometric holds\n- scap"
+      ]
+     },
+     {
+      "id": "c03",
+      "lang": "en",
+      "cat": "specific",
+      "wall_ms": 27515,
+      "latency_ms": 27327,
+      "llm_calls": 2,
+      "answer": "This behavior, known as hitching at lockout, indicates that you likely lost your position earlier in the lift [1]. To address this, you can use variations such as RDLs, paused deadlifts, and block pulls, depending on where the breakdown occurs [1].",
+      "scores": {
+       "idk": false,
+       "idk_correct": true,
+       "facts": 1.0,
+       "source_ok": false,
+       "quotes_ok": true,
+       "lang_ok": true,
+       "first_try": true
+      },
+      "sources": [
+       "02-deadlift-technique.md > Deadlift Technique > Romanian deadlift technique"
+      ],
+      "quotes": [
+       "If the bar stalls above the knee and climbs in stages, you likely lost position earlier. Paused deadlifts, RDLs, and blo"
+      ]
+     },
+     {
+      "id": "c04",
+      "lang": "en",
+      "cat": "specific",
+      "wall_ms": 28331,
+      "latency_ms": 28209,
+      "llm_calls": 2,
+      "answer": "Template A of the simple core training routine consists of the following: \n- Dead bug: 2 to 3 sets of 5 to 8 reps per side [1]\n- Side plank: 2 to 3 sets of 15 to 30 seconds per side [1]\n- Suitcase carry: 2 to 4 trips per side [1]",
+      "scores": {
+       "idk": false,
+       "idk_correct": true,
+       "facts": 1.0,
+       "source_ok": false,
+       "quotes_ok": true,
+       "lang_ok": true,
+       "first_try": true
+      },
+      "sources": [
+       "15-core-training-and-posture.md > Core Training, Bracing, and Posture Without the Myths > Better advice for desk workers"
+      ],
+      "quotes": [
+       "Template A\n\n- Dead bug: 2 to 3 sets of 5 to 8 reps per side\n- Side plank: 2 to 3 sets of 15 to 30 seconds per side\n- Sui"
+      ]
+     },
+     {
+      "id": "c05",
+      "lang": "en",
+      "cat": "specific",
+      "wall_ms": 26907,
+      "latency_ms": 26721,
+      "llm_calls": 2,
+      "answer": "A 10 to 15 minute warm-up can be split into three phases: 3 to 5 minutes of general movement, 3 to 5 minutes of targeted activation or mobility, and 5 to 10 minutes of progressively specific sets [1].",
+      "scores": {
+       "idk": false,
+       "idk_correct": true,
+       "facts": 1.0,
+       "source_ok": true,
+       "quotes_ok": true,
+       "lang_ok": true,
+       "first_try": true
+      },
+      "sources": [
+       "10-warm-up-and-mobility.md > Warm-Up and Mobility for Safer, Better Training > Making It Efficient"
+      ],
+      "quotes": [
+       "- 3 to 5 minutes of general movement\n- 3 to 5 minutes of targeted mobility or activation\n- 5 to 10 minutes of progressiv"
+      ]
+     },
+     {
+      "id": "c06",
+      "lang": "en",
+      "cat": "specific",
+      "wall_ms": 22039,
+      "latency_ms": 21870,
+      "llm_calls": 2,
+      "answer": "The knowledge base assigns the following rep ranges: 1 to 3 reps for high specificity, 3 to 6 reps for repeated strength practice, and 6 to 12 or more reps for assistance and hypertrophy support [1].",
+      "scores": {
+       "idk": false,
+       "idk_correct": true,
+       "facts": 1.0,
+       "source_ok": true,
+       "quotes_ok": true,
+       "lang_ok": true,
+       "first_try": true
+      },
+      "sources": [
+       "05-strength-programming-basics.md > Strength Programming Basics > Rep ranges for strength development"
+      ],
+      "quotes": [
+       "- 1 to 3 reps for high specificity\n- 3 to 6 reps for repeated strength practice\n- 6 to 12 or more for assistance and hyp"
+      ]
+     },
+     {
+      "id": "c07",
+      "lang": "en",
+      "cat": "common",
+      "wall_ms": 29578,
+      "latency_ms": 29438,
+      "llm_calls": 2,
+      "answer": "Active adults should target approximately 1.6 to 2.2 grams of protein per kilogram of body weight daily [1]. For better digestion and appetite control, it is often easier to spread this intake across three to five meals rather than consuming one large serving [3].",
+      "scores": {
+       "idk": false,
+       "idk_correct": true,
+       "facts": 1.0,
+       "source_ok": true,
+       "quotes_ok": true,
+       "lang_ok": true,
+       "first_try": true
+      },
+      "sources": [
+       "08-nutrition-protein-and-calories.md > Nutrition, Protein, and Calories for Fitness Goals > Protein: The Priority Macronutrient for Lifters",
+       "08-nutrition-protein-and-calories.md > Nutrition, Protein, and Calories for Fitness Goals > Protein: The Priority Macronutrient for Lifters > Distributing protein across the day"
+      ],
+      "quotes": [
+       "A useful target for many active adults is about 1.6 to 2.2 grams of protein per kilogram of body weight per day.",
+       "Protein is often easier to use and digest when spread across three to five meals rather than pushed into one huge servin"
+      ]
+     },
+     {
+      "id": "c08",
+      "lang": "en",
+      "cat": "common",
+      "wall_ms": 22494,
+      "latency_ms": 22299,
+      "llm_calls": 2,
+      "answer": "To fix the bar drifting forward, you should recheck your start position, ensure the bar remains over the midfoot, and engage your lats more aggressively [1].",
+      "scores": {
+       "idk": false,
+       "idk_correct": true,
+       "facts": 1.0,
+       "source_ok": false,
+       "quotes_ok": true,
+       "lang_ok": true,
+       "first_try": true
+      },
+      "sources": [
+       "02-deadlift-technique.md > Deadlift Technique > Romanian deadlift technique"
+      ],
+      "quotes": [
+       "Recheck the start position, keep the bar over midfoot, and engage the lats more aggressively."
+      ]
+     },
+     {
+      "id": "c09",
+      "lang": "en",
+      "cat": "out_of_corpus",
+      "wall_ms": 7158,
+      "latency_ms": 7028,
+      "llm_calls": 2,
+      "answer": "I don't know: the knowledge base has no information that reliably answers this question.\n\nClosest topics in the knowledge base (not an answer to your question): «Deadlift Technique», «Final deadlift checklist», «Conventional deadlift setup».\n\nDid you mean one of these topics? If not, which exercise, program or nutrition aspect do you have in mind?",
+      "scores": {
+       "idk": true,
+       "idk_correct": true,
+       "lang_ok": true,
+       "first_try": true
+      },
+      "sources": [],
+      "quotes": []
+     },
+     {
+      "id": "c10",
+      "lang": "en",
+      "cat": "out_of_corpus",
+      "wall_ms": 11959,
+      "latency_ms": 11770,
+      "llm_calls": 2,
+      "answer": "I don't know: the knowledge base has no information that reliably answers this question.\n\nClosest topics in the knowledge base (not an answer to your question): «Protein powder», «Protein powder > When powder earns its place», «A practical shortlist».\n\nDid you mean one of these topics? If not, which exercise, program or nutrition aspect do you have in mind?",
+      "scores": {
+       "idk": true,
+       "idk_correct": true,
+       "lang_ok": true,
+       "first_try": true
+      },
+      "sources": [],
+      "quotes": []
+     },
+     {
+      "id": "ru-c02",
+      "lang": "ru",
+      "cat": "specific",
+      "wall_ms": 26733,
+      "latency_ms": 26563,
+      "llm_calls": 2,
+      "answer": "Если вы пока не можете выполнять строгие подтягивания, полезными вариантами прогрессий являются: медленные эксцентрические фазы (опускания), подтягивания с помощью резин или тренажера, изометрические удержания и скапулярные подтягивания [1].",
+      "scores": {
+       "idk": false,
+       "idk_correct": true,
+       "facts": 1.0,
+       "source_ok": true,
+       "quotes_ok": true,
+       "lang_ok": true,
+       "first_try": true
+      },
+      "sources": [
+       "04-pulling-and-back-training.md > Pulling and Back Training > Pull-up progressions"
+      ],
+      "quotes": [
+       "Useful options include:\n\n- slow eccentrics\n- band-assisted pull-ups\n- machine-assisted pull-ups\n- isometric holds\n- scap"
+      ]
+     },
+     {
+      "id": "ru-c05",
+      "lang": "ru",
+      "cat": "specific",
+      "wall_ms": 29020,
+      "latency_ms": 28770,
+      "llm_calls": 2,
+      "answer": "Разминка на 10-15 минут можно разделить на следующие фазы: 3-5 минут общей двигательной активности, 3-5 минут целевой мобильности или активации и 5-10 минут постепенно специфических сетов [1].",
+      "scores": {
+       "idk": false,
+       "idk_correct": true,
+       "facts": 1.0,
+       "source_ok": true,
+       "quotes_ok": true,
+       "lang_ok": true,
+       "first_try": true
+      },
+      "sources": [
+       "10-warm-up-and-mobility.md > Warm-Up and Mobility for Safer, Better Training > Making It Efficient"
+      ],
+      "quotes": [
+       "- 3 to 5 minutes of general movement\n- 3 to 5 minutes of targeted mobility or activation\n- 5 to 10 minutes of progressiv"
+      ]
+     },
+     {
+      "id": "ru-c07",
+      "lang": "ru",
+      "cat": "common",
+      "wall_ms": 32515,
+      "latency_ms": 32404,
+      "llm_calls": 2,
+      "answer": "Активному взрослому человеку рекомендуется употреблять от 1,6 до 2,2 граммов белка на килограмм массы тела в день [1]. Для более эффективного усвоения и переваривания, а также для контроля аппетита, белок рекомендуется распределять между тремя и пятью приемами пищи [2].",
+      "scores": {
+       "idk": false,
+       "idk_correct": true,
+       "facts": 1.0,
+       "source_ok": true,
+       "quotes_ok": true,
+       "lang_ok": true,
+       "first_try": true
+      },
+      "sources": [
+       "08-nutrition-protein-and-calories.md > Nutrition, Protein, and Calories for Fitness Goals > Protein: The Priority Macronutrient for Lifters",
+       "08-nutrition-protein-and-calories.md > Nutrition, Protein, and Calories for Fitness Goals > Protein: The Priority Macronutrient for Lifters > Distributing protein across the day"
+      ],
+      "quotes": [
+       "A useful target for many active adults is about 1.6 to 2.2 grams of protein per kilogram of body weight per day.",
+       "Protein is often easier to use and digest when spread across three to five meals rather than pushed into one huge servin"
+      ]
+     },
+     {
+      "id": "ru-c08",
+      "lang": "ru",
+      "cat": "common",
+      "wall_ms": 26021,
+      "latency_ms": 25810,
+      "llm_calls": 2,
+      "answer": "Чтобы исправить уход штанги вперёд в становой тяге, необходимо перепроверить исходное положение, удерживать штангу над серединой стопы и более агрессивно задействовать широчайшие мышцы спины [2].",
+      "scores": {
+       "idk": false,
+       "idk_correct": true,
+       "facts": 1.0,
+       "source_ok": false,
+       "quotes_ok": true,
+       "lang_ok": true,
+       "first_try": true
+      },
+      "sources": [
+       "02-deadlift-technique.md > Deadlift Technique > Romanian deadlift technique"
+      ],
+      "quotes": [
+       "Recheck the start position, keep the bar over midfoot, and engage the lats more aggressively."
+      ]
+     },
+     {
+      "id": "ru01",
+      "lang": "ru",
+      "cat": "specific",
+      "wall_ms": 33283,
+      "latency_ms": 33129,
+      "llm_calls": 2,
+      "answer": "NEAT (non-exercise activity thermogenesis) — это энергия, которую вы тратите на обычные движения вне структурированных тренировок, такие как ходьба, уборка, использование лестниц и общая повседневная активность [1]. Во время диеты NEAT часто снижается незаметно для человека, так как из-за низкого уровня энергии вы можете больше сидеть, меньше двигаться или неосознанно избегать усилий [1].",
+      "scores": {
+       "idk": false,
+       "idk_correct": true,
+       "facts": 1.0,
+       "source_ok": true,
+       "quotes_ok": true,
+       "lang_ok": true,
+       "first_try": true
+      },
+      "sources": [
+       "09-fat-loss-and-body-composition.md > Fat Loss and Body Composition Without Losing the Plot > NEAT: The Hidden Lever"
+      ],
+      "quotes": [
+       "NEAT stands for non-exercise activity thermogenesis. In plain language, it is the energy you burn through ordinary movem",
+       "NEAT often drops during dieting without people noticing. You may sit more, move less, or unconsciously avoid effort beca"
+      ]
+     },
+     {
+      "id": "ru02",
+      "lang": "ru",
+      "cat": "out_of_corpus",
+      "wall_ms": 1732,
+      "latency_ms": 1593,
+      "llm_calls": 1,
+      "answer": "Не знаю: в базе знаний нет информации, которая надёжно отвечает на этот вопрос.\n\nБлижайшие темы в базе (это не ответ на ваш вопрос): «Tempo and execution quality», «Tracking and adjustment», «Who should be more cautious».\n\nВы имели в виду одну из этих тем? Если нет — уточните, о каком упражнении, программе или аспекте питания идёт речь.",
+      "scores": {
+       "idk": true,
+       "idk_correct": true,
+       "lang_ok": true,
+       "first_try": false
+      },
+      "sources": [],
+      "quotes": []
+     }
+    ],
+    "total_s": 382.6
+   },
+   {
+    "run": [
+     {
+      "id": "c01",
+      "lang": "en",
+      "cat": "specific",
+      "wall_ms": 32479,
+      "latency_ms": 32341,
+      "llm_calls": 2,
+      "answer": "Day 2 of the beginner 3-day full-body program consists of the following exercises: Trap-bar or kettlebell deadlift (3 sets of 5 to 8), Dumbbell overhead press (3 sets of 6 to 10), Lat pulldown (3 sets of 8 to 12), Reverse lunge (2 to 3 sets of 8 to 10 each side), and Dead bug (2 to 3 sets) [1].",
+      "scores": {
+       "idk": false,
+       "idk_correct": true,
+       "facts": 1.0,
+       "source_ok": false,
+       "quotes_ok": true,
+       "lang_ok": true,
+       "first_try": true
+      },
+      "sources": [
+       "13-beginner-program-design.md > Beginner Program Design for Strength and Muscle > A practical 3-day full-body program"
+      ],
+      "quotes": [
+       "- Trap-bar or kettlebell deadlift: 3 sets of 5 to 8\n- Dumbbell overhead press: 3 sets of 6 to 10\n- Lat pulldown: 3 sets "
+      ]
+     },
+     {
+      "id": "c02",
+      "lang": "en",
+      "cat": "specific",
+      "wall_ms": 23326,
+      "latency_ms": 23208,
+      "llm_calls": 2,
+      "answer": "If you cannot yet perform strict bodyweight pull-ups, useful progressions to build confidence and repetition quality include slow eccentrics, isometric holds, scapular pull-ups, and pull-ups assisted by bands or machines [1].",
+      "scores": {
+       "idk": false,
+       "idk_correct": true,
+       "facts": 1.0,
+       "source_ok": true,
+       "quotes_ok": true,
+       "lang_ok": true,
+       "first_try": true
+      },
+      "sources": [
+       "04-pulling-and-back-training.md > Pulling and Back Training > Pull-up progressions"
+      ],
+      "quotes": [
+       "Useful options include:\n\n- slow eccentrics\n- band-assisted pull-ups\n- machine-assisted pull-ups\n- isometric holds\n- scap"
+      ]
+     },
+     {
+      "id": "c03",
+      "lang": "en",
+      "cat": "specific",
+      "wall_ms": 28608,
+      "latency_ms": 28408,
+      "llm_calls": 2,
+      "answer": "This behavior, known as hitching at lockout, indicates that you likely lost your position earlier in the lift [1]. To address this, paused deadlifts, RDLs, and block pulls can be helpful, depending on where the breakdown in the lift begins [1].",
+      "scores": {
+       "idk": false,
+       "idk_correct": true,
+       "facts": 1.0,
+       "source_ok": false,
+       "quotes_ok": true,
+       "lang_ok": true,
+       "first_try": true
+      },
+      "sources": [
+       "02-deadlift-technique.md > Deadlift Technique > Romanian deadlift technique"
+      ],
+      "quotes": [
+       "If the bar stalls above the knee and climbs in stages, you likely lost position earlier. Paused deadlifts, RDLs, and blo"
+      ]
+     },
+     {
+      "id": "c04",
+      "lang": "en",
+      "cat": "specific",
+      "wall_ms": 27119,
+      "latency_ms": 26962,
+      "llm_calls": 2,
+      "answer": "Template A of the simple core training routine consists of the following: \n- Dead bug: 2 to 3 sets of 5 to 8 reps per side [1]\n- Side plank: 2 to 3 sets of 15 to 30 seconds per side [1]\n- Suitcase carry: 2 to 4 trips per side [1]",
+      "scores": {
+       "idk": false,
+       "idk_correct": true,
+       "facts": 1.0,
+       "source_ok": false,
+       "quotes_ok": true,
+       "lang_ok": true,
+       "first_try": true
+      },
+      "sources": [
+       "15-core-training-and-posture.md > Core Training, Bracing, and Posture Without the Myths > Better advice for desk workers"
+      ],
+      "quotes": [
+       "Template A\n\n- Dead bug: 2 to 3 sets of 5 to 8 reps per side\n- Side plank: 2 to 3 sets of 15 to 30 seconds per side\n- Sui"
+      ]
+     },
+     {
+      "id": "c05",
+      "lang": "en",
+      "cat": "specific",
+      "wall_ms": 25976,
+      "latency_ms": 25771,
+      "llm_calls": 2,
+      "answer": "A 10 to 15 minute warm-up can be split into three phases: 3 to 5 minutes of general movement, 3 to 5 minutes of targeted activation or mobility, and 5 to 10 minutes of progressively specific sets [1].",
+      "scores": {
+       "idk": false,
+       "idk_correct": true,
+       "facts": 1.0,
+       "source_ok": true,
+       "quotes_ok": true,
+       "lang_ok": true,
+       "first_try": true
+      },
+      "sources": [
+       "10-warm-up-and-mobility.md > Warm-Up and Mobility for Safer, Better Training > Making It Efficient"
+      ],
+      "quotes": [
+       "- 3 to 5 minutes of general movement\n- 3 to 5 minutes of targeted mobility or activation\n- 5 to 10 minutes of progressiv"
+      ]
+     },
+     {
+      "id": "c06",
+      "lang": "en",
+      "cat": "specific",
+      "wall_ms": 21250,
+      "latency_ms": 21111,
+      "llm_calls": 2,
+      "answer": "The knowledge base assigns the following rep ranges: 1 to 3 reps for high specificity, 3 to 6 reps for repeated strength practice, and 6 to 12 or more reps for assistance and hypertrophy support [1].",
+      "scores": {
+       "idk": false,
+       "idk_correct": true,
+       "facts": 1.0,
+       "source_ok": true,
+       "quotes_ok": true,
+       "lang_ok": true,
+       "first_try": true
+      },
+      "sources": [
+       "05-strength-programming-basics.md > Strength Programming Basics > Rep ranges for strength development"
+      ],
+      "quotes": [
+       "- 1 to 3 reps for high specificity\n- 3 to 6 reps for repeated strength practice\n- 6 to 12 or more for assistance and hyp"
+      ]
+     },
+     {
+      "id": "c07",
+      "lang": "en",
+      "cat": "common",
+      "wall_ms": 29415,
+      "latency_ms": 29288,
+      "llm_calls": 2,
+      "answer": "Active adults should target approximately 1.6 to 2.2 grams of protein per kilogram of body weight daily [1]. For better digestion and appetite control, it is often easier to spread this intake across three to five meals rather than consuming one large serving [3].",
+      "scores": {
+       "idk": false,
+       "idk_correct": true,
+       "facts": 1.0,
+       "source_ok": true,
+       "quotes_ok": true,
+       "lang_ok": true,
+       "first_try": true
+      },
+      "sources": [
+       "08-nutrition-protein-and-calories.md > Nutrition, Protein, and Calories for Fitness Goals > Protein: The Priority Macronutrient for Lifters",
+       "08-nutrition-protein-and-calories.md > Nutrition, Protein, and Calories for Fitness Goals > Protein: The Priority Macronutrient for Lifters > Distributing protein across the day"
+      ],
+      "quotes": [
+       "A useful target for many active adults is about 1.6 to 2.2 grams of protein per kilogram of body weight per day.",
+       "Protein is often easier to use and digest when spread across three to five meals rather than pushed into one huge servin"
+      ]
+     },
+     {
+      "id": "c08",
+      "lang": "en",
+      "cat": "common",
+      "wall_ms": 22472,
+      "latency_ms": 22251,
+      "llm_calls": 2,
+      "answer": "To fix the bar drifting forward, you should recheck your start position, ensure the bar remains over the midfoot, and engage your lats more aggressively [1].",
+      "scores": {
+       "idk": false,
+       "idk_correct": true,
+       "facts": 1.0,
+       "source_ok": false,
+       "quotes_ok": true,
+       "lang_ok": true,
+       "first_try": true
+      },
+      "sources": [
+       "02-deadlift-technique.md > Deadlift Technique > Romanian deadlift technique"
+      ],
+      "quotes": [
+       "Recheck the start position, keep the bar over midfoot, and engage the lats more aggressively."
+      ]
+     },
+     {
+      "id": "c09",
+      "lang": "en",
+      "cat": "out_of_corpus",
+      "wall_ms": 7165,
+      "latency_ms": 7017,
+      "llm_calls": 2,
+      "answer": "I don't know: the knowledge base has no information that reliably answers this question.\n\nClosest topics in the knowledge base (not an answer to your question): «Deadlift Technique», «Final deadlift checklist», «Conventional deadlift setup».\n\nDid you mean one of these topics? If not, which exercise, program or nutrition aspect do you have in mind?",
+      "scores": {
+       "idk": true,
+       "idk_correct": true,
+       "lang_ok": true,
+       "first_try": true
+      },
+      "sources": [],
+      "quotes": []
+     },
+     {
+      "id": "c10",
+      "lang": "en",
+      "cat": "out_of_corpus",
+      "wall_ms": 11610,
+      "latency_ms": 11410,
+      "llm_calls": 2,
+      "answer": "I don't know: the knowledge base has no information that reliably answers this question.\n\nClosest topics in the knowledge base (not an answer to your question): «Protein powder», «Protein powder > When powder earns its place», «A practical shortlist».\n\nDid you mean one of these topics? If not, which exercise, program or nutrition aspect do you have in mind?",
+      "scores": {
+       "idk": true,
+       "idk_correct": true,
+       "lang_ok": true,
+       "first_try": true
+      },
+      "sources": [],
+      "quotes": []
+     },
+     {
+      "id": "ru-c02",
+      "lang": "ru",
+      "cat": "specific",
+      "wall_ms": 25850,
+      "latency_ms": 25698,
+      "llm_calls": 2,
+      "answer": "Если вы пока не можете выполнять строгие подтягивания, полезными вариантами прогрессий являются: медленные эксцентрические фазы, подтягивания с помощью резин (band-assisted), подтягивания на тренажере (machine-assisted), изометрические удержания и скапулярные подтягивания [1].",
+      "scores": {
+       "idk": false,
+       "idk_correct": true,
+       "facts": 1.0,
+       "source_ok": true,
+       "quotes_ok": true,
+       "lang_ok": true,
+       "first_try": true
+      },
+      "sources": [
+       "04-pulling-and-back-training.md > Pulling and Back Training > Pull-up progressions"
+      ],
+      "quotes": [
+       "Useful options include:\n\n- slow eccentrics\n- band-assisted pull-ups\n- machine-assisted pull-ups\n- isometric holds\n- scap"
+      ]
+     },
+     {
+      "id": "ru-c05",
+      "lang": "ru",
+      "cat": "specific",
+      "wall_ms": 27634,
+      "latency_ms": 27397,
+      "llm_calls": 2,
+      "answer": "Разминка на 10-15 минут можно разделить на следующие фазы: 3-5 минут общей двигательной активности, 3-5 минут целевой мобильности или активации и 5-10 минут постепенно специфических сетов [1].",
+      "scores": {
+       "idk": false,
+       "idk_correct": true,
+       "facts": 1.0,
+       "source_ok": true,
+       "quotes_ok": true,
+       "lang_ok": true,
+       "first_try": true
+      },
+      "sources": [
+       "10-warm-up-and-mobility.md > Warm-Up and Mobility for Safer, Better Training > Making It Efficient"
+      ],
+      "quotes": [
+       "- 3 to 5 minutes of general movement\n- 3 to 5 minutes of targeted mobility or activation\n- 5 to 10 minutes of progressiv"
+      ]
+     },
+     {
+      "id": "ru-c07",
+      "lang": "ru",
+      "cat": "common",
+      "wall_ms": 31002,
+      "latency_ms": 30836,
+      "llm_calls": 2,
+      "answer": "Активному взрослому человеку рекомендуется употреблять от 1,6 до 2,2 граммов белка на килограмм массы тела в день [1]. Для более эффективного усвоения и переваривания, а также для контроля аппетита, белок рекомендуется распределять между тремя и пятью приемами пищи [2].",
+      "scores": {
+       "idk": false,
+       "idk_correct": true,
+       "facts": 1.0,
+       "source_ok": true,
+       "quotes_ok": true,
+       "lang_ok": true,
+       "first_try": true
+      },
+      "sources": [
+       "08-nutrition-protein-and-calories.md > Nutrition, Protein, and Calories for Fitness Goals > Protein: The Priority Macronutrient for Lifters",
+       "08-nutrition-protein-and-calories.md > Nutrition, Protein, and Calories for Fitness Goals > Protein: The Priority Macronutrient for Lifters > Distributing protein across the day"
+      ],
+      "quotes": [
+       "A useful target for many active adults is about 1.6 to 2.2 grams of protein per kilogram of body weight per day.",
+       "Protein is often easier to use and digest when spread across three to five meals rather than pushed into one huge servin"
+      ]
+     },
+     {
+      "id": "ru-c08",
+      "lang": "ru",
+      "cat": "common",
+      "wall_ms": 26004,
+      "latency_ms": 25826,
+      "llm_calls": 2,
+      "answer": "Чтобы исправить уход штанги вперёд в становой тяге, необходимо перепроверить исходное положение, удерживать штангу над серединой стопы и более агрессивно задействовать широчайшие мышцы спины [2].",
+      "scores": {
+       "idk": false,
+       "idk_correct": true,
+       "facts": 1.0,
+       "source_ok": false,
+       "quotes_ok": true,
+       "lang_ok": true,
+       "first_try": true
+      },
+      "sources": [
+       "02-deadlift-technique.md > Deadlift Technique > Romanian deadlift technique"
+      ],
+      "quotes": [
+       "Recheck the start position, keep the bar over midfoot, and engage the lats more aggressively."
+      ]
+     },
+     {
+      "id": "ru01",
+      "lang": "ru",
+      "cat": "specific",
+      "wall_ms": 32154,
+      "latency_ms": 32018,
+      "llm_calls": 2,
+      "answer": "NEAT (non-exercise activity thermogenesis) — это энергия, которую вы тратите на обычные движения вне структурированных тренировок, такие как ходьба, уборка, использование лестниц и общая повседневная активность [1]. Во время диеты NEAT часто снижается незаметно для человека, так как из-за низкого уровня энергии вы можете больше сидеть, меньше двигаться или неосознанно избегать усилий [1].",
+      "scores": {
+       "idk": false,
+       "idk_correct": true,
+       "facts": 1.0,
+       "source_ok": true,
+       "quotes_ok": true,
+       "lang_ok": true,
+       "first_try": true
+      },
+      "sources": [
+       "09-fat-loss-and-body-composition.md > Fat Loss and Body Composition Without Losing the Plot > NEAT: The Hidden Lever"
+      ],
+      "quotes": [
+       "NEAT stands for non-exercise activity thermogenesis. In plain language, it is the energy you burn through ordinary movem",
+       "NEAT often drops during dieting without people noticing. You may sit more, move less, or unconsciously avoid effort beca"
+      ]
+     },
+     {
+      "id": "ru02",
+      "lang": "ru",
+      "cat": "out_of_corpus",
+      "wall_ms": 1823,
+      "latency_ms": 1678,
+      "llm_calls": 1,
+      "answer": "Не знаю: в базе знаний нет информации, которая надёжно отвечает на этот вопрос.\n\nБлижайшие темы в базе (это не ответ на ваш вопрос): «Tempo and execution quality», «Tracking and adjustment», «Who should be more cautious».\n\nВы имели в виду одну из этих тем? Если нет — уточните, о каком упражнении, программе или аспекте питания идёт речь.",
+      "scores": {
+       "idk": true,
+       "idk_correct": true,
+       "lang_ok": true,
+       "first_try": false
+      },
+      "sources": [],
+      "quotes": []
+     }
+    ],
+    "total_s": 373.9
+   }
+  ],
+  "cold_start_ms": 12040
+ }
+}

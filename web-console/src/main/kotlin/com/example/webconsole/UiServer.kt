@@ -14,6 +14,7 @@ import com.example.core.llm.EmbeddingException
 import com.example.core.llm.EmbeddingTaskType
 import com.example.core.llm.GeminiEmbeddingClient
 import com.example.core.llm.GeminiTextGenerator
+import com.example.rag.LlmProvider
 import com.example.core.llm.HashingEmbeddingClient
 import com.example.core.llm.TextGenerator
 import com.example.rag.Chunk
@@ -86,31 +87,47 @@ class UiApi(
     sessionsDir: File = File("rag/sessions"),
     ollamaUrl: String = com.example.core.llm.OllamaChatClient.DEFAULT_URL,
     ollamaModel: String = com.example.core.llm.OllamaChatClient.DEFAULT_MODEL,
-    private val localChat: LocalChatApi = LocalChatApi(ollamaUrl, com.example.core.llm.OllamaChatClient(ollamaUrl, ollamaModel)),
+    ollamaEmbedModel: String = LlmProvider.DEFAULT_EMBED_MODEL,
+    localIndexDir: File = File(LlmProvider.LOCAL_INDEX_DIR),
+    localGeneratorFactory: ((String) -> TextGenerator?)? = null,
+    localEmbedderFactory: ((IndexMeta) -> EmbeddingClient?)? = null,
+    localModels: (() -> List<String>)? = null,
 ) {
     private val json = Json { ignoreUnknownKeys = true; encodeDefaults = true }
 
     private val generators = java.util.concurrent.ConcurrentHashMap<String, TextGenerator>()
 
+    private val localProvider = LlmProvider(LlmProvider.OLLAMA, apiKey, ollamaUrl, ollamaModel, ollamaEmbedModel)
+    private val localGenerators = java.util.concurrent.ConcurrentHashMap<String, TextGenerator>()
+
+    private val localRag = LocalRag(
+        localIndexDir,
+        embedderFor = { meta -> localEmbedderFactory?.invoke(meta) ?: localProvider.embedderFor(meta.embeddingModel, meta.dimension) },
+        generatorFor = { model -> localGeneratorFactory?.invoke(model) ?: localGenerators.getOrPut(model) { localProvider.generator(model) } },
+        defaultModel = ollamaModel,
+        models = localModels ?: { installedChatModels(com.example.core.llm.OllamaChatClient(ollamaUrl, ollamaModel)) },
+    )
+
     private val chatApi = ChatApi(
         indexDir, File(controlFile), apiKey,
         embedderFor = { embedderFactory(it) ?: defaultEmbedder(it) },
         generatorFor = { model -> generatorFactory(model) ?: apiKey.takeIf { it.isNotBlank() }?.let { generators.getOrPut(model) { GeminiTextGenerator(it, model) } } },
+        local = localRag,
     )
 
     private val sessionApi = com.example.webconsole.SessionApi(
         com.example.rag.chat.SessionStore(sessionsDir.toKxPath()), indexDir, apiKey,
         embedderFor = { embedderFactory(it) ?: defaultEmbedder(it) },
         generatorFor = { model -> generatorFactory(model) ?: apiKey.takeIf { it.isNotBlank() }?.let { generators.getOrPut(model) { GeminiTextGenerator(it, model) } } },
+        local = localRag,
     )
 
     fun chatConfig(): String = chatApi.config()
 
-    fun localConfig(): String = localChat.config()
+    /** Sessions are read-modify-write JSON files: serialise them even though other requests now run in parallel. */
+    private val sessionLock = Any()
 
-    fun localChatReply(body: String): String = localChat.chat(body)
-
-    fun sessions(method: String, path: String, body: String): String = sessionApi.handle(method, path, body)
+    fun sessions(method: String, path: String, body: String): String = synchronized(sessionLock) { sessionApi.handle(method, path, body) }
 
     fun chat(body: String): String = chatApi.chat(body)
 
@@ -227,6 +244,10 @@ class UiApi(
     fun errorJson(message: String) = json.encodeToString(ErrorBody.serializer(), ErrorBody(message))
 }
 
+/** Chat models installed in Ollama (embedding models are hidden), empty when Ollama is not reachable. */
+internal fun installedChatModels(client: com.example.core.llm.OllamaChatClient): List<String> =
+    runBlocking { client.models() }.getOrDefault(emptyList()).filterNot { "embed" in it.lowercase() }
+
 /** Local-only visualisation server (JDK built-in HTTP server, bound to loopback). */
 class UiServer(private val api: UiApi, port: Int) {
     private val server = HttpServer.create(InetSocketAddress(java.net.InetAddress.getLoopbackAddress(), port), 0)
@@ -234,7 +255,8 @@ class UiServer(private val api: UiApi, port: Int) {
 
     init {
         server.createContext("/") { ex -> handle(ex) { route(ex) } }
-        server.executor = null
+        // A small pool so independent requests (e.g. the Cloud and Local sides of a comparison) run concurrently.
+        server.executor = java.util.concurrent.Executors.newFixedThreadPool(4) { r -> Thread(r, "ui-http").apply { isDaemon = true } }
     }
 
     private fun route(ex: HttpExchange): Pair<String, String> {
@@ -255,8 +277,6 @@ class UiServer(private val api: UiApi, port: Int) {
             get && path == "/api/index/inspect" -> JSON to api.inspect(queryParam(ex, "strategy") ?: throw ApiException(400, "strategy required"))
             get && path == "/api/embedder/ping" -> JSON to api.ping(queryParam(ex, "strategy") ?: throw ApiException(400, "strategy required"))
             get && path == "/api/eval" -> JSON to api.eval(queryParam(ex, "strategy") ?: throw ApiException(400, "strategy required"))
-            get && path == "/api/local/config" -> JSON to api.localConfig()
-            post && path == "/api/local/chat" -> JSON to api.localChatReply(ex.requestBody.readBytes().decodeToString())
             get && path == "/api/chat/config" -> JSON to api.chatConfig()
             post && path == "/api/chat" -> JSON to api.chat(ex.requestBody.readBytes().decodeToString())
  path.startsWith("/api/sessions") && ex.requestMethod in setOf("GET", "POST", "PUT", "DELETE") ->

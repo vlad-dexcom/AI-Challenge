@@ -34,6 +34,15 @@ import com.example.rag.SearchHit
 import com.example.rag.VectorRetriever
 import com.example.rag.stagedPipeline
 
+/** What the web UI needs to serve the `ollama` provider: its own index directory, retrieval embedder and answer generator. */
+class LocalRag(
+    val indexDir: File,
+    val embedderFor: (IndexMeta) -> EmbeddingClient?,
+    val generatorFor: (String) -> TextGenerator?,
+    val defaultModel: String,
+    val models: () -> List<String>,
+)
+
 @Serializable
 data class ChatControlQuestion(val id: String, val category: String, val question: String)
 
@@ -47,6 +56,10 @@ data class ChatConfig(
     val defaultModel: String,
     val keyConfigured: Boolean,
     val controlQuestions: List<ChatControlQuestion>,
+    /** Local (Ollama) provider: its indexes, default model, installed models. */
+    val localStrategies: List<String> = emptyList(),
+    val localDefaultModel: String = "",
+    val localModels: List<String> = emptyList(),
 )
 
 /**
@@ -68,25 +81,39 @@ class ChatApi(
     private val embedderFor: (IndexMeta) -> EmbeddingClient?,
     private val generatorFor: (String) -> TextGenerator?,
     private val clock: () -> Long = System::nanoTime,
+    private val local: LocalRag? = null,
 ) {
     private val json = Json { ignoreUnknownKeys = true; encodeDefaults = true }
 
     private val provider = PipelineProvider { req, needsRetrieval ->
+        val useLocal = req.provider == LOCAL || req.provider == HYBRID
+        val route = providerRoute(req.provider)
         val retriever = if (needsRetrieval) {
-            val file = File(indexDir, "${req.strategy}.json")
-            if (!file.isFile) throw ApiException(404, "No saved index for '${req.strategy}'. Run: ./gradlew :rag:run --args=\"index\"")
+            val file = File(route.indexDir, "${req.strategy}.json")
+            if (!file.isFile) throw ApiException(404, if (useLocal) "No local index for '${req.strategy}'. Run: ./gradlew :rag:tools:run --args=\"index --provider ollama\"" else "No saved index for '${req.strategy}'. Run: ./gradlew :rag:run --args=\"index\"")
             val index = IndexStore().load(file.toKxPath())
-            val embedder = embedderFor(index.meta)
-                ?: throw ApiException(400, "Index was built with ${index.meta.embeddingModel}; set GEMINI_API_KEY (env var or local.properties) and restart the ui.")
+            val embedder = route.embedderFor(index.meta)
+                ?: throw ApiException(400, if (useLocal) "Index was built with ${index.meta.embeddingModel}, which the local provider cannot query." else "Index was built with ${index.meta.embeddingModel}; set GEMINI_API_KEY (env var or local.properties) and restart the ui.")
             VectorRetriever(embedder, index, req.topK)
         } else Retriever { emptyList() }
-        val model = req.model ?: GeminiTextGenerator.DEFAULT_MODEL
-        val raw = generatorFor(model)
+        val model = req.model ?: route.defaultModel
+        val raw = route.generatorFor(model)
             ?: throw ApiException(400, "GEMINI_API_KEY is not set: cannot generate answers. Set the env var or add it to local.properties and restart the ui.")
         val usage = LlmUsage()
         val generator = CachedTextGenerator(raw, model, usage)
         val config = if (req.staged) RagConfig(req.topKBefore, req.topK, req.threshold, req.filter, req.rerank, req.rewrite) else RagConfig.PLAIN
         ChatPipeline(stagedPipeline(retriever, generator, config, req.llmRerank, req.citations), config, usage)
+    }
+
+    private class Route(val indexDir: File, val embedderFor: (IndexMeta) -> EmbeddingClient?, val generatorFor: (String) -> TextGenerator?, val defaultModel: String)
+
+    private fun providerRoute(provider: String): Route = when (provider) {
+        LOCAL -> local?.let { Route(it.indexDir, it.embedderFor, it.generatorFor, it.defaultModel) }
+            ?: throw ApiException(400, "The local provider is not configured")
+        HYBRID -> local?.let { Route(it.indexDir, it.embedderFor, generatorFor, GeminiTextGenerator.DEFAULT_MODEL) }
+            ?: throw ApiException(400, "The local provider is not configured")
+        "gemini" -> Route(indexDir, embedderFor, generatorFor, GeminiTextGenerator.DEFAULT_MODEL)
+        else -> throw ApiException(400, "Unknown provider '$provider'")
     }
 
     fun config(): String {
@@ -96,7 +123,11 @@ class ChatApi(
         val strategies = ChunkStrategy.entries.map { it.id }.filter { File(indexDir, "$it.json").isFile }
         return json.encodeToString(
             ChatConfig.serializer(),
-            ChatConfig(strategies, "structure", VectorRetriever.DEFAULT_TOP_K, RagConfig.DEFAULT.topKBefore, RagConfig.DEFAULT.threshold, GeminiTextGenerator.DEFAULT_MODEL, apiKey.isNotBlank(), questions),
+            ChatConfig(strategies, "structure", VectorRetriever.DEFAULT_TOP_K, RagConfig.DEFAULT.topKBefore, RagConfig.DEFAULT.threshold, GeminiTextGenerator.DEFAULT_MODEL, apiKey.isNotBlank(), questions,
+                localStrategies = local?.let { l -> ChunkStrategy.entries.map { it.id }.filter { File(l.indexDir, "$it.json").isFile } }.orEmpty(),
+                localDefaultModel = local?.defaultModel.orEmpty(),
+                localModels = local?.models?.invoke().orEmpty(),
+            ),
         )
     }
 
@@ -168,6 +199,10 @@ class ChatApi(
         fun looksLikeNotFound(answer: String): Boolean = answer.lowercase().let { a -> NOT_FOUND_PHRASES.any { it in a } }
 
         private const val MAX_QUESTION = 2000
-        private val MODEL_RE = Regex("[A-Za-z0-9._-]{1,64}")
+        const val LOCAL = "ollama"
+
+        /** Local retrieval (Ollama embeddings over the local index) + cloud answer (Gemini): separates retrieval quality from answer quality. */
+        const val HYBRID = "hybrid"
+        private val MODEL_RE = Regex("[A-Za-z0-9._:-]{1,64}")
     }
 }

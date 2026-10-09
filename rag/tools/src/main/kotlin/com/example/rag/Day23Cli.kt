@@ -7,7 +7,6 @@ import kotlinx.serialization.json.Json
 import java.io.File
 import kotlin.system.exitProcess
 import com.example.core.llm.EmbeddingClient
-import com.example.core.llm.GeminiTextGenerator
 import com.example.core.llm.TextGenerator
 
 private val pretty = Json { prettyPrint = true; prettyPrintIndent = "  " }
@@ -58,20 +57,20 @@ internal suspend fun runSweep(opts: Map<String, String>, dir: File, embedder: Em
     println("Written to ${out.path}/sweep.json and sweep.md (${rows.size} grid rows)")
 }
 
-internal suspend fun runModesEval(opts: Map<String, String>, dir: File, embedder: EmbeddingClient, key: String) {
-    if (key.isBlank()) { System.err.println("GEMINI_API_KEY is not set (env var or local.properties)."); exitProcess(2) }
+internal suspend fun runModesEval(opts: Map<String, String>, dir: File, embedder: EmbeddingClient, llm: LlmProvider) {
+    if (!llm.available) { System.err.println(llm.missingMessage()); exitProcess(2) }
     val corpus = CorpusLoader.load(File(opts["corpus"] ?: "rag/corpus").toKxPath())
     val eval = EvalSet.load(File(opts["questions"] ?: "rag/eval/questions.json"))
     val control = ControlSet.load(File(opts["control"] ?: "rag/eval/control-questions.json"))
     val problems = EvalSet.validate(eval, corpus) + ControlSet.validate(control, corpus)
     if (problems.isNotEmpty()) { System.err.println("Invalid question sets:\n" + problems.joinToString("\n")); exitProcess(1) }
     val index = loadIndex(opts, dir, embedder)
-    val model = opts["model"] ?: GeminiTextGenerator.DEFAULT_MODEL
+    val model = opts["model"] ?: llm.defaultModel
     val cache = DiskCache(if (flag(opts, "no-cache")) null else File(CACHE_DIR, "llm"))
     val usage = LlmUsage()
     // Answers use temperature 0.2 as on Day 22; rewriter, reranker and judge pass temperature 0 per call.
-    val generator = CachedTextGenerator(GeminiTextGenerator(key, model), "$model@0.2", usage, cache)
-    val judge = Judge(CachedTextGenerator(GeminiTextGenerator(key, model), "$model@judge", LlmUsage(), cache))
+    val generator = CachedTextGenerator(llm.generator(model), "$model@0.2", usage, cache)
+    val judge = Judge(CachedTextGenerator(llm.generator(model), "$model@judge", LlmUsage(), cache))
     val cfg = ragConfigFrom(opts)
     val specs = ModeSpecs.all(cfg.topKBefore, cfg.topKAfter, cfg.threshold)
     val report = ModesEvaluator(index, cachedEmbedder(embedder), generator, usage, judge).run(specs, eval, control) { println(it) }

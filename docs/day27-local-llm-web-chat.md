@@ -1,4 +1,6 @@
-# День 27 — локальная LLM в веб-консоли (чат + сравнение моделей)
+# День 27 — локальная LLM в веб-консоли (чат + выбор модели)
+
+> **Обновление (день 28):** отдельная вкладка Local LLM и её endpoints (`/api/local/*`, `LocalChatApi`) убраны: чат объединён в одну вкладку Chat, локальная модель выбирается в «Answer with → Local (Ollama)». Описание ниже — как было на день 27; `OllamaChatClient` остался (на нём построены `OllamaTextGenerator` и индексация).
 
 Цель: подключить локальную модель к реальному приложению, отправлять запросы и показывать ответы без облака. Выбран веб-интерфейс `:web-console`
 (браузер и Ollama на одном Mac, `localhost:11434` без сетевых настроек). Мобильный клиент и RAG-пайплайн в этот день не трогались (RAG — день 28).
@@ -8,7 +10,7 @@
 |---|---|---|
 | `OllamaChatClient` | `:core:llm` | Ktor-клиент Ollama: `/api/chat` (`stream=false`, температура, флаг `think`, статистика токенов/скорости) и `/api/tags` (список моделей). Если модель не поддерживает `think`, запрос повторяется без флага. Без ключей и ретраев |
 | `LocalChatApi` | `:web-console` | `GET /api/local/config` (адрес, модели, доступность Ollama), `POST /api/local/chat` (сообщения, модель, system, temperature, think). История хранится в браузере |
-| Вкладка **Local LLM** | `resources/ui/index.html` | Чат, выбор модели, temperature, system prompt, thinking (default/off/on), «send conversation history», режим **compare models** (один вопрос по очереди в несколько моделей, ответы колонками, tok/s и время) |
+| Вкладка **Local LLM** | `resources/ui/index.html` | Чат, выбор модели, temperature, system prompt, thinking (default/off/on), «send conversation history», tok/s и время под каждым ответом |
 
 Настройки: `--ollama-url`/`OLLAMA_URL` (по умолчанию `http://localhost:11434`), `--ollama-model`/`OLLAMA_MODEL` (по умолчанию `gemma4:26b-a4b-it-qat`).
 Тесты: `OllamaChatClientTest` (5), `LocalChatApiTest` (3), без сети.
