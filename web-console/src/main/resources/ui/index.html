@@ -59,14 +59,14 @@
  <label><input id="crerank" type="checkbox" checked> rerank</label>
  <label><input id="cllmrerank" type="checkbox"> LLM reranker</label>
  <label><input id="crewrite" type="checkbox"> query rewrite</label>
- <label id="lblprov">Answer with <select id="cprov"><option value="gemini">Cloud (Gemini)</option><option value="ollama">Local (Ollama)</option><option value="both">Compare: Local vs Cloud</option></select></label>
+ <label id="lblprov">Answer with <select id="cprov"><option value="gemini">Cloud (Gemini)</option><option value="ollama">Local (Ollama)</option><option value="hybrid">Hybrid: local retrieval + Gemini answer</option><option value="both">Compare: Local vs Cloud</option></select></label>
  <label id="lblmodel">Model <input id="cmodel" list="cmodels" style="width:200px" placeholder="default"></label><datalist id="cmodels"></datalist>
  <label id="lblcloudm" style="display:none">Cloud model <input id="ccloudmodel" style="width:170px" placeholder="default"></label>
  <label id="lbllocalm" style="display:none">Local model <input id="clocalmodel" list="clocalmodels" style="width:200px" placeholder="default"></label><datalist id="clocalmodels"></datalist>
  <label>Control question <select id="cctl" style="max-width:340px"><option value="">(pick one…)</option></select></label>
  <button id="cclear">Clear chat</button>
  <div class="meta">Stages: <b>filter</b> drops chunks below the cosine threshold (nothing left → the model is not called), <b>rerank</b> reorders the survivors and trims to topK after, <b>query rewrite</b> searches with an LLM-rewritten query (the answer still uses your original question). All off = Day 22 behaviour.</div>
- <div class="meta"><b>Answer with</b>: <b>Cloud</b> = Gemini embeddings + Gemini answer over <code>rag/index</code>; <b>Local</b> = Ollama embeddings + Ollama answer over <code>rag/index-local</code> (no key, no internet); <b>Compare: Local vs Cloud</b> sends the same question with the same stage settings through both stacks, side by side with latency, LLM calls, sources and verified quotes (modes With RAG / Without RAG).</div>
+ <div class="meta"><b>Answer with</b>: <b>Cloud</b> = Gemini embeddings + Gemini answer over <code>rag/index</code>; <b>Local</b> = Ollama embeddings + Ollama answer over <code>rag/index-local</code> (no key, no internet); <b>Hybrid</b> = local retrieval (Ollama embeddings, local index) + Gemini answer, which separates retrieval quality from answer quality; <b>Compare: Local vs Cloud</b> sends the same question with the same stage settings through both stacks, side by side with latency, LLM calls, sources and verified quotes (modes With RAG / Without RAG).</div>
  <div class="meta"><b>Chat with task memory</b> (default): dialogue history, rolling summary and a task memory (goal, clarifications, constraints) are used for every answer; sources and verified quotes are shown under each answer; the stage settings above except topK/threshold are fixed (filter + rerank + contextual rewrite). The other modes are single-shot: history is shown but not used.</div>
  <div id="cwarn" class="warn" style="display:none"></div>
 </fieldset>
@@ -435,8 +435,8 @@ $('cctl').onchange=()=>{if($('cctl').value){$('cq').value=$('cctl').value;$('cq'
 let chatCfg=null;
 function applyProvider(){
   const c=chatCfg;if(!c)return;
-  const cmp=isCompare(),local=$('cprov').value==='ollama';
-  const strategies=cmp?c.strategies.filter(x=>c.localStrategies.includes(x)):(local?c.localStrategies:c.strategies);
+  const cmp=isCompare(),local=$('cprov').value==='ollama',localIdx=local||$('cprov').value==='hybrid';
+  const strategies=cmp?c.strategies.filter(x=>c.localStrategies.includes(x)):(localIdx?c.localStrategies:c.strategies);
   $('cstrategy').innerHTML=strategies.map(x=>`<option value="${esc(x)}">${esc(x)}</option>`).join('');
   if(strategies.includes(c.defaultStrategy))$('cstrategy').value=c.defaultStrategy;
   $('cmodel').value='';$('cmodel').placeholder=local?c.localDefaultModel:c.defaultModel;
@@ -445,10 +445,10 @@ function applyProvider(){
   $('clocalmodels').innerHTML=c.localModels.map(m=>`<option value="${esc(m)}">`).join('');
   const w=$('cwarn');w.style.display='none';
   const warn=t=>{w.style.display='';w.textContent=t};
-  if((local||cmp)&&!c.localStrategies.length)warn('No local index found. Build it (retrieval runs locally too): ./gradlew :rag:tools:run --args="index --provider ollama"');
+  if((localIdx||cmp)&&!c.localStrategies.length)warn('No local index found. Build it (retrieval runs locally too): ./gradlew :rag:tools:run --args="index --provider ollama"');
   else if((local||cmp)&&!c.localModels.length)warn('Ollama is not reachable or has no models. Start it: brew services start ollama');
   else if((!local||cmp)&&!c.keyConfigured)warn(cmp?'GEMINI_API_KEY is not set: the Cloud column will show an error (env var or local.properties, then restart the ui).':'GEMINI_API_KEY is not set: cloud answers need it (env var or local.properties), then restart the ui. Or switch Provider to Local (Ollama).');
-  else if(!local&&!cmp&&!c.strategies.length)warn('No saved index found. Run: ./gradlew :rag:run --args="index"');
+  else if(!localIdx&&!cmp&&!c.strategies.length)warn('No saved index found. Run: ./gradlew :rag:run --args="index"');
   else if(cmp&&!strategies.length)warn('The cloud and local indexes have no strategy in common.');
 }
 $('cprov').onchange=()=>{if(applyLayout())updateMode();else applyProvider()};

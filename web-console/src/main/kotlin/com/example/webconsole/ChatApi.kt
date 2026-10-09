@@ -86,7 +86,7 @@ class ChatApi(
     private val json = Json { ignoreUnknownKeys = true; encodeDefaults = true }
 
     private val provider = PipelineProvider { req, needsRetrieval ->
-        val useLocal = req.provider == LOCAL
+        val useLocal = req.provider == LOCAL || req.provider == HYBRID
         val route = providerRoute(req.provider)
         val retriever = if (needsRetrieval) {
             val file = File(route.indexDir, "${req.strategy}.json")
@@ -109,6 +109,8 @@ class ChatApi(
 
     private fun providerRoute(provider: String): Route = when (provider) {
         LOCAL -> local?.let { Route(it.indexDir, it.embedderFor, it.generatorFor, it.defaultModel) }
+            ?: throw ApiException(400, "The local provider is not configured")
+        HYBRID -> local?.let { Route(it.indexDir, it.embedderFor, generatorFor, GeminiTextGenerator.DEFAULT_MODEL) }
             ?: throw ApiException(400, "The local provider is not configured")
         "gemini" -> Route(indexDir, embedderFor, generatorFor, GeminiTextGenerator.DEFAULT_MODEL)
         else -> throw ApiException(400, "Unknown provider '$provider'")
@@ -198,6 +200,9 @@ class ChatApi(
 
         private const val MAX_QUESTION = 2000
         const val LOCAL = "ollama"
+
+        /** Local retrieval (Ollama embeddings over the local index) + cloud answer (Gemini): separates retrieval quality from answer quality. */
+        const val HYBRID = "hybrid"
         private val MODEL_RE = Regex("[A-Za-z0-9._:-]{1,64}")
     }
 }

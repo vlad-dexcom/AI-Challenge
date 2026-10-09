@@ -10,6 +10,8 @@ import kotlinx.coroutines.delay
  *  - Thinking is off by default: chain-of-thought text would break the JSON contracts (memory, citations) and slow every call.
  *  - [GenerationOptions.json] maps to Ollama's `format: "json"`; stray ```json fences are stripped anyway.
  *  - [numCtx] sets the context window per call (Ollama's own default is small and would silently truncate long RAG prompts).
+ *  - Some runners (e.g. MLX builds) answer HTTP 501 "structured output is unavailable" to `format: "json"`; the generator then
+ *    drops the format for that model and relies on the prompt's JSON instruction (the reply is still fence-stripped).
  *  - Transient failures (connection reset, 5xx) are retried up to [maxRetries] times; a model that is not pulled or a bad request is not.
  */
 class OllamaTextGenerator(
@@ -29,6 +31,8 @@ class OllamaTextGenerator(
 
     private val client = OllamaChatClient(baseUrl, model, engine)
 
+    @Volatile private var jsonFormatSupported = true
+
     override suspend fun generate(systemInstruction: String?, prompt: String): Result<String> =
         generate(systemInstruction, prompt, GenerationOptions())
 
@@ -36,8 +40,12 @@ class OllamaTextGenerator(
         val messages = listOfNotNull(systemInstruction?.let { OllamaMessage("system", it) }, OllamaMessage("user", prompt))
         var attempt = 0
         while (true) {
-            val result = client.chat(messages, model, options.temperature ?: temperature, think, options.json, numCtx)
+            val result = client.chat(messages, model, options.temperature ?: temperature, think, options.json && jsonFormatSupported, numCtx)
             val failure = result.exceptionOrNull() ?: return result.map { clean(it.content, options.json) }
+            if (options.json && jsonFormatSupported && failure.message.orEmpty().contains("structured output is unavailable")) {
+                jsonFormatSupported = false
+                continue
+            }
             if (!retryable(failure) || attempt >= maxRetries) return Result.failure(failure)
             sleep(500L shl attempt++)
         }

@@ -359,7 +359,7 @@ See `docs/day21-indexing.md` for the design and the strategy comparison, and
   `./gradlew :rag:tools:run --args="eval"` → hit@1/3/5, MRR, top-1 score stats, report in `rag/eval/`.
   With real Gemini embeddings: hit@3 96% (both strategies); the structure chunker's `section` metadata matches
   the answer far more often (section hit@3 92% vs 73%). See `docs/day21-indexing.md`.
-- `rag/index/` holds the Gemini-embedded indexes; `rag/index-offline/` the lexical-only offline ones.
+- `rag/index/` holds the Gemini-embedded indexes; `rag/index-local/` the Ollama-embedded ones (Day 28); `rag/index-offline/` the lexical-only offline ones.
   Retriever/reranker come in Days 22-23.
 
 ```
@@ -435,6 +435,14 @@ the Day 24 structured answers (sources and verified quotes on every answer, "I d
 ```
 Details, results and caveats (2 scenarios, one run, same-model judge): [docs/day25-rag-chat.md](docs/day25-rag-chat.md), manual steps: [docs/day25-rag-chat-test-scenario.md](docs/day25-rag-chat-test-scenario.md).
 
+## Local LLM + RAG (Days 26–28)
+
+Everything runs on a local Ollama (no key, no internet): `OllamaTextGenerator` / `OllamaEmbeddingClient` in `:core:llm`, `LlmProvider` in `:rag:tools`.
+- `./gradlew :rag:tools:run --args="index --provider ollama"` builds `rag/index-local` (same chunks as `rag/index`, `embeddinggemma-2` vectors);
+  `ask|chat|citations-eval|... --provider ollama` answers with `OLLAMA_MODEL` (default `gemma4:26b-a4b-it-qat`). Env: `LLM_PROVIDER`, `OLLAMA_URL`, `OLLAMA_MODEL`, `OLLAMA_EMBED_MODEL`.
+- Web console (single Chat window): *Answer with* Cloud / Local / Hybrid (local retrieval + Gemini) / Compare Local vs Cloud (parallel).
+- Results and how to reproduce: `docs/day28-local-rag.md`, benchmark scripts and raw answers in `rag/eval/local-rag/`.
+
 ## Setup
 
 1. Get a Gemini API key from [Google AI Studio](https://aistudio.google.com/apikey).
@@ -486,12 +494,12 @@ graph TD
 
 - `core/common` — `io/Files.kt` (kotlinx-io `Path` helpers), `time/Time.kt` (`nowMillis`, `newId`),
   `platform/` (the only place allowed to touch JVM APIs: HTTP engine, Unicode normalization, `File` bridge).
-- `core/llm` — `LlmClient`, `GeminiApiClient`, `GeminiModels`, `EmbeddingClient`/`GeminiEmbeddingClient`, `TextGenerator`.
+- `core/llm` — `LlmClient`, `GeminiApiClient`, `GeminiModels`, `EmbeddingClient`/`GeminiEmbeddingClient`, `TextGenerator`, Ollama clients (`OllamaChatClient`, `OllamaTextGenerator`, `OllamaEmbeddingClient`).
 - `rag/core` — Day 21–25 RAG: `Chunker`s, `VectorIndex`/`IndexStore`, `Retriever`, `RagPipeline`,
   `Citations`, `chat/` (`ChatEngine`, `SessionStore`, `TaskMemory`); shared test fixtures in `testFixtures`.
 - `rag/tools` — CLI (`./gradlew :rag:tools:run --args="index|eval|compare|ask|chat|..."`), evals, sweeps.
 - `web-console` — `./gradlew :web-console:run [--args="--port 8080"]`, the former `ui` command.
-- `rag/corpus`, `rag/eval`, `rag/index`, `rag/index-offline`, `rag/sessions` — data (not a Gradle module).
+- `rag/corpus`, `rag/eval`, `rag/index`, `rag/index-local`, `rag/index-offline`, `rag/sessions` — data (not a Gradle module).
 - `agent` — `agent/` (`Agent`, `AgentConfig`/`AgentCatalog`, `LlmAgent`, `TokenEstimator`), `agent/memory/`
   (Day 11), `agent/profile/` (Day 12), `agent/task/` (Day 13/15), `agent/invariant/` (Day 14), `agent/planner/`
   (Day 19), `agent/mcp/` (Day 17 `McpToolCallingAgent`), `agent/rag/` (Day 22 `RagAgent`), `agent/workout/`

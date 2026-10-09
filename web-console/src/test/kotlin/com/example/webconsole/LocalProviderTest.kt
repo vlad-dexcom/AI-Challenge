@@ -99,6 +99,16 @@ class LocalProviderTest {
         assertTrue(localModels.isEmpty())
     }
 
+    @Test fun hybridUsesLocalIndexAndEmbedderButTheCloudGenerator() {
+        start()
+        val (code, r) = call("POST", "/api/chat", """{"question":"protein to build muscle","mode":"rag","provider":"hybrid","citations":false}""")
+        assertEquals(200, code)
+        assertEquals("cloud answer", r["results"]!!.jsonArray.single().jsonObject["answer"]!!.jsonPrimitive.content)
+        assertEquals(1, cloudCalls.size)
+        assertTrue(localModels.isEmpty())
+        assertEquals(404, run { tmp.root.resolve("index-local/structure.json").delete(); call("POST", "/api/chat", """{"question":"x","mode":"rag","provider":"hybrid"}""").first })
+    }
+
     @Test fun configListsLocalIndexesAndDefaultModel() {
         start()
         val (_, cfg) = call("GET", "/api/chat/config")

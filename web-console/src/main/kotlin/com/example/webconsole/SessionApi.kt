@@ -103,7 +103,8 @@ class SessionApi(
         if (o.strategy !in listOf("fixed", "structure")) throw ApiException(400, "Unknown strategy '${o.strategy}'")
         if (o.model?.let { !MODEL_RE.matches(it) } == true) throw ApiException(400, "Invalid model name")
 
-        val useLocal = o.provider == ChatApi.LOCAL
+        val useLocal = o.provider == ChatApi.LOCAL || o.provider == ChatApi.HYBRID
+        val localAnswer = o.provider == ChatApi.LOCAL
         if (!useLocal && o.provider != "gemini") throw ApiException(400, "Unknown provider '${o.provider}'")
         if (useLocal && local == null) throw ApiException(400, "The local provider is not configured")
         val file = File(if (useLocal) local!!.indexDir else indexDir, "${o.strategy}.json")
@@ -111,8 +112,8 @@ class SessionApi(
         val index = IndexStore().load(file.toKxPath())
         val embedder = (if (useLocal) local!!.embedderFor else embedderFor)(index.meta)
             ?: throw ApiException(400, if (useLocal) "Index was built with ${index.meta.embeddingModel}, which the local provider cannot query." else "Index was built with ${index.meta.embeddingModel}; set GEMINI_API_KEY (env var or local.properties) and restart the ui.")
-        val model = o.model ?: if (useLocal) local!!.defaultModel else GeminiTextGenerator.DEFAULT_MODEL
-        val raw = (if (useLocal) local!!.generatorFor else generatorFor)(model) ?: throw ApiException(400, "GEMINI_API_KEY is not set: cannot generate answers. Set the env var or add it to local.properties and restart the ui.")
+        val model = o.model ?: if (localAnswer) local!!.defaultModel else GeminiTextGenerator.DEFAULT_MODEL
+        val raw = (if (localAnswer) local!!.generatorFor else generatorFor)(model) ?: throw ApiException(400, "GEMINI_API_KEY is not set: cannot generate answers. Set the env var or add it to local.properties and restart the ui.")
         val usage = LlmUsage()
         val engine = ChatEngine(VectorRetriever(embedder, index, o.topKBefore), CachedTextGenerator(raw, model, usage), usage)
         val updated = runBlocking { engine.send(s, text, o) }.getOrElse { throw ApiException(502, "Answer failed: ${it.message?.take(300)}") }

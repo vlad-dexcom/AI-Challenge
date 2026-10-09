@@ -5,12 +5,12 @@
 | `:core:common` | kotlin-jvm | kotlinx-io, ktor-core | `io/Files.kt` (`Path` helpers: `readText`, `writeText` (creates parents), `walkFiles`, `atomicMoveTo`, `div`…), `time/Time.kt` (`nowMillis()`, `newId()`), `text/TextNormalizer`, `platform/` seams |
 | `:core:llm` | kotlin-jvm | common | `LlmClient`, `ToolCallingLlmClient`, `GeminiApiClient` (Ktor, Interactions API), `GeminiModels`, `EmbeddingClient`/`GeminiEmbeddingClient`/`HashingEmbeddingClient`, `TextGenerator`, Ollama: `OllamaChatClient` (`/api/chat` + `/api/tags`), `OllamaTextGenerator`, `OllamaEmbeddingClient` |
 | `:rag:core` | kotlin-jvm + testFixtures | llm, common | `Chunker`s, `VectorIndex`/`IndexStore`/`Indexer`, `Retriever`, `RagPipeline`, rerank/filter/rewrite, `Citations`, `chat/` (`ChatEngine`, `SessionStore`, `TaskMemory`, `MemoryExtractor`). Fixtures: `ChatFixture`, `ScriptedGenerator` |
-| `:rag:tools` | application | rag:core | CLI `./gradlew :rag:tools:run --args="index|eval|compare|ask|chat|rag-eval|sweep|modes-eval"`, evals, scenarios |
+| `:rag:tools` | application | rag:core | `LlmProvider` (`--provider gemini|ollama`), CLI `./gradlew :rag:tools:run --args="index|eval|compare|ask|chat|rag-eval|sweep|modes-eval"`, evals, scenarios |
 | `:web-console` | application | rag:tools | `./gradlew :web-console:run [--args="--port 8080"]`: single Chat tab (RAG, task memory; "Answer with" Cloud / Local / Compare via `LocalRag`) + chunk visualiser (`resources/ui`, JS tests in `src/test/js`) |
 | `:agent` | kotlin-jvm | rag:core, llm, common | Everything agent-related (see below) |
 | `:app` | android-application | agent | Android shell and UI |
 
-`rag/corpus`, `rag/eval`, `rag/index*`, `rag/sessions` are data directories, not modules.
+`rag/corpus`, `rag/eval`, `rag/index*` (`index` Gemini, `index-local` Ollama, `index-offline` hashing), `rag/sessions` are data directories, not modules. `rag/eval/local-rag/` holds the Day 28 Python benchmark scripts and results.
 `mcp-server/` is a separate Firebase/TypeScript project exposing `get_exercise_info` and `suggest_workout`.
 
 ## `:agent` packages (`com.example.geminichat`)

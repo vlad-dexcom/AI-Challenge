@@ -47,6 +47,21 @@ class OllamaTextGeneratorTest {
         assertEquals(1, missing)
     }
 
+    @Test fun dropsJsonFormatWhenTheRunnerHasNoStructuredOutput() = runTest {
+        val bodies = mutableListOf<String>()
+        val engine = MockEngine { req ->
+            val b = (req.body as TextContent).text; bodies += b
+            if (b.contains("\"format\"")) respond("""{"error":"structured output is unavailable"}""", HttpStatusCode.NotImplemented, jsonHeaders)
+            else respond(reply("```json\n{\"ok\":true}\n```"), HttpStatusCode.OK, jsonHeaders)
+        }
+        val gen = OllamaTextGenerator(engine = engine, sleep = {})
+        assertEquals("{\"ok\":true}", gen.generate(null, "x", GenerationOptions(json = true)).getOrThrow())
+        assertEquals(2, bodies.size)
+        assertEquals("{\"ok\":true}", gen.generate(null, "y", GenerationOptions(json = true)).getOrThrow())
+        assertEquals(3, bodies.size)
+        assertFalse(bodies.last().contains("\"format\""))
+    }
+
     @Test fun givesUpAfterMaxRetriesOnNetworkErrors() = runTest {
         var calls = 0
         val down = MockEngine { calls++; throw java.io.IOException("refused") }
