@@ -84,6 +84,9 @@ class UiApi(
     private val controlFile: String = "rag/eval/control-questions.json",
     private val generatorFactory: ((String) -> TextGenerator?) = { null },
     sessionsDir: File = File("rag/sessions"),
+    ollamaUrl: String = com.example.core.llm.OllamaChatClient.DEFAULT_URL,
+    ollamaModel: String = com.example.core.llm.OllamaChatClient.DEFAULT_MODEL,
+    private val localChat: LocalChatApi = LocalChatApi(ollamaUrl, com.example.core.llm.OllamaChatClient(ollamaUrl, ollamaModel)),
 ) {
     private val json = Json { ignoreUnknownKeys = true; encodeDefaults = true }
 
@@ -102,6 +105,10 @@ class UiApi(
     )
 
     fun chatConfig(): String = chatApi.config()
+
+    fun localConfig(): String = localChat.config()
+
+    fun localChatReply(body: String): String = localChat.chat(body)
 
     fun sessions(method: String, path: String, body: String): String = sessionApi.handle(method, path, body)
 
@@ -248,6 +255,8 @@ class UiServer(private val api: UiApi, port: Int) {
             get && path == "/api/index/inspect" -> JSON to api.inspect(queryParam(ex, "strategy") ?: throw ApiException(400, "strategy required"))
             get && path == "/api/embedder/ping" -> JSON to api.ping(queryParam(ex, "strategy") ?: throw ApiException(400, "strategy required"))
             get && path == "/api/eval" -> JSON to api.eval(queryParam(ex, "strategy") ?: throw ApiException(400, "strategy required"))
+            get && path == "/api/local/config" -> JSON to api.localConfig()
+            post && path == "/api/local/chat" -> JSON to api.localChatReply(ex.requestBody.readBytes().decodeToString())
             get && path == "/api/chat/config" -> JSON to api.chatConfig()
             post && path == "/api/chat" -> JSON to api.chat(ex.requestBody.readBytes().decodeToString())
  path.startsWith("/api/sessions") && ex.requestMethod in setOf("GET", "POST", "PUT", "DELETE") ->
