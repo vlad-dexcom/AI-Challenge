@@ -5,7 +5,7 @@ import com.example.core.platform.toKxPath
 import com.example.rag.CachedTextGenerator
 import com.example.rag.DiskCache
 import com.example.core.llm.EmbeddingClient
-import com.example.core.llm.GeminiTextGenerator
+import com.example.rag.LlmProvider
 import com.example.rag.IndexStore
 import com.example.rag.LlmUsage
 import com.example.rag.ManualVerdict
@@ -22,14 +22,14 @@ private val reportJson = Json { prettyPrint = true; prettyPrintIndent = "  " }
 
 private class Wiring(val engine: ChatEngine, val judge: GoalJudge, val usage: LlmUsage, val options: ChatOptions)
 
-private fun wire(opts: Map<String, String>, dir: File, embedder: EmbeddingClient, key: String): Wiring {
-    if (key.isBlank()) { System.err.println("GEMINI_API_KEY is not set (env var or local.properties)."); exitProcess(2) }
+private fun wire(opts: Map<String, String>, dir: File, embedder: EmbeddingClient, llm: LlmProvider): Wiring {
+    if (!llm.available) { System.err.println(llm.missingMessage()); exitProcess(2) }
     val file = File(dir, "${opts["strategy"] ?: "structure"}.json")
     require(file.isFile) { "Missing index ${file.path}; run the index command first." }
     val index = IndexStore().load(file.toKxPath())
-    val model = opts["model"] ?: GeminiTextGenerator.DEFAULT_MODEL
+    val model = opts["model"] ?: llm.defaultModel
     val cache = DiskCache(if (flag(opts, "no-cache")) null else File("rag/cache/llm"))
-    val raw = ThrottledTextGenerator(GeminiTextGenerator(key, model), opts["delay-ms"]?.toLong() ?: 0L)
+    val raw = ThrottledTextGenerator(llm.generator(model), opts["delay-ms"]?.toLong() ?: 0L)
     val usage = LlmUsage()
     val options = ChatOptions(
         memoryMode = opts["memory"]?.let { m -> MemoryMode.entries.first { it.name.equals(m.replace('-', '_'), true) } } ?: MemoryMode.FULL,
@@ -41,8 +41,8 @@ private fun wire(opts: Map<String, String>, dir: File, embedder: EmbeddingClient
 }
 
 /** `scenarios-eval`: replays the scenario files of rag/eval/scenarios in the FULL / HISTORY_ONLY / NONE variants and writes rag/eval/scenarios-report.{md,json}. */
-internal suspend fun runScenariosEval(opts: Map<String, String>, dir: File, embedder: EmbeddingClient, key: String) {
-    val w = wire(opts, dir, embedder, key)
+internal suspend fun runScenariosEval(opts: Map<String, String>, dir: File, embedder: EmbeddingClient, llm: LlmProvider) {
+    val w = wire(opts, dir, embedder, llm)
     val all = ScenarioLoader.loadAll(File(opts["scenarios"] ?: "rag/eval/scenarios"))
     val scenarios = opts["scenario"]?.let { id -> all.filter { it.id == id } } ?: all
     require(scenarios.isNotEmpty()) { "No scenarios found" }
@@ -53,7 +53,7 @@ internal suspend fun runScenariosEval(opts: Map<String, String>, dir: File, embe
     val runner = ScenarioRunner(w.engine, w.judge, w.options)
     val runs = scenarios.flatMap { sc -> variants.map { v -> runner.run(sc, v, manual) { println(it) } } }
     val spec = "${scenarios.size} scenarios (${scenarios.joinToString { "${it.id}: ${it.turns.size} turns" }}), variants ${variants.joinToString { it.name }}; " +
-        "model ${opts["model"] ?: GeminiTextGenerator.DEFAULT_MODEL}, keep last ${w.options.keepLastTurns} turns, summary batch ${w.options.summaryBatch}, threshold ${w.options.threshold}, topK ${w.options.topKBefore}->${w.options.topK}"
+        "model ${opts["model"] ?: llm.defaultModel}, keep last ${w.options.keepLastTurns} turns, summary batch ${w.options.summaryBatch}, threshold ${w.options.threshold}, topK ${w.options.topKBefore}->${w.options.topK}"
     val report = ScenariosReport(spec, runs)
     File(out, "scenarios-report.json").writeText(reportJson.encodeToString(ScenariosReport.serializer(), report))
     val md = ScenarioReport.render(report, scenarios.associateBy { it.id })
@@ -63,8 +63,8 @@ internal suspend fun runScenariosEval(opts: Map<String, String>, dir: File, embe
 }
 
 /** `chat`: a REPL over the same engine and session files as the web UI. */
-internal suspend fun runChatRepl(opts: Map<String, String>, dir: File, embedder: EmbeddingClient, key: String) {
-    val w = wire(opts, dir, embedder, key)
+internal suspend fun runChatRepl(opts: Map<String, String>, dir: File, embedder: EmbeddingClient, llm: LlmProvider) {
+    val w = wire(opts, dir, embedder, llm)
     val store = SessionStore(File(opts["sessions"] ?: "rag/sessions").toKxPath())
     var session = opts["session"]?.let { store.load(it) ?: error("No such session ${it}") } ?: store.create()
     println("Session ${session.id}, memory mode ${w.options.memoryMode}. Commands: /memory  /goal <text>  /reset  /new  /sessions  /quit")

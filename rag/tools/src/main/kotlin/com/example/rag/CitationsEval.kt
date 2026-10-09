@@ -7,7 +7,6 @@ import kotlinx.serialization.builtins.ListSerializer
 import kotlinx.serialization.json.Json
 import java.io.File
 import com.example.core.llm.EmbeddingClient
-import com.example.core.llm.GeminiTextGenerator
 import com.example.core.llm.GenerationOptions
 import com.example.core.llm.TextGenerator
 
@@ -157,8 +156,8 @@ class CitationsEvaluator(
 
 private val reportJson = Json { prettyPrint = true; prettyPrintIndent = "  " }
 
-internal suspend fun runCitationsEval(opts: Map<String, String>, dir: File, embedder: EmbeddingClient, key: String) {
-    if (key.isBlank()) { System.err.println("GEMINI_API_KEY is not set (env var or local.properties)."); kotlin.system.exitProcess(2) }
+internal suspend fun runCitationsEval(opts: Map<String, String>, dir: File, embedder: EmbeddingClient, llm: LlmProvider) {
+    if (!llm.available) { System.err.println(llm.missingMessage()); kotlin.system.exitProcess(2) }
     val corpus = CorpusLoader.load(File(opts["corpus"] ?: "rag/corpus").toKxPath())
     val control = ControlSet.load(File(opts["control"] ?: "rag/eval/control-questions.json"))
     val problems = ControlSet.validate(control, corpus)
@@ -166,11 +165,11 @@ internal suspend fun runCitationsEval(opts: Map<String, String>, dir: File, embe
     val file = File(dir, "${opts["strategy"] ?: "structure"}.json")
     require(file.isFile) { "Missing index ${file.path}; run the index command first." }
     val index = IndexStore().load(file.toKxPath())
-    val model = opts["model"] ?: GeminiTextGenerator.DEFAULT_MODEL
+    val model = opts["model"] ?: llm.defaultModel
     val cache = DiskCache(if (flag(opts, "no-cache")) null else File("rag/cache/llm"))
     val usage = LlmUsage()
-    val generator = CachedTextGenerator(GeminiTextGenerator(key, model), "$model@cite", usage, cache)
-    val judge = QuoteJudge(CachedTextGenerator(GeminiTextGenerator(key, model), "$model@quote-judge", LlmUsage(), cache))
+    val generator = CachedTextGenerator(llm.generator(model), "$model@cite", usage, cache)
+    val judge = QuoteJudge(CachedTextGenerator(llm.generator(model), "$model@quote-judge", LlmUsage(), cache))
     val cfg = RagConfig(filter = true, rerank = true, rewrite = flag(opts, "rewrite"), threshold = opts["threshold"]?.toFloat() ?: RagConfig.DEFAULT.threshold)
     val pipeline = stagedPipeline(VectorRetriever(cachedEmbedder(embedder), index, cfg.topKAfter), generator, cfg, false, citations = true)
     val out = File(opts["report"] ?: "rag/eval").also { it.mkdirs() }

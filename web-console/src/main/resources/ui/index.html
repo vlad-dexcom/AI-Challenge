@@ -47,10 +47,10 @@
  .src{font-size:12px;margin:4px 0 0 0;padding-left:18px} .meta{font-size:11px;color:#666}
  details{font-size:12px;margin-top:4px} details pre{white-space:pre-wrap;margin:2px 0 6px;background:#fff;padding:4px;border:1px solid #eee}
 </style></head><body>
-<nav><button id="tab-chat" class="on">Chat (Day 22+, stages: Day 23, memory: Day 25)</button><button id="tab-local">Local LLM (Day 26–27)</button><button id="tab-viz">Chunk visualiser (Day 21)</button></nav>
+<nav><button id="tab-chat" class="on">Chat (RAG, memory, local &amp; cloud: Days 22–28)</button><button id="tab-viz">Chunk visualiser (Day 21)</button></nav>
 <div id="page-chat"><div id="chat-wrap">
 <fieldset><legend>Settings</legend>
- <label>Mode <select id="cmode"><option value="session">Chat with task memory (Day 25)</option><option value="rag">With RAG (single-shot)</option><option value="no_rag">Without RAG (single-shot)</option><option value="compare">Compare (single-shot)</option></select></label>
+ <label>Mode <select id="cmode"><option value="session">Chat with task memory</option><option value="rag">With RAG</option><option value="no_rag">Without RAG</option><option value="compare">RAG vs no RAG (side by side)</option></select></label>
  <label>Index <select id="cstrategy"></select></label>
  <label>topK after <input id="ctopk" type="number" value="4" min="1" max="20" style="width:50px"></label>
  <label>topK before <input id="cbefore" type="number" value="10" min="1" max="50" style="width:50px"></label>
@@ -59,10 +59,14 @@
  <label><input id="crerank" type="checkbox" checked> rerank</label>
  <label><input id="cllmrerank" type="checkbox"> LLM reranker</label>
  <label><input id="crewrite" type="checkbox"> query rewrite</label>
- <label>Model <input id="cmodel" style="width:160px" placeholder="default"></label>
+ <label id="lblprov">Answer with <select id="cprov"><option value="gemini">Cloud (Gemini)</option><option value="ollama">Local (Ollama)</option><option value="both">Compare: Local vs Cloud</option></select></label>
+ <label id="lblmodel">Model <input id="cmodel" list="cmodels" style="width:200px" placeholder="default"></label><datalist id="cmodels"></datalist>
+ <label id="lblcloudm" style="display:none">Cloud model <input id="ccloudmodel" style="width:170px" placeholder="default"></label>
+ <label id="lbllocalm" style="display:none">Local model <input id="clocalmodel" list="clocalmodels" style="width:200px" placeholder="default"></label><datalist id="clocalmodels"></datalist>
  <label>Control question <select id="cctl" style="max-width:340px"><option value="">(pick one…)</option></select></label>
  <button id="cclear">Clear chat</button>
  <div class="meta">Stages: <b>filter</b> drops chunks below the cosine threshold (nothing left → the model is not called), <b>rerank</b> reorders the survivors and trims to topK after, <b>query rewrite</b> searches with an LLM-rewritten query (the answer still uses your original question). All off = Day 22 behaviour.</div>
+ <div class="meta"><b>Answer with</b>: <b>Cloud</b> = Gemini embeddings + Gemini answer over <code>rag/index</code>; <b>Local</b> = Ollama embeddings + Ollama answer over <code>rag/index-local</code> (no key, no internet); <b>Compare: Local vs Cloud</b> sends the same question with the same stage settings through both stacks, side by side with latency, LLM calls, sources and verified quotes (modes With RAG / Without RAG).</div>
  <div class="meta"><b>Chat with task memory</b> (default): dialogue history, rolling summary and a task memory (goal, clarifications, constraints) are used for every answer; sources and verified quotes are shown under each answer; the stage settings above except topK/threshold are fixed (filter + rerank + contextual rewrite). The other modes are single-shot: history is shown but not used.</div>
  <div id="cwarn" class="warn" style="display:none"></div>
 </fieldset>
@@ -77,23 +81,6 @@
 <div id="msgs"></div>
 <div><textarea id="cq" style="height:60px;font:14px system-ui" placeholder="Ask about training, nutrition, recovery… (Enter = send, Shift+Enter = newline)"></textarea>
  <button id="csend">Send</button> <span id="cerr" class="err"></span></div>
-</div></div>
-<div id="page-local" style="display:none"><div id="chat-wrap">
- <fieldset>
-  <label>Model <select id="lmodel"></select></label>
-  <label>temperature <input id="ltemp" type="number" value="0.7" min="0" max="2" step="0.1" style="width:60px"></label>
-  <button id="lrefresh" title="Reload model list">↻</button>
-  <label><input id="lcompare" type="checkbox"> compare models</label> <span id="lcmplist" style="display:none"></span>
-  <label>thinking <select id="lthink"><option value="">model default</option><option value="false">off</option><option value="true">on</option></select></label>
-  <label><input id="lhistory" type="checkbox" checked> send conversation history</label>
-  <label>System prompt <input id="lsys" style="width:300px" placeholder="(optional)"></label>
-  <button id="lclear">Clear chat</button>
-  <span class="meta" id="lstatus"></span>
- </fieldset>
- <div id="lwarn" class="warn" style="display:none"></div>
- <div id="lmsgs" class="msgs-box" style="background:#fff;border:1px solid #ccc;padding:8px;min-height:240px;max-height:60vh;overflow:auto"></div>
- <div><textarea id="lq" style="height:60px;font:14px system-ui" placeholder="Ask the local model anything (Enter = send, Shift+Enter = newline)"></textarea>
- <button id="lsend">Send</button> <span id="lerr" class="err"></span></div>
 </div></div>
 <div id="page-viz" style="display:none">
 <h1>Chunk visualiser (Day 21)</h1>
@@ -236,8 +223,8 @@ api('/api/files').then(r=>r.files.forEach(n=>{const o=document.createElement('op
 
 // ---- Chat (Day 22+) ----
 const cfg={defaultModel:''};
-function show(tab){['chat','local','viz'].forEach(t=>{$('page-'+t).style.display=t===tab?'':'none';$('tab-'+t).classList.toggle('on',t===tab)})}
-$('tab-chat').onclick=()=>show('chat');$('tab-local').onclick=()=>{show('local');localInit()};$('tab-viz').onclick=()=>show('viz');
+function show(tab){['chat','viz'].forEach(t=>{$('page-'+t).style.display=t===tab?'':'none';$('tab-'+t).classList.toggle('on',t===tab)})}
+$('tab-chat').onclick=()=>show('chat');$('tab-viz').onclick=()=>show('viz');
 const md=s=>window.renderMarkdown?window.renderMarkdown(s):`<p style="white-space:pre-wrap">${esc(s)}</p>`;
 function stageTable(title,hits,kept,showRerank){
   if(!hits.length)return `<div class="meta"><b>${title}</b>: none</div>`;
@@ -320,7 +307,7 @@ function addMsg(html){const d=document.createElement('div');d.innerHTML=html;con
 let sess=null;
 const isSession=()=>$('cmode').value==='session';
 function sessOptions(){
-  const o={memoryMode:$('smem').value,keepLastTurns:+$('skeep').value||4,strategy:$('cstrategy').value||'structure',topK:+$('ctopk').value||4,topKBefore:+$('cbefore').value||10,threshold:parseFloat($('cthr').value),llmRerank:$('cllmrerank').checked};
+  const o={provider:$('cprov').value,memoryMode:$('smem').value,keepLastTurns:+$('skeep').value||4,strategy:$('cstrategy').value||'structure',topK:+$('ctopk').value||4,topKBefore:+$('cbefore').value||10,threshold:parseFloat($('cthr').value),llmRerank:$('cllmrerank').checked};
   if($('cmodel').value.trim())o.model=$('cmodel').value.trim();
   return o;
 }
@@ -342,7 +329,19 @@ async function refreshSessions(select){
   const r=await api('/api/sessions/'+id);sess=r.session;renderSession();
 }
 async function sessionAction(fn){try{$('cerr').textContent='';const r=await fn();if(r&&r.session){sess=r.session;renderSession()}}catch(e){$('cerr').textContent=e.message}}
+const isCompare=()=>$('cprov').value==='both';
+/** Shows the model inputs that match the stack and, when comparing stacks, disables the modes that cannot run on two stacks. Returns true if it had to change the mode. */
+function applyLayout(){
+  const cmp=isCompare();
+  ['lblmodel'].forEach(i=>$(i).style.display=cmp?'none':'');
+  ['lblcloudm','lbllocalm'].forEach(i=>$(i).style.display=cmp?'':'none');
+  [...$('cmode').options].forEach(o=>{o.disabled=cmp&&(o.value==='session'||o.value==='compare')});
+  if(cmp&&($('cmode').value==='session'||$('cmode').value==='compare')){$('cmode').value='rag';return true}
+  return false;
+}
 function updateMode(){
+  applyLayout();
+  applyProvider();
   const on=isSession();
   $('sessbar').style.display=on?'':'none';$('memory').style.display=on?'':'none';
   if(on)refreshSessions().catch(e=>{$('cerr').textContent=e.message});else $('msgs').innerHTML='';
@@ -372,16 +371,55 @@ async function sendSession(q){
   }catch(e){pending.outerHTML=`<div class="msg bot"><div class="err">Error: ${esc(e.message)} (the message was not saved, you can resend it)</div></div>`}
   $('csend').disabled=false;
 }
+const STACKS=[
+  {provider:'gemini',title:'Cloud · Gemini',input:'ccloudmodel',def:()=>chatCfg&&chatCfg.defaultModel},
+  {provider:'ollama',title:'Local · Ollama',input:'clocalmodel',def:()=>chatCfg&&chatCfg.localDefaultModel},
+];
+function compareSummary(rs){
+  const [c,l]=rs;
+  if(!c.t||!l.t)return '';
+  const rag=$('cmode').value==='rag';
+  const ids=t=>new Set((t.sources||[]).map(s=>s.chunkId));
+  const ci=ids(c.t),li=ids(l.t),shared=[...ci].filter(x=>li.has(x)).length;
+  const idk=t=>!!(t.structured&&t.structured.idk);
+  const vq=t=>{const st=t.structured;if(!st)return '–';const qs=st.verification.quotes;return qs.filter(x=>x.status==='VERIFIED'||x.status==='REATTRIBUTED').length+'/'+qs.length};
+  const faster=c.t.latencyMs&&l.t.latencyMs?(l.t.latencyMs<c.t.latencyMs?`local ${(c.t.latencyMs/l.t.latencyMs).toFixed(1)}x faster`:`cloud ${(l.t.latencyMs/c.t.latencyMs).toFixed(1)}x faster`):'';
+  return `<div class="meta" style="margin:4px 0 8px"><b>Comparison</b>: latency cloud ${c.t.latencyMs} ms vs local ${l.t.latencyMs} ms (${faster}) · LLM calls ${c.t.llmCalls??'?'} vs ${l.t.llmCalls??'?'} · ${rag?`shared sources ${shared} of ${ci.size}/${li.size} · `:''}verified quotes ${vq(c.t)} vs ${vq(l.t)} · "I don't know": cloud ${idk(c.t)?'yes':'no'}, local ${idk(l.t)?'yes':'no'}</div>`;
+}
+async function sendCompare(q){
+  addMsg(`<div class="msg user">${esc(q)}</div>`);
+  const box=addMsg('<div></div>');
+  const cols=STACKS.map(st=>{const d=document.createElement('div');d.innerHTML=`<div class="meta"><b>${st.title}</b></div><div class="msg bot meta">Waiting…</div>`;return d});
+  const pair=document.createElement('div');pair.className='pair';cols.forEach(d=>pair.appendChild(d));box.appendChild(pair);
+  $('csend').disabled=true;$('cq').value='';
+  // Both stacks run at the same time; each column fills in when its own answer arrives.
+  const results=await Promise.all(STACKS.map(async(st,i)=>{
+    cols[i].lastElementChild.textContent='Thinking…'+(st.provider==='ollama'?' (the first local call loads the model into memory)':'');
+    const model=$(st.input).value.trim()||st.def()||'';
+    const body={provider:st.provider,question:q,mode:$('cmode').value,strategy:$('cstrategy').value||'structure',topK:+$('ctopk').value||4,topKBefore:+$('cbefore').value||10,threshold:parseFloat($('cthr').value),
+      filter:$('cfilter').checked,rerank:$('crerank').checked,llmRerank:$('cllmrerank').checked,rewrite:$('crewrite').checked};
+    if($(st.input).value.trim())body.model=$(st.input).value.trim();
+    const head=`<div class="meta"><b>${st.title}</b> · ${esc(model)}</div>`;
+    try{
+      const r=await api('/api/chat',body);const t=r.results[0];
+      cols[i].innerHTML=head+turnHtml(t);return {t};
+    }catch(e){cols[i].innerHTML=head+`<div class="msg bot"><div class="err">Error: ${esc(e.message)}</div></div>`;return {}}
+    finally{$('msgs').scrollTop=$('msgs').scrollHeight}
+  }));
+  box.insertAdjacentHTML('afterbegin',compareSummary(results));
+  $('csend').disabled=false;$('msgs').scrollTop=$('msgs').scrollHeight;
+}
 async function send(){
   const q=$('cq').value.trim();$('cerr').textContent='';
   if(!q){$('cerr').textContent='Type a question first';return}
   const mode=$('cmode').value;
   if(mode==='session')return sendSession(q);
+  if(isCompare())return sendCompare(q);
   addMsg(`<div class="msg user">${esc(q)}</div>`);
   const pending=addMsg('<div class="msg bot meta">Thinking…</div>');
   $('csend').disabled=true;$('cq').value='';
   try{
-    const body={question:q,mode,strategy:$('cstrategy').value||'structure',topK:+$('ctopk').value||4,topKBefore:+$('cbefore').value||10,threshold:parseFloat($('cthr').value),
+    const body={provider:$('cprov').value,question:q,mode,strategy:$('cstrategy').value||'structure',topK:+$('ctopk').value||4,topKBefore:+$('cbefore').value||10,threshold:parseFloat($('cthr').value),
       filter:$('cfilter').checked,rerank:$('crerank').checked,llmRerank:$('cllmrerank').checked,rewrite:$('crewrite').checked};
     if($('cmodel').value.trim())body.model=$('cmodel').value.trim();
     const r=await api('/api/chat',body);
@@ -394,62 +432,32 @@ $('csend').onclick=send;
 $('cq').onkeydown=e=>{if(e.key==='Enter'&&!e.shiftKey){e.preventDefault();send()}};
 $('cclear').onclick=()=>{if(isSession())renderSession();else $('msgs').innerHTML=''};
 $('cctl').onchange=()=>{if($('cctl').value){$('cq').value=$('cctl').value;$('cq').focus()}};
+let chatCfg=null;
+function applyProvider(){
+  const c=chatCfg;if(!c)return;
+  const cmp=isCompare(),local=$('cprov').value==='ollama';
+  const strategies=cmp?c.strategies.filter(x=>c.localStrategies.includes(x)):(local?c.localStrategies:c.strategies);
+  $('cstrategy').innerHTML=strategies.map(x=>`<option value="${esc(x)}">${esc(x)}</option>`).join('');
+  if(strategies.includes(c.defaultStrategy))$('cstrategy').value=c.defaultStrategy;
+  $('cmodel').value='';$('cmodel').placeholder=local?c.localDefaultModel:c.defaultModel;
+  $('cmodels').innerHTML=(local?c.localModels:[]).map(m=>`<option value="${esc(m)}">`).join('');
+  $('ccloudmodel').placeholder=c.defaultModel;$('clocalmodel').placeholder=c.localDefaultModel;
+  $('clocalmodels').innerHTML=c.localModels.map(m=>`<option value="${esc(m)}">`).join('');
+  const w=$('cwarn');w.style.display='none';
+  const warn=t=>{w.style.display='';w.textContent=t};
+  if((local||cmp)&&!c.localStrategies.length)warn('No local index found. Build it (retrieval runs locally too): ./gradlew :rag:tools:run --args="index --provider ollama"');
+  else if((local||cmp)&&!c.localModels.length)warn('Ollama is not reachable or has no models. Start it: brew services start ollama');
+  else if((!local||cmp)&&!c.keyConfigured)warn(cmp?'GEMINI_API_KEY is not set: the Cloud column will show an error (env var or local.properties, then restart the ui).':'GEMINI_API_KEY is not set: cloud answers need it (env var or local.properties), then restart the ui. Or switch Provider to Local (Ollama).');
+  else if(!local&&!cmp&&!c.strategies.length)warn('No saved index found. Run: ./gradlew :rag:run --args="index"');
+  else if(cmp&&!strategies.length)warn('The cloud and local indexes have no strategy in common.');
+}
+$('cprov').onchange=()=>{if(applyLayout())updateMode();else applyProvider()};
 fetch('/api/chat/config').then(r=>r.json()).then(c=>{
-  c.strategies.forEach(s=>{const o=document.createElement('option');o.value=o.textContent=s;$('cstrategy').appendChild(o)});
-  if(c.strategies.includes(c.defaultStrategy))$('cstrategy').value=c.defaultStrategy;
-  $('ctopk').value=c.defaultTopK;$('cbefore').value=c.defaultTopKBefore;$('cthr').value=c.defaultThreshold;$('cmodel').placeholder=c.defaultModel;
+  chatCfg=c;
+  $('ctopk').value=c.defaultTopK;$('cbefore').value=c.defaultTopKBefore;$('cthr').value=c.defaultThreshold;
   c.controlQuestions.forEach(q=>{const o=document.createElement('option');o.value=q.question;o.textContent=`${q.id} [${q.category}] ${q.question}`.slice(0,90);$('cctl').appendChild(o)});
-  if(!c.keyConfigured){$('cwarn').style.display='';$('cwarn').textContent='GEMINI_API_KEY is not set: chat answers need it (env var or local.properties), then restart the ui.'}
-  if(!c.strategies.length){$('cwarn').style.display='';$('cwarn').textContent='No saved index found. Run: ./gradlew :rag:run --args="index"'}
+  applyProvider();
 });
 updateMode();
 
-// ---- Local LLM (Day 26-27): plain Ollama chat, browser keeps the transcript (one history per model) ----
-let lhist={},lbusy=false,lmodels=[],ldefault='';
-async function localInit(){
-  try{
-    const c=await api('/api/local/config');
-    lmodels=c.models.length?c.models:[c.defaultModel];ldefault=c.defaultModel;
-    const cur=$('lmodel').value;
-    $('lmodel').innerHTML=lmodels.map(n=>`<option value="${esc(n)}">${esc(n)}</option>`).join('');
-    $('lmodel').value=lmodels.includes(cur)?cur:(lmodels.includes(ldefault)?ldefault:lmodels[0]);
-    const checked=new Set([...document.querySelectorAll('.lcmp:checked')].map(x=>x.value));
-    $('lcmplist').innerHTML=lmodels.map(n=>`<label><input type="checkbox" class="lcmp" value="${esc(n)}"${checked.has(n)||(!checked.size&&lmodels.length<=3)?' checked':''}> ${esc(n)}</label>`).join('');
-    $('lstatus').textContent=c.reachable?`Ollama @ ${c.baseUrl} · ${lmodels.length} model(s)`:'';
-    $('lwarn').style.display=c.error?'':'none';$('lwarn').textContent=c.error||'';
-  }catch(e){$('lwarn').style.display='';$('lwarn').textContent=e.message}
-  lmode();
-}
-function lmode(){const c=$('lcompare').checked;$('lcmplist').style.display=c?'':'none';$('lmodel').disabled=c}
-function lAdd(role,html,parent){const d=document.createElement('div');d.className='msg '+(role==='user'?'user':'bot');d.innerHTML=html;(parent||$('lmsgs')).appendChild(d);$('lmsgs').scrollTop=$('lmsgs').scrollHeight;return d}
-async function lAsk(model,q,pending){
-  const h=lhist[model]||(lhist[model]=[]);
-  const messages=($('lhistory').checked?h:[]).concat([{role:'user',content:q}]);
-  try{
-    const r=await api('/api/local/chat',{messages,model,system:$('lsys').value||null,temperature:parseFloat($('ltemp').value),think:$('lthink').value===''?null:$('lthink').value==='true'});
-    h.push({role:'user',content:q},{role:'assistant',content:r.reply});
-    pending.innerHTML=`<div class="meta"><b>${esc(r.model)}</b></div>${r.thinking?`<details><summary>thinking (${r.thinking.length} chars)</summary><pre>${esc(r.thinking)}</pre></details>`:''}<div class="md">${md(r.reply)}</div><div class="meta"><span class="badge">local</span>${r.promptTokens} prompt + ${r.completionTokens} tokens · ${r.tokensPerSecond.toFixed(1)} tok/s · ${(r.totalMillis/1000).toFixed(1)} s</div>`;
-  }catch(e){pending.innerHTML=`<div class="meta"><b>${esc(model)}</b></div><span class="err">${esc(e.message)}</span>`}
-}
-async function lSend(){
-  const q=$('lq').value.trim(); if(!q||lbusy)return;
-  const compare=$('lcompare').checked;
-  const targets=compare?[...document.querySelectorAll('.lcmp:checked')].map(x=>x.value):[$('lmodel').value||ldefault];
-  if(!targets.length){$('lerr').textContent='Pick at least one model to compare.';return}
-  lbusy=true; $('lerr').textContent=''; $('lsend').disabled=true; $('lq').value='';
-  lAdd('user',`<div style="white-space:pre-wrap">${esc(q)}</div>`);
-  let parent=null;
-  if(compare){parent=document.createElement('div');parent.className='pair';parent.style.gridTemplateColumns=`repeat(${Math.min(targets.length,3)},minmax(0,1fr))`;$('lmsgs').appendChild(parent)}
-  const pendings=targets.map(m=>lAdd('bot',`<div class="meta"><b>${esc(m)}</b></div><span class="meta">waiting…</span>`,parent));
-  for(let i=0;i<targets.length;i++){
-    pendings[i].querySelector('.meta:last-child').textContent='thinking… (the first call loads the model into memory)';
-    await lAsk(targets[i],q,pendings[i]);
-    $('lmsgs').scrollTop=$('lmsgs').scrollHeight;
-  }
-  lbusy=false;$('lsend').disabled=false;$('lq').focus();
-}
-$('lsend').onclick=lSend;
-$('lq').addEventListener('keydown',e=>{if(e.key==='Enter'&&!e.shiftKey){e.preventDefault();lSend()}});
-$('lclear').onclick=()=>{lhist={};$('lmsgs').innerHTML='';$('lerr').textContent=''};
-$('lcompare').onchange=lmode;$('lrefresh').onclick=localInit;
 </script></body></html>

@@ -28,6 +28,8 @@ data class ChatOptions(
     val threshold: Float = RagConfig.DEFAULT.threshold,
     val llmRerank: Boolean = false,
     val model: String? = null,
+    /** `gemini` (cloud, default) or `ollama` (local). */
+    val provider: String = "gemini",
 ) {
     fun ragConfig() = RagConfig(topKBefore, topK, threshold, filter = true, rerank = true, rewrite = true)
 }

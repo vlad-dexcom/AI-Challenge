@@ -33,6 +33,8 @@ data class ChatRequest(
     val topKBefore: Int = RagConfig.DEFAULT.topKBefore,
     /** Day 24: JSON contract with verified sources/quotes and "I don't know" in the RAG answer. */
     val citations: Boolean = true,
+    /** `gemini` (cloud, default) or `ollama` (local generation and retrieval over the local index). */
+    val provider: String = "gemini",
 ) {
     val staged: Boolean get() = filter || rerank || rewrite
 }

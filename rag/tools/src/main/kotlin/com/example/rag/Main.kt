@@ -9,12 +9,15 @@ import java.io.File
 import kotlin.system.exitProcess
 import com.example.core.llm.EmbeddingClient
 import com.example.core.llm.GeminiEmbeddingClient
-import com.example.core.llm.GeminiTextGenerator
+import com.example.core.llm.EmbedPrompts
+import com.example.core.llm.EmbeddingException
 import com.example.core.llm.HashingEmbeddingClient
+import com.example.core.llm.OllamaChatClient
+import com.example.core.llm.OllamaEmbeddingClient
 
 private const val USAGE = """
 Usage (run from the repo root via Gradle):
-  ./gradlew :rag:tools:run --args="index   [--corpus rag/corpus] [--out rag/index] [--embedder gemini|offline]"
+  ./gradlew :rag:tools:run --args="index   [--corpus rag/corpus] [--out rag/index] [--embedder gemini|offline|ollama:<model>]"
   ./gradlew :rag:tools:run --args="compare [--out rag/index] [--embedder gemini|offline]"
   ./gradlew :rag:tools:run --args="eval    [--embedder gemini|offline] [--k 5] [--strategy fixed|structure] [--questions rag/eval/questions.json] [--out dir]"
   ./gradlew :rag:tools:run --args="ask     \"question\" [--mode both|rag|no-rag] [--k 4] [--strategy structure] [--model gemini-3.5-flash]"
@@ -26,6 +29,7 @@ index    builds one JSON index per chunking strategy (fixed.json, structure.json
 compare  loads both indexes, prints chunk stats + sample-query results, writes comparison-report.md.
 eval     runs the retrieval eval set against each saved index (hit@1/3/5, MRR, top-1 score stats) and writes rag/eval/report-<embedder>.md.
 Default --out is rag/index for gemini and rag/index-offline for offline (so both sets of indexes can live side by side).
+--provider gemini|ollama (or LLM_PROVIDER) picks generation + default embedder: ollama = fully local (answers via --ollama-model, retrieval via --ollama-embed-model, index rag/index-local).
 ask      Day 22: answers one question WITHOUT RAG, WITH RAG (top-k chunks from the index in the prompt), or both.
 rag-eval Day 22: runs the 10 control questions in both modes, writes rag/eval/control-results.json and control-report.md.
 sweep    Day 23: grid over threshold x topK-before x topK-after on the eval set (no LLM calls), writes rag/eval/sweep.{json,md}.
@@ -37,6 +41,7 @@ scenarios-eval  Day 25: replays rag/eval/scenarios/*.json in FULL / HISTORY_ONLY
 ui       moved: ./gradlew :web-console:run --args="--port 8080" (Chat tab + chunk visualiser).
 --embedder gemini  (default if GEMINI_API_KEY is set) calls the Gemini embeddings REST API.
 --embedder offline deterministic hashing embedder, no network (lexical only, for tests/demos).
+--embedder ollama:<model> local embeddings via Ollama /api/embed (e.g. ollama:embeddinggemma-2:270m), index in rag/index-local-<model>; --embed-prompts off disables task prompts, --ollama-url overrides the server.
 The Gemini key is read from the GEMINI_API_KEY env var or from local.properties (never committed).
 """
 
@@ -52,16 +57,22 @@ fun main(args: Array<String>) {
         System.err.println("The web UI moved to its own module: ./gradlew :web-console:run [--args=\"--port 8080\"]")
         exitProcess(1)
     }
-    val embedderName = opts["embedder"] ?: if (key.isNotBlank()) "gemini" else "offline"
+    val llm = try { LlmProvider.from(opts, key) } catch (e: IllegalArgumentException) { System.err.println(e.message); exitProcess(1) }
+    val embedderName = opts["embedder"] ?: llm.defaultEmbedderName
     val embedder: EmbeddingClient = when (embedderName) {
         "gemini" -> {
             if (key.isBlank()) { System.err.println("GEMINI_API_KEY is not set (env var or local.properties)."); exitProcess(2) }
             GeminiEmbeddingClient(key)
         }
         "offline" -> HashingEmbeddingClient()
-        else -> { System.err.println("Unknown embedder '$embedderName'"); exitProcess(1) }
+        else -> if (embedderName.startsWith(LlmProvider.OLLAMA_EMBEDDER_PREFIX)) localEmbedder(embedderName.removePrefix(LlmProvider.OLLAMA_EMBEDDER_PREFIX), llm, opts) else { System.err.println("Unknown embedder '$embedderName'"); exitProcess(1) }
     }
-    val outDir = File(opts["out"] ?: if (embedderName == "gemini") "rag/index" else "rag/index-offline")
+    val outDir = File(opts["out"] ?: when {
+        embedderName == "gemini" -> "rag/index"
+        embedderName == llm.defaultEmbedderName && llm.isLocal -> LlmProvider.LOCAL_INDEX_DIR
+        embedderName.startsWith("ollama:") -> "rag/index-local-" + embedderName.removePrefix("ollama:").replace(Regex("[^A-Za-z0-9.]+"), "-")
+        else -> "rag/index-offline"
+    })
     println("Embedder: ${embedder.modelName} (${embedder.dimension} dims)")
 
     runBlocking {
@@ -69,16 +80,27 @@ fun main(args: Array<String>) {
             "index" -> runIndex(File(opts["corpus"] ?: "rag/corpus"), outDir, embedder)
             "compare" -> runCompare(outDir, embedder)
             "eval" -> runEval(opts, outDir, embedder, embedderName)
-            "ask" -> runAsk(opts, question, outDir, embedder, key)
-            "rag-eval" -> runRagEval(opts, outDir, embedder, key)
+            "ask" -> runAsk(opts, question, outDir, embedder, llm)
+            "rag-eval" -> runRagEval(opts, outDir, embedder, llm)
             "sweep" -> runSweep(opts, outDir, embedder)
-            "modes-eval" -> runModesEval(opts, outDir, embedder, key)
-            "citations-eval" -> runCitationsEval(opts, outDir, embedder, key)
-            "chat" -> com.example.rag.chat.runChatRepl(opts, outDir, embedder, key)
-            "scenarios-eval" -> com.example.rag.chat.runScenariosEval(opts, outDir, embedder, key)
+            "modes-eval" -> runModesEval(opts, outDir, embedder, llm)
+            "citations-eval" -> runCitationsEval(opts, outDir, embedder, llm)
+            "chat" -> com.example.rag.chat.runChatRepl(opts, outDir, embedder, llm)
+            "scenarios-eval" -> com.example.rag.chat.runScenariosEval(opts, outDir, embedder, llm)
         }
     }
     exitProcess(0)
+}
+
+/** `--embedder ollama:<model>`: local embeddings; task prompts follow the model family unless `--embed-prompts off`. */
+private fun localEmbedder(model: String, llm: LlmProvider, opts: Map<String, String>): EmbeddingClient = runBlocking {
+    val url = llm.ollamaUrl
+    val prompts = if (opts["embed-prompts"] == "off") EmbedPrompts.NONE else EmbedPrompts.defaultsFor(model)
+    try {
+        OllamaEmbeddingClient.connect(model, prompts, url)
+    } catch (e: EmbeddingException) {
+        System.err.println(e.message); exitProcess(2)
+    }
 }
 
 /** GEMINI_API_KEY from the environment or `local.properties` (never committed); empty if neither is set. */
@@ -148,27 +170,27 @@ private suspend fun runEval(opts: Map<String, String>, dir: File, embedder: Embe
         Evaluator.run(index, embedder, questions, (opts["k"] ?: "5").toInt())
     }
     val md = Evaluator.renderMarkdown(embedderName, metrics)
-    val report = File("rag/eval/report-$embedderName.md")
+    val report = File("rag/eval/report-${embedderName.replace(':', '-')}.md")
     report.writeText(md)
     println(md)
     println("Report written to ${report.path}")
 }
 
-private fun buildPipeline(opts: Map<String, String>, dir: File, embedder: EmbeddingClient, key: String): RagPipeline {
-    if (key.isBlank()) { System.err.println("GEMINI_API_KEY is not set (env var or local.properties)."); exitProcess(2) }
+private fun buildPipeline(opts: Map<String, String>, dir: File, embedder: EmbeddingClient, llm: LlmProvider): RagPipeline {
+    if (!llm.available) { System.err.println(llm.missingMessage()); exitProcess(2) }
     val file = File(dir, "${opts["strategy"] ?: "structure"}.json")
     require(file.isFile) { "Missing index ${file.path}; run the index command first." }
     val index = IndexStore().load(file.toKxPath())
     val retriever = VectorRetriever(embedder, index, (opts["k"] ?: VectorRetriever.DEFAULT_TOP_K.toString()).toInt())
-    val generator = GeminiTextGenerator(key, opts["model"] ?: GeminiTextGenerator.DEFAULT_MODEL)
+    val generator = llm.generator(opts["model"])
     return stagedPipeline(retriever, generator, if (staged(opts)) ragConfigFrom(opts) else RagConfig.PLAIN, opts["rerank"] == "llm", citations = opts["citations"] != "off")
 }
 
 private fun staged(opts: Map<String, String>) = flag(opts, "filter") || flag(opts, "rerank") || flag(opts, "rewrite")
 
-private suspend fun runAsk(opts: Map<String, String>, question: String?, dir: File, embedder: EmbeddingClient, key: String) {
+private suspend fun runAsk(opts: Map<String, String>, question: String?, dir: File, embedder: EmbeddingClient, llm: LlmProvider) {
     if (question.isNullOrBlank()) { System.err.println("Usage: ask \"<question>\" [--mode both|rag|no-rag]"); exitProcess(1) }
-    val pipeline = buildPipeline(opts, dir, embedder, key)
+    val pipeline = buildPipeline(opts, dir, embedder, llm)
     val modes = when (val m = opts["mode"] ?: "both") {
         "both" -> listOf(RagMode.NO_RAG, RagMode.RAG)
         "rag" -> listOf(RagMode.RAG)
@@ -199,11 +221,11 @@ private suspend fun runAsk(opts: Map<String, String>, question: String?, dir: Fi
     }
 }
 
-private suspend fun runRagEval(opts: Map<String, String>, dir: File, embedder: EmbeddingClient, key: String) {
+private suspend fun runRagEval(opts: Map<String, String>, dir: File, embedder: EmbeddingClient, llm: LlmProvider) {
     val questions = ControlSet.load(File(opts["questions"] ?: "rag/eval/control-questions.json"))
     val problems = ControlSet.validate(questions, CorpusLoader.load(File(opts["corpus"] ?: "rag/corpus").toKxPath()))
     if (problems.isNotEmpty()) { System.err.println("Invalid control set:\n" + problems.joinToString("\n")); exitProcess(1) }
-    val pipeline = buildPipeline(opts, dir, embedder, key)
+    val pipeline = buildPipeline(opts, dir, embedder, llm)
     val results = ControlScorer.run(pipeline, questions)
     val out = File(opts["out"] ?: "rag/eval")
     out.mkdirs()

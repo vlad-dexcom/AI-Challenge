@@ -41,7 +41,7 @@ class OllamaChatClient(
         const val DEFAULT_MODEL = "gemma4:26b-a4b-it-qat"
     }
 
-    private val json = Json { ignoreUnknownKeys = true; encodeDefaults = true }
+    private val json = Json { ignoreUnknownKeys = true; encodeDefaults = false }
     private val http = HttpClient(engine) {
         install(HttpTimeout) { requestTimeoutMillis = 300_000; socketTimeoutMillis = 300_000; connectTimeoutMillis = 5_000 }
     }
@@ -51,8 +51,12 @@ class OllamaChatClient(
         model: String = this.model,
         temperature: Double? = null,
         think: Boolean? = null,
+        jsonMode: Boolean = false,
+        numCtx: Int? = null,
+        maxTokens: Int? = null,
     ): Result<OllamaReply> = try {
-        var body = ChatRequest(model, messages, false, temperature?.let { Options(it) }, think)
+        val options = if (temperature == null && numCtx == null && maxTokens == null) null else Options(temperature, numCtx, maxTokens)
+        var body = ChatRequest(model, messages, false, options, think, if (jsonMode) "json" else null)
         var response = post(body)
         var text = response.bodyAsText()
         // Models without a thinking mode reject the `think` flag; retry plain so one toggle works for every model.
@@ -89,13 +93,18 @@ class OllamaChatClient(
         setBody(json.encodeToString(ChatRequest.serializer(), body))
     }
 
-    @Serializable private data class Options(val temperature: Double)
+    @Serializable private data class Options(
+        val temperature: Double? = null,
+        @kotlinx.serialization.SerialName("num_ctx") val numCtx: Int? = null,
+        @kotlinx.serialization.SerialName("num_predict") val numPredict: Int? = null,
+    )
     @Serializable private data class ChatRequest(
         val model: String,
         val messages: List<OllamaMessage>,
         val stream: Boolean,
         val options: Options? = null,
         val think: Boolean? = null,
+        val format: String? = null,
     )
     @Serializable private data class ChatResponse(
         val model: String? = null,

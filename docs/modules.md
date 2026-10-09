@@ -3,10 +3,10 @@
 | Module | Plugin | Depends on | Purpose |
 |---|---|---|---|
 | `:core:common` | kotlin-jvm | kotlinx-io, ktor-core | `io/Files.kt` (`Path` helpers: `readText`, `writeText` (creates parents), `walkFiles`, `atomicMoveTo`, `div`…), `time/Time.kt` (`nowMillis()`, `newId()`), `text/TextNormalizer`, `platform/` seams |
-| `:core:llm` | kotlin-jvm | common | `LlmClient`, `ToolCallingLlmClient`, `GeminiApiClient` (Ktor, Interactions API), `GeminiModels`, `EmbeddingClient`/`GeminiEmbeddingClient`/`HashingEmbeddingClient`, `TextGenerator`, `OllamaChatClient` (local Ollama `/api/chat` + `/api/tags`) |
+| `:core:llm` | kotlin-jvm | common | `LlmClient`, `ToolCallingLlmClient`, `GeminiApiClient` (Ktor, Interactions API), `GeminiModels`, `EmbeddingClient`/`GeminiEmbeddingClient`/`HashingEmbeddingClient`, `TextGenerator`, Ollama: `OllamaChatClient` (`/api/chat` + `/api/tags`), `OllamaTextGenerator`, `OllamaEmbeddingClient` |
 | `:rag:core` | kotlin-jvm + testFixtures | llm, common | `Chunker`s, `VectorIndex`/`IndexStore`/`Indexer`, `Retriever`, `RagPipeline`, rerank/filter/rewrite, `Citations`, `chat/` (`ChatEngine`, `SessionStore`, `TaskMemory`, `MemoryExtractor`). Fixtures: `ChatFixture`, `ScriptedGenerator` |
 | `:rag:tools` | application | rag:core | CLI `./gradlew :rag:tools:run --args="index|eval|compare|ask|chat|rag-eval|sweep|modes-eval"`, evals, scenarios |
-| `:web-console` | application | rag:tools | `./gradlew :web-console:run [--args="--port 8080"]`: chat tab, Local LLM tab (`LocalChatApi`: plain Ollama chat, model comparison, thinking toggle) + chunk visualiser (`resources/ui`, JS tests in `src/test/js`) |
+| `:web-console` | application | rag:tools | `./gradlew :web-console:run [--args="--port 8080"]`: single Chat tab (RAG, task memory; "Answer with" Cloud / Local / Compare via `LocalRag`) + chunk visualiser (`resources/ui`, JS tests in `src/test/js`) |
 | `:agent` | kotlin-jvm | rag:core, llm, common | Everything agent-related (see below) |
 | `:app` | android-application | agent | Android shell and UI |
 
