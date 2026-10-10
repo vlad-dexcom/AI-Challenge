@@ -1,0 +1,136 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="theme-color" content="#111827">
+<title>Private AI</title>
+<style>
+  :root { color-scheme: light dark; --bg:#f3f4f6; --fg:#111827; --me:#2563eb; --bot:#fff; --bd:#d1d5db; }
+  @media (prefers-color-scheme: dark) { :root { --bg:#0b1020; --fg:#e5e7eb; --bot:#1f2937; --bd:#374151; } }
+  * { box-sizing: border-box; }
+  html, body { height: 100%; margin: 0; }
+  body { display: flex; flex-direction: column; background: var(--bg); color: var(--fg); font: 16px/1.4 -apple-system, system-ui, sans-serif; }
+  header { display: flex; gap: 8px; align-items: center; padding: 8px 12px; padding-top: max(8px, env(safe-area-inset-top)); border-bottom: 1px solid var(--bd); }
+  header h1 { font-size: 1rem; margin: 0; flex: 1; }
+  #status { font-size: .75rem; opacity: .7; }
+  button, input, textarea, select { font: inherit; color: inherit; }
+  button { border: 1px solid var(--bd); background: var(--bot); border-radius: 10px; padding: 8px 12px; }
+  #log { flex: 1; overflow-y: auto; padding: 12px; display: flex; flex-direction: column; gap: 8px; }
+  .m { max-width: 88%; padding: 8px 12px; border-radius: 14px; white-space: pre-wrap; word-wrap: break-word; background: var(--bot); border: 1px solid var(--bd); }
+  .m.me { align-self: flex-end; background: var(--me); color: #fff; border-color: var(--me); }
+  .m.err { border-color: #dc2626; color: #dc2626; }
+  form { display: flex; gap: 8px; padding: 8px 12px; padding-bottom: max(8px, env(safe-area-inset-bottom)); border-top: 1px solid var(--bd); }
+  textarea { flex: 1; resize: none; max-height: 40vh; border: 1px solid var(--bd); border-radius: 12px; padding: 8px 12px; background: var(--bot); }
+  #send { background: var(--me); color: #fff; border-color: var(--me); }
+  #setup { padding: 12px; display: none; gap: 8px; flex-direction: column; border-bottom: 1px solid var(--bd); }
+  #setup input { border: 1px solid var(--bd); border-radius: 10px; padding: 8px 12px; background: var(--bot); }
+</style>
+</head>
+<body>
+<header>
+  <h1>Private AI <span id="status"></span></h1>
+  <select id="model" hidden></select>
+  <button id="key" type="button">Key</button>
+  <button id="new" type="button">New chat</button>
+</header>
+<div id="setup">
+  <label for="keyInput">Device key (stored only in this browser)</label>
+  <input id="keyInput" type="password" autocomplete="off" autocapitalize="off" spellcheck="false" placeholder="sk-lan-...">
+  <button id="saveKey" type="button">Save</button>
+</div>
+<div id="log"></div>
+<form id="form">
+  <textarea id="input" rows="1" placeholder="Message" enterkeyhint="send"></textarea>
+  <button id="send" type="submit">Send</button>
+</form>
+<script>
+const $ = id => document.getElementById(id);
+const log = $('log'), input = $('input'), sendBtn = $('send'), status = $('status'), modelSel = $('model');
+let history = [], busy = false, abort = null;
+const getKey = () => localStorage.getItem('gatewayKey') || '';
+
+function add(cls, text) {
+  const d = document.createElement('div');
+  d.className = 'm ' + cls; d.textContent = text; log.appendChild(d);
+  log.scrollTop = log.scrollHeight; return d;
+}
+function setStatus(t) { status.textContent = t || ''; }
+function needKey(show) { $('setup').style.display = show ? 'flex' : 'none'; if (show) $('keyInput').focus(); }
+
+async function loadModels() {
+  if (!getKey()) { needKey(true); return; }
+  try {
+    const r = await fetch('/v1/models', { headers: { Authorization: 'Bearer ' + getKey() } });
+    if (r.status === 401 || r.status === 403) { needKey(true); setStatus('key rejected'); return; }
+    const j = await r.json();
+    modelSel.innerHTML = '';
+    j.data.forEach(m => { const o = document.createElement('option'); o.value = o.textContent = m.id; modelSel.appendChild(o); });
+    modelSel.hidden = j.data.length < 2; needKey(false); setStatus('');
+  } catch (e) { setStatus('offline'); }
+}
+
+async function send(text) {
+  history.push({ role: 'user', content: text });
+  add('me', text);
+  const bubble = add('', '…');
+  busy = true; sendBtn.disabled = true; abort = new AbortController();
+  let answer = '';
+  try {
+    const r = await fetch('/v1/chat/completions', {
+      method: 'POST', signal: abort.signal,
+      headers: { 'Content-Type': 'application/json', Authorization: 'Bearer ' + getKey() },
+      body: JSON.stringify({ model: modelSel.value || undefined, messages: history, stream: true }),
+    });
+    if (!r.ok) {
+      let msg = 'HTTP ' + r.status;
+      try { const j = await r.json(); msg = j.error.message; } catch (e) {}
+      const ra = r.headers.get('Retry-After');
+      if (r.status === 401 || r.status === 403) needKey(true);
+      bubble.className = 'm err'; bubble.textContent = msg + (ra ? ' (retry in ' + ra + ' s)' : '');
+      history.pop(); return;
+    }
+    const reader = r.body.getReader(), dec = new TextDecoder();
+    let buf = '';
+    for (;;) {
+      const { value, done } = await reader.read();
+      if (done) break;
+      buf += dec.decode(value, { stream: true });
+      let i;
+      while ((i = buf.indexOf('\n\n')) >= 0) {
+        const line = buf.slice(0, i).trim(); buf = buf.slice(i + 2);
+        if (!line.startsWith('data:')) continue;
+        const data = line.slice(5).trim();
+        if (data === '[DONE]') continue;
+        const j = JSON.parse(data);
+        if (j.error) { bubble.className = 'm err'; bubble.textContent = answer + '\n' + j.error.message; continue; }
+        const delta = j.choices && j.choices[0].delta.content;
+        if (delta) { answer += delta; bubble.textContent = answer; log.scrollTop = log.scrollHeight; }
+        if (j.usage) setStatus(j.usage.completion_tokens + ' tokens');
+      }
+    }
+    if (answer) history.push({ role: 'assistant', content: answer }); else history.pop();
+  } catch (e) {
+    if (e.name !== 'AbortError') { bubble.className = 'm err'; bubble.textContent = (answer ? answer + '\n' : '') + 'Connection lost.'; }
+    if (answer) history.push({ role: 'assistant', content: answer }); else history.pop();
+  } finally {
+    busy = false; sendBtn.disabled = false; abort = null;
+  }
+}
+
+$('form').addEventListener('submit', e => {
+  e.preventDefault();
+  const t = input.value.trim();
+  if (!t || busy) return;
+  if (!getKey()) { needKey(true); return; }
+  input.value = ''; input.style.height = 'auto'; send(t);
+});
+input.addEventListener('input', () => { input.style.height = 'auto'; input.style.height = Math.min(input.scrollHeight, window.innerHeight * .4) + 'px'; });
+$('new').onclick = () => { if (abort) abort.abort(); history = []; log.innerHTML = ''; setStatus(''); };
+$('key').onclick = () => needKey($('setup').style.display === 'none');
+$('saveKey').onclick = () => { localStorage.setItem('gatewayKey', $('keyInput').value.trim()); $('keyInput').value = ''; loadModels(); };
+loadModels();
+</script>
+</body>
+</html>

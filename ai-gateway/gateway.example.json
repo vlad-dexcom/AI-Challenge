@@ -1,0 +1,24 @@
+{
+  "host": "0.0.0.0",
+  "port": 8088,
+  "upstreamUrl": "http://127.0.0.1:11434",
+  "models": ["gemma4:26b-a4b-it-qat"],
+  "numCtx": 8192,
+  "keys": [],
+  "limits": {
+    "maxBodyBytes": 65536,
+    "maxMessages": 40,
+    "maxTokensCap": 1024,
+    "defaultMaxTokens": 512,
+    "rateLimitPerMinute": 30,
+    "rateBurst": 10,
+    "maxConcurrent": 1,
+    "queueSize": 4,
+    "queueTimeoutMs": 30000,
+    "retryAfterSeconds": 5,
+    "maxRequestsPerKey": 2,
+    "requestTimeoutMs": 300000,
+    "streamIdleTimeoutMs": 60000,
+    "keepaliveMs": 10000
+  }
+}
