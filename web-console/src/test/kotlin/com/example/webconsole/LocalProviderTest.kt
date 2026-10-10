@@ -31,6 +31,7 @@ class LocalProviderTest {
     private lateinit var server: UiServer
     private val cloudCalls = mutableListOf<String>()
     private val localModels = mutableListOf<String>()
+    private val baselineModels = mutableListOf<String>()
 
     private val sample = "# Sleep\n\n## Hygiene\n\n" + "Sleep eight hours in a dark cool bedroom to recover. ".repeat(30) +
         "\n\n## Protein\n\n" + "Eat protein every day to build muscle. ".repeat(30) + "\n"
@@ -52,6 +53,9 @@ class LocalProviderTest {
             localGeneratorFactory = { m -> localModels += m; TextGenerator { _, _ -> Result.success("local answer [1]") } },
             localEmbedderFactory = { meta -> HashingEmbeddingClient(meta.dimension) as EmbeddingClient },
             localModels = { listOf("gemma-x", "other:1b") },
+            localBaselineGeneratorFactory = { m -> baselineModels += m; TextGenerator { _, _ -> Result.success("baseline answer") } },
+            ollamaTuning = com.example.core.llm.OllamaTuning.RECOMMENDED,
+            ollamaPrompts = com.example.rag.PromptProfile.LOCAL,
         )
         server = UiServer(api, 0).also { it.start() }
     }
@@ -107,6 +111,47 @@ class LocalProviderTest {
         assertEquals(1, cloudCalls.size)
         assertTrue(localModels.isEmpty())
         assertEquals(404, run { tmp.root.resolve("index-local/structure.json").delete(); call("POST", "/api/chat", """{"question":"x","mode":"rag","provider":"hybrid"}""").first })
+    }
+
+    @Test fun baselineProviderUsesTheOriginalLocalStackNextToTheOptimizedOne() {
+        start()
+        val (c1, before) = call("POST", "/api/chat", """{"question":"protein to build muscle","mode":"rag","provider":"ollama-baseline","citations":false}""")
+        val (c2, after) = call("POST", "/api/chat", """{"question":"protein to build muscle","mode":"rag","provider":"ollama","citations":false}""")
+        assertEquals(200, c1); assertEquals(200, c2)
+        assertEquals("baseline answer", before["results"]!!.jsonArray.single().jsonObject["answer"]!!.jsonPrimitive.content)
+        assertEquals("local answer [1]", after["results"]!!.jsonArray.single().jsonObject["answer"]!!.jsonPrimitive.content)
+        assertEquals(1, baselineModels.size); assertEquals(1, localModels.size)
+        assertTrue(cloudCalls.isEmpty())
+    }
+
+    @Test fun configDescribesWhatDiffersBetweenBeforeAndAfter() {
+        start()
+        val (_, cfg) = call("GET", "/api/chat/config")
+        val params = cfg["optimization"]!!.jsonObject["params"]!!.jsonArray.map { it.jsonObject }
+        fun p(name: String) = params.first { it["name"]!!.jsonPrimitive.content.startsWith(name) }
+        assertEquals("16384 токенов", p("Контекстное окно")["before"]!!.jsonPrimitive.content)
+        assertEquals("8192 токенов", p("Контекстное окно")["after"]!!.jsonPrimitive.content)
+        assertEquals("true", p("Контекстное окно")["changed"]!!.jsonPrimitive.content)
+        assertEquals("без лимита", p("Лимит ответа")["before"]!!.jsonPrimitive.content)
+        assertEquals("1024 токенов", p("Лимит ответа")["after"]!!.jsonPrimitive.content)
+        assertEquals("полный отказ («не знаю»)", p("Частично")["before"]!!.jsonPrimitive.content)
+        assertEquals("ответить на подтверждённую часть", p("Частично")["after"]!!.jsonPrimitive.content)
+        assertEquals("false", p("Модель")["changed"]!!.jsonPrimitive.content)
+    }
+
+    @Test fun optimizationSummaryResourceIsServed() {
+        start()
+        val c = URL("http://localhost:${server.port}/ui/optimization-summary.json").openConnection() as HttpURLConnection
+        val body = Json.parseToJsonElement(c.inputStream.readBytes().decodeToString()).jsonObject
+        assertTrue(body["benchmarks"]!!.jsonArray.size >= 2)
+        assertTrue(body["demo"]!!.jsonArray.isNotEmpty())
+    }
+
+    @Test fun llmStatsEndpointsStartEmptyAndReset() {
+        start()
+        val c = URL("http://localhost:${server.port}/api/llm/stats").openConnection() as HttpURLConnection
+        assertEquals("[]", c.inputStream.readBytes().decodeToString())
+        assertEquals(200, call("POST", "/api/llm/stats/reset").first)
     }
 
     @Test fun configListsLocalIndexesAndDefaultModel() {

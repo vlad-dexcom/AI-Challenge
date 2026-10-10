@@ -62,6 +62,23 @@ class OllamaTextGeneratorTest {
         assertFalse(bodies.last().contains("\"format\""))
     }
 
+    @Test fun repeatLoopIsRetriedOnceWithSomeRandomness() = runTest {
+        val bodies = mutableListOf<String>()
+        val engine = MockEngine { req ->
+            bodies += (req.body as TextContent).text
+            if (bodies.size == 1) respond("""{"error":"prediction aborted, token repeat limit reached"}""", HttpStatusCode.InternalServerError, jsonHeaders)
+            else respond(reply("done"), HttpStatusCode.OK, jsonHeaders)
+        }
+        val out = OllamaTextGenerator(engine = engine, sleep = {}).generate(null, "x", GenerationOptions(temperature = 0.0)).getOrThrow()
+        assertEquals("done", out)
+        assertEquals(2, bodies.size)
+        assertTrue(bodies[0].contains("\"temperature\":0.0") && !bodies[0].contains("repeat_penalty"))
+        assertTrue(bodies[1].contains("\"temperature\":0.3") && bodies[1].contains("\"repeat_penalty\":1.1"))
+        // a loop that persists is reported, not retried forever
+        val always = MockEngine { respond("""{"error":"token repeat limit reached"}""", HttpStatusCode.InternalServerError, jsonHeaders) }
+        assertTrue(OllamaTextGenerator(engine = always, maxRetries = 0, sleep = {}).generate(null, "x").isFailure)
+    }
+
     @Test fun givesUpAfterMaxRetriesOnNetworkErrors() = runTest {
         var calls = 0
         val down = MockEngine { calls++; throw java.io.IOException("refused") }

@@ -1,6 +1,8 @@
 package com.example.rag
 
 import kotlinx.coroutines.CancellationException
+import com.example.core.llm.CallPurpose
+import com.example.core.llm.GenerationOptions
 import com.example.core.llm.TextGenerator
 
 enum class RagMode { NO_RAG, RAG }
@@ -38,8 +40,10 @@ class RagPipeline(
     private val config: RagConfig = RagConfig.PLAIN,
     /** Day 24: RAG answers use the JSON contract with verified sources/quotes and an "I don't know" mode. Off keeps Day 22/23 free text. */
     private val citations: Boolean = false,
+    /** Day 29: wording of the cited-answer prompts; [PromptProfile.DEFAULT] keeps the original text. */
+    profile: PromptProfile = PromptProfile.DEFAULT,
 ) {
-    private val cited = CitedAnswerer(generator)
+    private val cited = CitedAnswerer(generator, profile)
 
     /** Retrieval + stage 2 only (no answer generation); also used by the evals. */
     suspend fun retrieve(question: String, config: RagConfig = this.config, history: List<HistoryMessage> = emptyList()): RetrievalTrace {
@@ -78,7 +82,7 @@ class RagPipeline(
             }
         }
         val hits = trace?.finalHits ?: emptyList()
-        return generator.generate(RagPromptBuilder.systemPrompt(mode), RagPromptBuilder.userPrompt(mode, q, hits))
+        return generator.generate(RagPromptBuilder.systemPrompt(mode), RagPromptBuilder.userPrompt(mode, q, hits), GenerationOptions(purpose = CallPurpose.ANSWER))
             .map { RagAnswer(mode, q, it, hits, trace) }
     }
 

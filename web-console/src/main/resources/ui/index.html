@@ -43,6 +43,9 @@
  .badge.rag{background:#c7f0d0}.badge.norag{background:#ffe0b3}
  .quote{border-left:3px solid #999;margin:4px 0;padding:2px 8px;font-size:12px;background:#fafafa} .quote.ok{border-color:#2e8b57} .quote.bad{border-color:#d9822b;background:#fff8ec}
  .idk{background:#eef3ff;border:1px solid #9db4f0;padding:6px 10px;margin:4px 0}
+ #optpanel table{border-collapse:collapse;font-size:12px;width:100%} #optpanel td,#optpanel th{border:1px solid #ddd;padding:3px 6px;text-align:left;vertical-align:top}
+ #optpanel tr.chg td.after{background:#dcfce7;font-weight:600} #optpanel tr.same td{color:#666} #optpanel td.good{background:#dcfce7} #optpanel td.bad{background:#fde2e2}
+ .chip{display:inline-block;margin:2px 4px 2px 0;padding:3px 9px;border:1px solid #9db4f0;border-radius:12px;background:#eef3ff;cursor:pointer;font-size:12px} .chip:hover{background:#dbe7ff} .chip small{color:#555}
  .warn{background:#fff3cd;border:1px solid #ffd966;padding:4px 8px;margin:4px 0}
  .src{font-size:12px;margin:4px 0 0 0;padding-left:18px} .meta{font-size:11px;color:#666}
  details{font-size:12px;margin-top:4px} details pre{white-space:pre-wrap;margin:2px 0 6px;background:#fff;padding:4px;border:1px solid #eee}
@@ -59,7 +62,7 @@
  <label><input id="crerank" type="checkbox" checked> rerank</label>
  <label><input id="cllmrerank" type="checkbox"> LLM reranker</label>
  <label><input id="crewrite" type="checkbox"> query rewrite</label>
- <label id="lblprov">Answer with <select id="cprov"><option value="gemini">Cloud (Gemini)</option><option value="ollama">Local (Ollama)</option><option value="hybrid">Hybrid: local retrieval + Gemini answer</option><option value="both">Compare: Local vs Cloud</option></select></label>
+ <label id="lblprov">Answer with <select id="cprov"><option value="gemini">Cloud (Gemini)</option><option value="ollama">Local (Ollama)</option><option value="hybrid">Hybrid: local retrieval + Gemini answer</option><option value="opt">Compare: before vs after optimization (Day 29)</option><option value="both">Compare: Local vs Cloud</option></select></label>
  <label id="lblmodel">Model <input id="cmodel" list="cmodels" style="width:200px" placeholder="default"></label><datalist id="cmodels"></datalist>
  <label id="lblcloudm" style="display:none">Cloud model <input id="ccloudmodel" style="width:170px" placeholder="default"></label>
  <label id="lbllocalm" style="display:none">Local model <input id="clocalmodel" list="clocalmodels" style="width:200px" placeholder="default"></label><datalist id="clocalmodels"></datalist>
@@ -69,6 +72,17 @@
  <div class="meta"><b>Answer with</b>: <b>Cloud</b> = Gemini embeddings + Gemini answer over <code>rag/index</code>; <b>Local</b> = Ollama embeddings + Ollama answer over <code>rag/index-local</code> (no key, no internet); <b>Hybrid</b> = local retrieval (Ollama embeddings, local index) + Gemini answer, which separates retrieval quality from answer quality; <b>Compare: Local vs Cloud</b> sends the same question with the same stage settings through both stacks, side by side with latency, LLM calls, sources and verified quotes (modes With RAG / Without RAG).</div>
  <div class="meta"><b>Chat with task memory</b> (default): dialogue history, rolling summary and a task memory (goal, clarifications, constraints) are used for every answer; sources and verified quotes are shown under each answer; the stage settings above except topK/threshold are fixed (filter + rerank + contextual rewrite). The other modes are single-shot: history is shown but not used.</div>
  <div id="cwarn" class="warn" style="display:none"></div>
+ <details id="optpanel" open style="display:none;background:#fff;border:1px solid #9db4f0;padding:6px 10px;margin-top:6px">
+  <summary><b>День 29: оптимизация локальной LLM — что изменили и что получилось</b></summary>
+  <div class="meta" id="optnote" style="margin:4px 0"></div>
+  <div class="warn" style="margin:4px 0">Настройки конвейера в этом режиме закреплены как в бенчмарке: <b>filter + rerank + query rewrite</b>, topK 4/10, порог 0.65. Без <b>query rewrite</b> поисковый запрос не переписывается и часть улучшений (rewrite-промпт) не работает: на таких вопросах «до» и «после» дают почти одинаковые ответы.</div>
+  <div><b>Демо-вопросы</b> <span class="meta">(клик подставляет вопрос; запросы идут последовательно; перед каждой стороной модель прогревается с её num_ctx: смена окна заставляет Ollama перезагружать модель, без прогрева в задержку попала бы загрузка)</span><div id="optdemo" style="margin:4px 0"></div></div>
+  <div style="display:grid;grid-template-columns:minmax(0,3fr) minmax(0,2fr);gap:12px;align-items:start">
+   <div><b>Что изменили (параметры и промпты)</b><div id="optparams"></div></div>
+   <div><b>Итоги бенчмарка</b> <label class="meta">набор <select id="optset"><option value="holdout">hold-out (новые 28 вопросов)</option><option value="tuning">tuning (16 вопросов подбора)</option></select></label>
+    <label class="meta">модель <select id="optbench"></select></label><div id="optbench-table"></div></div>
+  </div>
+ </details>
 </fieldset>
 <div id="sessbar" style="background:#fff;border:1px solid #ccc;padding:6px 8px">
  <label>Session <select id="ssel" style="max-width:260px"></select></label>
@@ -330,13 +344,23 @@ async function refreshSessions(select){
 }
 async function sessionAction(fn){try{$('cerr').textContent='';const r=await fn();if(r&&r.session){sess=r.session;renderSession()}}catch(e){$('cerr').textContent=e.message}}
 const isCompare=()=>$('cprov').value==='both';
+const isOpt=()=>$('cprov').value==='opt';
 /** Shows the model inputs that match the stack and, when comparing stacks, disables the modes that cannot run on two stacks. Returns true if it had to change the mode. */
 function applyLayout(){
   const cmp=isCompare();
   ['lblmodel'].forEach(i=>$(i).style.display=cmp?'none':'');
   ['lblcloudm','lbllocalm'].forEach(i=>$(i).style.display=cmp?'':'none');
-  [...$('cmode').options].forEach(o=>{o.disabled=cmp&&(o.value==='session'||o.value==='compare')});
-  if(cmp&&($('cmode').value==='session'||$('cmode').value==='compare')){$('cmode').value='rag';return true}
+  const opt=isOpt();
+  [...$('cmode').options].forEach(o=>{o.disabled=(cmp&&(o.value==='session'||o.value==='compare'))||(opt&&o.value!=='rag')});
+  $('optpanel').style.display=opt?'':'none';
+  if(opt){
+    initOptPanel();
+    // The benchmark (and the improvement itself, e.g. the rewrite prompt) assumes these pipeline settings: pin them while this view is open.
+    $('cfilter').checked=true;$('crerank').checked=true;$('crewrite').checked=true;$('cllmrerank').checked=false;
+    $('ctopk').value=4;$('cbefore').value=10;$('cthr').value=0.65;
+  }
+  ['cfilter','crerank','crewrite','cllmrerank','ctopk','cbefore','cthr'].forEach(i=>{$(i).disabled=opt});
+  if((cmp&&($('cmode').value==='session'||$('cmode').value==='compare'))||(opt&&$('cmode').value!=='rag')){$('cmode').value='rag';return true}
   return false;
 }
 function updateMode(){
@@ -409,12 +433,85 @@ async function sendCompare(q){
   box.insertAdjacentHTML('afterbegin',compareSummary(results));
   $('csend').disabled=false;$('msgs').scrollTop=$('msgs').scrollHeight;
 }
+// ---- Day 29: before / after optimization of the local model ----
+let optSummary=null,optReady=false;
+const fmtPct=v=>v==null?'–':Math.round(v*100)+'%';
+const fmtS=ms=>(ms/1000).toFixed(1)+' с';
+async function initOptPanel(){
+  if(optReady||!chatCfg)return;
+  optReady=true;
+  const o=chatCfg.optimization;
+  if(o){
+    $('optnote').textContent=`Модель: ${o.model} (одна и та же в обеих колонках). «До» — исходные промпты и параметры по умолчанию; «После» — профиль промптов local и рекомендованные настройки.`;
+    let h='<table><tr><th>Группа</th><th>Параметр</th><th>'+esc(o.beforeTitle)+'</th><th>'+esc(o.afterTitle)+'</th><th>Зачем</th></tr>';
+    o.params.forEach(p=>{h+=`<tr class="${p.changed?'chg':'same'}"><td>${esc(p.group)}</td><td>${esc(p.name)}</td><td>${esc(p.before)}</td><td class="after">${esc(p.after)}${p.changed?'':' <small>(без изменений)</small>'}</td><td>${esc(p.why)}</td></tr>`});
+    $('optparams').innerHTML=h+'</table>';
+  }
+  try{
+    optSummary=await (await fetch('/ui/optimization-summary.json')).json();
+    $('optbench').innerHTML=optSummary.benchmarks.map((b,i)=>`<option value="${i}">${esc(b.title)}</option>`).join('');
+    $('optdemo').innerHTML=optSummary.demo.map((d,i)=>`<span class="chip" data-i="${i}">${esc(d.id)} <small>${esc(d.tag)}</small></span>`).join('');
+    renderOptBench();
+  }catch(e){$('optbench-table').innerHTML='<div class="warn">Нет optimization-summary.json: python3 rag/eval/local-rag/make_summary.py</div>'}
+}
+function renderOptBench(){
+  if(!optSummary)return;
+  const b=optSummary.benchmarks[+$('optbench').value||0],s=b.sets[$('optset').value];
+  const rows=[
+    ['Факты (ключевые факты в ответе)','facts',fmtPct,1],['«Не знаю» по вопросам из корпуса','idkInCorpus',fmtPct,-1],['Частично покрытые вопросы','partial',fmtPct,1],
+    ['Отказ вне корпуса (должен быть 100%)','outOfCorpusRefused',fmtPct,1],['Цитаты проверены в источнике','quotesVerified',fmtPct,1],['Язык ответа верный','languageOk',fmtPct,1],
+    ['Медиана задержки','medianMs',fmtS,-1],['p90 задержки','p90Ms',fmtS,-1]];
+  let h='<table><tr><th>Метрика</th><th>До</th><th>После</th></tr>';
+  rows.forEach(([name,k,f,dir])=>{
+    const bv=s.before[k],av=s.after[k];
+    let cls='';if(bv!=null&&av!=null&&Math.abs(av-bv)>(k.endsWith('Ms')?500:0.02))cls=((av-bv)*dir>0)?'good':'bad';
+    h+=`<tr><td>${name}</td><td>${f(bv)}</td><td class="${cls}">${f(av)}</td></tr>`;
+  });
+  h+=`<tr><td>Память модели (ollama ps)</td><td>${b.memoryGbBefore} ГБ</td><td>${b.memoryGbAfter} ГБ</td></tr></table><div class="meta">${esc(optSummary.note)} Ответов на конфигурацию: ${s.after.answers}.</div>`;
+  $('optbench-table').innerHTML=h;
+}
+$('optset').onchange=renderOptBench;$('optbench').onchange=renderOptBench;
+$('optdemo').onclick=e=>{const c=e.target.closest('.chip');if(!c||!optSummary)return;$('cq').value=optSummary.demo[+c.dataset.i].question;$('cq').focus()};
+const OPT_SIDES=[{provider:'ollama-baseline',title:'До оптимизации'},{provider:'ollama',title:'После оптимизации'}];
+function optSummaryLine(rs){
+  const [b,a]=rs;if(!b.t||!a.t)return '';
+  const idk=t=>!!(t.structured&&t.structured.idk);
+  const vq=t=>{const st=t.structured;if(!st)return '–';const qs=st.verification.quotes;return qs.filter(x=>x.status==='VERIFIED'||x.status==='REATTRIBUTED').length+'/'+qs.length};
+  const verdict=idk(b.t)&&!idk(a.t)?'<b style="color:#15803d">до: «не знаю» → после: ответ с цитатами</b>':(!idk(b.t)&&idk(a.t)?'<b style="color:#b91c1c">до: ответ → после: «не знаю» (регрессия)</b>':(idk(b.t)&&idk(a.t)?'оба: «не знаю»':'оба ответили'));
+  return `<div class="meta" style="margin:4px 0 8px"><b>Сравнение</b>: ${verdict} · задержка ${b.t.latencyMs} мс → ${a.t.latencyMs} мс · вызовов LLM ${b.t.llmCalls??'?'} → ${a.t.llmCalls??'?'} · проверенные цитаты ${vq(b.t)} → ${vq(a.t)} · длина ответа ${(b.t.answer||'').length} → ${(a.t.answer||'').length} симв.</div>`;
+}
+async function sendOpt(q){
+  addMsg(`<div class="msg user">${esc(q)}</div>`);
+  const box=addMsg('<div></div>');
+  const cols=OPT_SIDES.map(st=>{const d=document.createElement('div');d.innerHTML=`<div class="meta"><b>${st.title}</b></div><div class="msg bot meta">Ожидание…</div>`;return d});
+  const pair=document.createElement('div');pair.className='pair';cols.forEach(d=>pair.appendChild(d));box.appendChild(pair);
+  $('csend').disabled=true;$('cq').value='';
+  const model=$('cmodel').value.trim()||(chatCfg&&chatCfg.localDefaultModel)||'';
+  const results=[];
+  for(let i=0;i<OPT_SIDES.length;i++){
+    const st=OPT_SIDES[i];
+    // Different num_ctx makes Ollama reload the model; load the right variant first so the measured latency does not include the reload.
+    cols[i].lastElementChild.textContent='Подготовка модели (загрузка с нужным окном контекста)…';
+    try{await api('/api/chat',{provider:st.provider,question:'Reply with: OK',mode:'no_rag',model:$('cmodel').value.trim()||undefined})}catch(e){}
+    cols[i].lastElementChild.textContent='Думает…';
+    const body={provider:st.provider,question:q,mode:'rag',strategy:$('cstrategy').value||'structure',topK:+$('ctopk').value||4,topKBefore:+$('cbefore').value||10,threshold:parseFloat($('cthr').value),
+      filter:$('cfilter').checked,rerank:$('crerank').checked,llmRerank:$('cllmrerank').checked,rewrite:$('crewrite').checked};
+    if($('cmodel').value.trim())body.model=$('cmodel').value.trim();
+    const head=`<div class="meta"><b>${st.title}</b> · ${esc(model)}</div>`;
+    try{const r=await api('/api/chat',body);const t=r.results[0];cols[i].innerHTML=head+turnHtml(t);results.push({t})}
+    catch(e){cols[i].innerHTML=head+`<div class="msg bot"><div class="err">Error: ${esc(e.message)}</div></div>`;results.push({})}
+    $('msgs').scrollTop=$('msgs').scrollHeight;
+  }
+  box.insertAdjacentHTML('afterbegin',optSummaryLine(results));
+  $('csend').disabled=false;$('msgs').scrollTop=$('msgs').scrollHeight;
+}
 async function send(){
   const q=$('cq').value.trim();$('cerr').textContent='';
   if(!q){$('cerr').textContent='Type a question first';return}
   const mode=$('cmode').value;
   if(mode==='session')return sendSession(q);
   if(isCompare())return sendCompare(q);
+  if(isOpt())return sendOpt(q);
   addMsg(`<div class="msg user">${esc(q)}</div>`);
   const pending=addMsg('<div class="msg bot meta">Thinking…</div>');
   $('csend').disabled=true;$('cq').value='';
@@ -435,7 +532,7 @@ $('cctl').onchange=()=>{if($('cctl').value){$('cq').value=$('cctl').value;$('cq'
 let chatCfg=null;
 function applyProvider(){
   const c=chatCfg;if(!c)return;
-  const cmp=isCompare(),local=$('cprov').value==='ollama',localIdx=local||$('cprov').value==='hybrid';
+  const cmp=isCompare(),local=$('cprov').value==='ollama'||isOpt(),localIdx=local||$('cprov').value==='hybrid';
   const strategies=cmp?c.strategies.filter(x=>c.localStrategies.includes(x)):(localIdx?c.localStrategies:c.strategies);
   $('cstrategy').innerHTML=strategies.map(x=>`<option value="${esc(x)}">${esc(x)}</option>`).join('');
   if(strategies.includes(c.defaultStrategy))$('cstrategy').value=c.defaultStrategy;

@@ -1,8 +1,10 @@
 package com.example.rag.chat
 
+import com.example.core.llm.CallPurpose
 import com.example.core.llm.GenerationOptions
 import com.example.rag.HistoryMessage
 import com.example.rag.LlmQueryRewriter
+import com.example.rag.PromptProfile
 import com.example.rag.QueryRewriter
 import com.example.rag.RagConfig
 import com.example.rag.RewriteOutcome
@@ -80,7 +82,7 @@ class Summarizer(private val generator: TextGenerator) {
     suspend fun update(previous: String, evicted: List<ChatMessage>): Pair<String, Boolean> {
         val dialog = evicted.joinToString("\n") { "${it.role}: ${it.text.take(if (it.role == "user") USER else ASSISTANT)}" }
         val prompt = "Previous summary:\n${previous.ifBlank { "(none)" }}\n\nNew exchanges:\n$dialog\n\nWrite the updated summary."
-        val reply = generator.generate(SYSTEM, prompt, GenerationOptions(temperature = 0.0)).getOrNull()?.trim()
+        val reply = generator.generate(SYSTEM, prompt, GenerationOptions(temperature = 0.0, purpose = CallPurpose.SUMMARY)).getOrNull()?.trim()
         if (!reply.isNullOrEmpty()) return reply.take(MAX_SUMMARY) to false
         return fallback(previous, evicted) to true
     }
@@ -107,6 +109,7 @@ class ContextualRewriter(
     private val generator: TextGenerator,
     private val memory: TaskMemory?,
     private val summary: String,
+    private val profile: PromptProfile = PromptProfile.DEFAULT,
 ) : QueryRewriter {
     override suspend fun rewrite(question: String, history: List<HistoryMessage>): RewriteOutcome {
         val contextual = history.isNotEmpty() || summary.isNotBlank() || memory?.isEmpty == false
@@ -121,7 +124,7 @@ class ContextualRewriter(
             }
             append("Question: $question")
         }
-        val reply = generator.generate(SYSTEM, prompt, GenerationOptions(temperature = 0.0)).getOrElse {
+        val reply = generator.generate(systemFor(profile), prompt, GenerationOptions(temperature = 0.0, purpose = CallPurpose.REWRITE)).getOrElse {
             return RewriteOutcome(fallbackQuery, "rewrite call failed: ${it.message?.take(80)}")
         }
         val out = LlmQueryRewriter.validate(question, reply, checkDrift = !contextual)
@@ -129,8 +132,12 @@ class ContextualRewriter(
     }
 
     companion object {
-        val SYSTEM = LlmQueryRewriter.SYSTEM + " If a task memory is given, it holds the user's goal and fixed constraints: when the question depends on them " +
+        private const val MEMORY_HINT = " If a task memory is given, it holds the user's goal and fixed constraints: when the question depends on them " +
             "(\"what about for my knee?\", \"a plan for me\"), put the relevant keywords (injury, equipment, diet, level) into the query; " +
             "do not add constraints that have nothing to do with the question."
+
+        val SYSTEM = LlmQueryRewriter.SYSTEM + MEMORY_HINT
+
+        fun systemFor(profile: PromptProfile): String = LlmQueryRewriter.systemFor(profile) + MEMORY_HINT
     }
 }

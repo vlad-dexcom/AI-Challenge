@@ -26,6 +26,8 @@ data class OllamaReply(
     val completionTokens: Int,
     val evalMillis: Long,
     val totalMillis: Long,
+    val promptEvalMillis: Long = 0,
+    val loadMillis: Long = 0,
 ) {
     val tokensPerSecond: Double get() = if (evalMillis > 0) completionTokens * 1000.0 / evalMillis else 0.0
 }
@@ -54,9 +56,14 @@ class OllamaChatClient(
         jsonMode: Boolean = false,
         numCtx: Int? = null,
         maxTokens: Int? = null,
+        topP: Double? = null,
+        topK: Int? = null,
+        repeatPenalty: Double? = null,
+        keepAlive: String? = null,
     ): Result<OllamaReply> = try {
-        val options = if (temperature == null && numCtx == null && maxTokens == null) null else Options(temperature, numCtx, maxTokens)
-        var body = ChatRequest(model, messages, false, options, think, if (jsonMode) "json" else null)
+        val options = Options(temperature, numCtx, maxTokens, topP, topK, repeatPenalty)
+            .takeIf { listOf(temperature, numCtx, maxTokens, topP, topK, repeatPenalty).any { it != null } }
+        var body = ChatRequest(model, messages, false, options, think, if (jsonMode) "json" else null, keepAlive)
         var response = post(body)
         var text = response.bodyAsText()
         // Models without a thinking mode reject the `think` flag; retry plain so one toggle works for every model.
@@ -72,7 +79,10 @@ class OllamaChatClient(
             val content = r.message?.content?.trim().orEmpty()
             if (content.isEmpty()) Result.failure(IllegalStateException("Ollama returned an empty answer"))
             else Result.success(
-                OllamaReply(content, r.message?.thinking?.trim().orEmpty(), r.model ?: model, r.promptEvalCount, r.evalCount, r.evalDuration / 1_000_000, r.totalDuration / 1_000_000),
+                OllamaReply(
+                    content, r.message?.thinking?.trim().orEmpty(), r.model ?: model, r.promptEvalCount, r.evalCount,
+                    r.evalDuration / 1_000_000, r.totalDuration / 1_000_000, r.promptEvalDuration / 1_000_000, r.loadDuration / 1_000_000,
+                ),
             )
         }
     } catch (e: Exception) {
@@ -97,6 +107,9 @@ class OllamaChatClient(
         val temperature: Double? = null,
         @kotlinx.serialization.SerialName("num_ctx") val numCtx: Int? = null,
         @kotlinx.serialization.SerialName("num_predict") val numPredict: Int? = null,
+        @kotlinx.serialization.SerialName("top_p") val topP: Double? = null,
+        @kotlinx.serialization.SerialName("top_k") val topK: Int? = null,
+        @kotlinx.serialization.SerialName("repeat_penalty") val repeatPenalty: Double? = null,
     )
     @Serializable private data class ChatRequest(
         val model: String,
@@ -105,6 +118,7 @@ class OllamaChatClient(
         val options: Options? = null,
         val think: Boolean? = null,
         val format: String? = null,
+        @kotlinx.serialization.SerialName("keep_alive") val keepAlive: String? = null,
     )
     @Serializable private data class ChatResponse(
         val model: String? = null,
@@ -113,6 +127,8 @@ class OllamaChatClient(
         @kotlinx.serialization.SerialName("eval_count") val evalCount: Int = 0,
         @kotlinx.serialization.SerialName("eval_duration") val evalDuration: Long = 0,
         @kotlinx.serialization.SerialName("total_duration") val totalDuration: Long = 0,
+        @kotlinx.serialization.SerialName("prompt_eval_duration") val promptEvalDuration: Long = 0,
+        @kotlinx.serialization.SerialName("load_duration") val loadDuration: Long = 0,
     )
     @Serializable private data class ReplyMessage(val content: String = "", val thinking: String? = null)
     @Serializable private data class Tag(val name: String)

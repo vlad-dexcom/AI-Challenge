@@ -17,6 +17,25 @@ class LlmProviderTest {
         assertEquals("http://h:2", p.ollamaUrl)
     }
 
+    @Test fun localDefaultsAreTheTunedOnesAndNoneTurnsThemOff() {
+        val p = LlmProvider.from(mapOf("provider" to "ollama"), "")
+        assertEquals(PromptProfile.LOCAL, p.promptProfile)
+        assertEquals(com.example.core.llm.OllamaTuning.RECOMMENDED, p.tuning)
+        assertEquals(8192, p.tuning.base.numCtx)
+        val off = LlmProvider.from(mapOf("provider" to "ollama", "ollama-tuning" to "none", "prompt-profile" to "default"), "")
+        assertEquals(PromptProfile.DEFAULT, off.promptProfile)
+        assertEquals(com.example.core.llm.OllamaTuning.DEFAULT, off.tuning)
+        // the cloud never gets the local prompts
+        assertEquals(PromptProfile.DEFAULT, LlmProvider.from(emptyMap(), "k").promptProfile)
+    }
+
+    @Test fun tuningComesFromTheOptionAndBadValuesAreRejected() {
+        val p = LlmProvider.from(mapOf("provider" to "ollama", "ollama-tuning" to "numCtx=4096,rewrite.maxTokens=64"), "")
+        assertEquals(4096, p.tuning.base.numCtx)
+        assertEquals(64, p.tuning.resolve(com.example.core.llm.CallPurpose.REWRITE).maxTokens)
+        assertTrue(runCatching { LlmProvider.from(mapOf("ollama-tuning" to "bogus=1"), "") }.isFailure)
+    }
+
     @Test fun geminiNeedsAKeyAndFallsBackToOfflineEmbedder() {
         val noKey = LlmProvider.from(emptyMap(), "")
         assertTrue(!noKey.isLocal && !noKey.available)

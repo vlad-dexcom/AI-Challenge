@@ -8,6 +8,7 @@ import kotlinx.serialization.json.JsonPrimitive
 import kotlinx.serialization.json.booleanOrNull
 import kotlinx.serialization.json.contentOrNull
 import com.example.core.platform.normalizeNfkc
+import com.example.core.llm.CallPurpose
 import com.example.core.llm.GenerationOptions
 import com.example.core.llm.TextGenerator
 
@@ -166,10 +167,12 @@ object CitationVerifier {
 }
 
 object IdkResponder {
+    /** Counts words, not letters: a Russian question with an English term ("Кто выиграл CrossFit Games 2024?") is Russian. */
     fun detectLanguage(text: String): String {
-        val cyr = text.count { it in 'а'..'я' || it in 'А'..'Я' || it == 'ё' || it == 'Ё' }
-        val lat = text.count { it in 'a'..'z' || it in 'A'..'Z' }
-        return if (cyr > lat) "ru" else "en"
+        val words = text.split(Regex("[^\\p{L}]+")).filter { it.isNotEmpty() }
+        val cyr = words.count { w -> w.any { it in 'а'..'я' || it in 'А'..'Я' || it == 'ё' || it == 'Ё' } }
+        val lat = words.count { w -> w.any { it in 'a'..'z' || it in 'A'..'Z' } && w.none { it in 'а'..'я' || it in 'А'..'Я' } }
+        return if (cyr > 0 && cyr >= lat) "ru" else "en"
     }
 
     /** Closest chunks below this cosine are unrelated noise (Day 23 sweep: off-topic top-1 scores are 0.50-0.60), so no topics are offered. */
@@ -213,21 +216,21 @@ object IdkResponder {
 }
 
 /** Generates the JSON answer, verifies it in code, retries once with a stricter prompt, and falls back to "I don't know". */
-class CitedAnswerer(private val generator: TextGenerator) {
+class CitedAnswerer(private val generator: TextGenerator, private val profile: PromptProfile = PromptProfile.DEFAULT) {
     private sealed interface Attempt {
         data class Parsed(val raw: RawCitedAnswer) : Attempt
         data class Malformed(val why: String) : Attempt
     }
 
     suspend fun answer(question: String, hits: List<SearchHit>, closest: List<SearchHit> = hits, dialogContext: String? = null): Result<StructuredAnswer> {
-        val options = GenerationOptions(temperature = 0.0, json = true)
+        val options = GenerationOptions(temperature = 0.0, json = true, purpose = CallPurpose.CITED_ANSWER)
         var lastReport = VerificationReport()
         var lastReason = IdkReason.VERIFICATION_FAILED
         var feedback: String? = null
         val notes = mutableListOf<String>()
         for (attempt in 1..MAX_ATTEMPTS) {
-            val prompt = RagPromptBuilder.citationUserPrompt(question, hits, feedback, dialogContext)
-            val reply = generator.generate(RagPromptBuilder.citationSystemPrompt(strict = attempt > 1, dialog = dialogContext != null), prompt, options).getOrElse { return Result.failure(it) }
+            val prompt = RagPromptBuilder.citationUserPrompt(question, hits, feedback, dialogContext, profile)
+            val reply = generator.generate(RagPromptBuilder.citationSystemPrompt(strict = attempt > 1, dialog = dialogContext != null, profile = profile), prompt, options).getOrElse { return Result.failure(it) }
             val parsed = parseOrRepair(reply, options).getOrElse { return Result.failure(it) }
             when (parsed) {
                 is Attempt.Malformed -> {
@@ -265,7 +268,7 @@ class CitedAnswerer(private val generator: TextGenerator) {
     /** One repair call when the reply is not parseable; a failed repair request is a malformed attempt, not a hard error. */
     private suspend fun parseOrRepair(reply: String, options: GenerationOptions): Result<Attempt> {
         CitationParser.parse(reply).onSuccess { return Result.success(Attempt.Parsed(it)) }
-        val repaired = generator.generate(RagPromptBuilder.REPAIR_SYSTEM, RagPromptBuilder.repairPrompt(reply), options).getOrNull()
+        val repaired = generator.generate(RagPromptBuilder.REPAIR_SYSTEM, RagPromptBuilder.repairPrompt(reply), options.copy(purpose = CallPurpose.REPAIR)).getOrNull()
         val second = repaired?.let { CitationParser.parse(it) }
         return second?.fold({ Result.success(Attempt.Parsed(it)) }, { Result.success(Attempt.Malformed(it.message.orEmpty().take(80))) })
             ?: Result.success(Attempt.Malformed("repair request failed"))

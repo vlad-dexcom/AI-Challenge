@@ -1,5 +1,6 @@
 package com.example.rag.chat
 
+import com.example.core.llm.CallPurpose
 import com.example.core.llm.GenerationOptions
 import com.example.rag.HistoryMessage
 import com.example.core.llm.TextGenerator
@@ -28,7 +29,7 @@ class MemoryExtractor(private val generator: TextGenerator) {
             appendLine()
             append("New user message: $userMessage")
         }
-        val reply = generator.generate(SYSTEM, prompt, GenerationOptions(temperature = 0.0, json = true))
+        val reply = generator.generate(SYSTEM, prompt, GenerationOptions(temperature = 0.0, json = true, purpose = CallPurpose.MEMORY))
             .getOrElse { return ExtractOutcome(null, "extractor call failed: ${it.message?.take(80)}") }
         return parse(reply).fold({ ExtractOutcome(it) }, { ExtractOutcome(null, "extractor reply rejected: ${it.message?.take(80)}") })
     }

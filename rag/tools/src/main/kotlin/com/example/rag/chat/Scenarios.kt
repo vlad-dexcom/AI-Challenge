@@ -1,5 +1,6 @@
 package com.example.rag.chat
 
+import com.example.core.llm.CallPurpose
 import com.example.core.llm.GenerationOptions
 import com.example.rag.IdkResponder
 import com.example.rag.ManualVerdict
@@ -100,7 +101,7 @@ class GoalJudge(private val generator: TextGenerator) {
             appendLine("constraintsRespected = nothing in the reply contradicts a fixed constraint (e.g. recommends something the user cannot do or eat) unless it explicitly flags the conflict; true when there are no constraints.")
             append("Reply with JSON only: {\"goalKept\":true|false,\"constraintsRespected\":true|false,\"reason\":\"<one short sentence>\"}")
         }
-        val reply = generator.generate(SYSTEM, prompt, GenerationOptions(temperature = 0.0, json = true)).getOrElse { return Result.failure(it) }
+        val reply = generator.generate(SYSTEM, prompt, GenerationOptions(temperature = 0.0, json = true, purpose = CallPurpose.JUDGE)).getOrElse { return Result.failure(it) }
         return parse(reply)
     }
 

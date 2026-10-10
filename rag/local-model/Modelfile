@@ -1,0 +1,10 @@
+# Day 29: the tuned local model for the RAG / trainer assistant (see docs/day29-local-llm-optimization.md).
+# Create it with:  ollama create trainer-rag-fast -f rag/local-model/Modelfile
+# The RAG pipeline sends its own system prompt, context window and limits on every call, so these values matter for clients that talk to Ollama
+# directly (curl, the private gateway, a phone chat): an 8K window (the measured prompts are 0.1-2.1K tokens), calmer sampling than Gemma's default (1.0).
+FROM gemma4:26b-a4b-it-qat
+PARAMETER num_ctx 8192
+PARAMETER temperature 0.3
+PARAMETER top_k 64
+PARAMETER top_p 0.95
+SYSTEM """You are a knowledgeable, concise personal trainer. Answer the user's question about training, nutrition and recovery."""

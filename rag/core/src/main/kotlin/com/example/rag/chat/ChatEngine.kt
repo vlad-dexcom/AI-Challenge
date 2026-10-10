@@ -9,6 +9,7 @@ import com.example.rag.IdkResponder
 import com.example.rag.LlmReranker
 import com.example.rag.LlmUsage
 import com.example.rag.RagMode
+import com.example.rag.PromptProfile
 import com.example.rag.RagPipeline
 import com.example.rag.RagPromptBuilder
 import com.example.rag.Reranker
@@ -33,6 +34,7 @@ class ChatEngine(
     private val retriever: Retriever,
     private val generator: TextGenerator,
     private val usage: LlmUsage = LlmUsage(),
+    private val profile: PromptProfile = PromptProfile.DEFAULT,
     private val reranker: Reranker? = null,
     private val clock: () -> Long = System::nanoTime,
     private val now: () -> Long = System::currentTimeMillis,
@@ -64,9 +66,9 @@ class ChatEngine(
             val memoryForPrompt = if (full) memory else null
             val cfg = options.ragConfig()
             val pipeline = RagPipeline(
-                retriever, generator, ContextualRewriter(generator, memoryForPrompt, summary),
+                retriever, generator, ContextualRewriter(generator, memoryForPrompt, summary, profile),
                 reranker ?: if (options.llmRerank) LlmReranker(generator) else HeuristicReranker(),
-                config = cfg, citations = true,
+                config = cfg, citations = true, profile = profile,
             )
             val answer = pipeline.ask(question, RagMode.RAG, cfg, history, HistoryBudget.dialogContext(memoryForPrompt, summary, history)).getOrElse { return Result.failure(it) }
             val raw = answer.structured ?: error("pipeline was built without citations")

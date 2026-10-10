@@ -1,0 +1,83 @@
+{
+ "ctx4k-fast": {
+  "model": "gemma4:26b-a4b-it-qat",
+  "tuning": "numCtx=4096"
+ },
+ "ctx8k-fast": {
+  "model": "gemma4:26b-a4b-it-qat",
+  "tuning": "numCtx=8192"
+ },
+ "limits-fast": {
+  "model": "gemma4:26b-a4b-it-qat",
+  "tuning": "numCtx=4096,rewrite.maxTokens=64,cited.maxTokens=700,repair.maxTokens=700"
+ },
+ "ctx4k-smart": {
+  "model": "gemma4:31b-mlx",
+  "tuning": "numCtx=4096"
+ },
+ "p-rewrite-fast": {
+  "model": "gemma4:26b-a4b-it-qat",
+  "tuning": "",
+  "env": {
+   "RAG_PROMPT_PROFILE": "rewrite"
+  }
+ },
+ "p-partial-fast": {
+  "model": "gemma4:26b-a4b-it-qat",
+  "tuning": "",
+  "env": {
+   "RAG_PROMPT_PROFILE": "partial"
+  }
+ },
+ "p-lang-fast": {
+  "model": "gemma4:26b-a4b-it-qat",
+  "tuning": "",
+  "env": {
+   "RAG_PROMPT_PROFILE": "lang"
+  }
+ },
+ "p-compact-fast": {
+  "model": "gemma4:26b-a4b-it-qat",
+  "tuning": "",
+  "env": {
+   "RAG_PROMPT_PROFILE": "compact"
+  }
+ },
+ "p-local-fast": {
+  "model": "gemma4:26b-a4b-it-qat",
+  "tuning": "",
+  "env": {
+   "RAG_PROMPT_PROFILE": "local"
+  }
+ },
+ "p-local-smart": {
+  "model": "gemma4:31b-mlx",
+  "tuning": "",
+  "env": {
+   "RAG_PROMPT_PROFILE": "local"
+  }
+ },
+ "q-26b-nvfp4": {
+  "model": "gemma4:26b-nvfp4",
+  "tuning": ""
+ },
+ "q-26b-q4km": {
+  "model": "gemma4:26b-a4b-it-q4_K_M",
+  "tuning": ""
+ },
+ "q-12b-qat": {
+  "model": "gemma4:12b-it-qat",
+  "tuning": ""
+ },
+ "q-12b-nvfp4": {
+  "model": "gemma4:12b-nvfp4",
+  "tuning": ""
+ },
+ "final-fast": {
+  "model": "gemma4:26b-a4b-it-qat",
+  "tuning": "numCtx=8192,rewrite.maxTokens=64,cited.maxTokens=700,repair.maxTokens=700",
+  "env": {
+   "RAG_PROMPT_PROFILE": "local"
+  }
+ }
+}

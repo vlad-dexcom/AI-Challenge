@@ -118,7 +118,7 @@ class InfraTest {
         val r = Judge(gen).judge("q", "answer", listOf(listOf("a", "b")), outOfCorpus = false).getOrThrow()
         assertEquals(Verdict.PARTIAL, r.verdict)
         assertEquals("only two of five", r.reason)
-        assertEquals(GenerationOptions(0.0, true), gen.calls.single().third)
+        assertEquals(GenerationOptions(0.0, true, com.example.core.llm.CallPurpose.JUDGE), gen.calls.single().third)
         assertTrue(gen.calls.single().second.contains("a / b"))
         assertTrue(Judge.parse("not json").isFailure)
     }

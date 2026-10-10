@@ -7,6 +7,7 @@ import kotlinx.serialization.builtins.ListSerializer
 import kotlinx.serialization.json.Json
 import java.io.File
 import com.example.core.llm.EmbeddingClient
+import com.example.core.llm.CallPurpose
 import com.example.core.llm.GenerationOptions
 import com.example.core.llm.TextGenerator
 
@@ -55,7 +56,7 @@ class QuoteJudge(private val generator: TextGenerator) {
             "\n\nDoes every claim of the answer follow from the quotes, and do the quotes not contradict it? " +
             "SUPPORTED = yes; PARTIAL = some claims go beyond the quotes; UNSUPPORTED = the answer is not backed by or contradicts the quotes. " +
             "The answer may be in another language than the quotes. Reply with JSON only: {\"verdict\":\"supported|partial|unsupported\",\"reason\":\"<one short sentence>\"}"
-        val reply = generator.generate("You are a strict fact-checker. Judge only against the given quotes.", prompt, GenerationOptions(0.0, true))
+        val reply = generator.generate("You are a strict fact-checker. Judge only against the given quotes.", prompt, GenerationOptions(0.0, true, CallPurpose.JUDGE))
             .getOrElse { return Result.failure(it) }
         val verdict = Regex("\"verdict\"\\s*:\\s*\"(supported|partial|unsupported)\"", RegexOption.IGNORE_CASE).find(reply)?.groupValues?.get(1)?.uppercase()
             ?: return Result.failure(IllegalArgumentException("Unparsable judge reply: ${reply.take(100)}"))
@@ -171,7 +172,7 @@ internal suspend fun runCitationsEval(opts: Map<String, String>, dir: File, embe
     val generator = CachedTextGenerator(llm.generator(model), "$model@cite", usage, cache)
     val judge = QuoteJudge(CachedTextGenerator(llm.generator(model), "$model@quote-judge", LlmUsage(), cache))
     val cfg = RagConfig(filter = true, rerank = true, rewrite = flag(opts, "rewrite"), threshold = opts["threshold"]?.toFloat() ?: RagConfig.DEFAULT.threshold)
-    val pipeline = stagedPipeline(VectorRetriever(cachedEmbedder(embedder), index, cfg.topKAfter), generator, cfg, false, citations = true)
+    val pipeline = stagedPipeline(VectorRetriever(cachedEmbedder(embedder), index, cfg.topKAfter), generator, cfg, false, citations = true, profile = llm.promptProfile)
     val out = File(opts["report"] ?: "rag/eval").also { it.mkdirs() }
     val manualFile = File(out, "citations-manual.json")
     val manual = if (manualFile.isFile) Json.decodeFromString(kotlinx.serialization.builtins.MapSerializer(kotlinx.serialization.serializer<String>(), ManualVerdict.serializer()), manualFile.readText()) else emptyMap()

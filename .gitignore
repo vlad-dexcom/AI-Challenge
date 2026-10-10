@@ -49,3 +49,7 @@ rag/cache/
 
 ### Chat sessions (Day 25) ###
 rag/sessions/
+
+# Day 29 experiment artifacts
+__pycache__/
+rag/eval/local-rag/optimization/server.log
