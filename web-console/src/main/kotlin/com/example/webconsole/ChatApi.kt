@@ -23,6 +23,7 @@ import com.example.rag.ControlSet
 import com.example.rag.IndexMeta
 import com.example.rag.IndexStore
 import com.example.rag.LlmUsage
+import com.example.rag.PromptProfile
 import com.example.rag.RagAnswer
 import com.example.rag.RagConfig
 import com.example.rag.RagMode
@@ -41,6 +42,7 @@ class LocalRag(
     val generatorFor: (String) -> TextGenerator?,
     val defaultModel: String,
     val models: () -> List<String>,
+    val promptProfile: PromptProfile = PromptProfile.DEFAULT,
 )
 
 @Serializable
@@ -60,6 +62,8 @@ data class ChatConfig(
     val localStrategies: List<String> = emptyList(),
     val localDefaultModel: String = "",
     val localModels: List<String> = emptyList(),
+    /** Day 29: what differs between the "before" and "after" local configurations (for the before/after view). */
+    val optimization: OptimizationView? = null,
 )
 
 /**
@@ -82,11 +86,14 @@ class ChatApi(
     private val generatorFor: (String) -> TextGenerator?,
     private val clock: () -> Long = System::nanoTime,
     private val local: LocalRag? = null,
+    /** Day 29 comparison: the same local stack with the original prompts and no tuning. */
+    private val localBaseline: LocalRag? = null,
+    private val optimization: OptimizationView? = null,
 ) {
     private val json = Json { ignoreUnknownKeys = true; encodeDefaults = true }
 
     private val provider = PipelineProvider { req, needsRetrieval ->
-        val useLocal = req.provider == LOCAL || req.provider == HYBRID
+        val useLocal = req.provider == LOCAL || req.provider == HYBRID || req.provider == LOCAL_BASELINE
         val route = providerRoute(req.provider)
         val retriever = if (needsRetrieval) {
             val file = File(route.indexDir, "${req.strategy}.json")
@@ -102,14 +109,19 @@ class ChatApi(
         val usage = LlmUsage()
         val generator = CachedTextGenerator(raw, model, usage)
         val config = if (req.staged) RagConfig(req.topKBefore, req.topK, req.threshold, req.filter, req.rerank, req.rewrite) else RagConfig.PLAIN
-        ChatPipeline(stagedPipeline(retriever, generator, config, req.llmRerank, req.citations), config, usage)
+        ChatPipeline(stagedPipeline(retriever, generator, config, req.llmRerank, req.citations, route.profile), config, usage)
     }
 
-    private class Route(val indexDir: File, val embedderFor: (IndexMeta) -> EmbeddingClient?, val generatorFor: (String) -> TextGenerator?, val defaultModel: String)
+    private class Route(
+        val indexDir: File, val embedderFor: (IndexMeta) -> EmbeddingClient?, val generatorFor: (String) -> TextGenerator?, val defaultModel: String,
+        val profile: PromptProfile = PromptProfile.DEFAULT,
+    )
 
     private fun providerRoute(provider: String): Route = when (provider) {
-        LOCAL -> local?.let { Route(it.indexDir, it.embedderFor, it.generatorFor, it.defaultModel) }
+        LOCAL -> local?.let { Route(it.indexDir, it.embedderFor, it.generatorFor, it.defaultModel, it.promptProfile) }
             ?: throw ApiException(400, "The local provider is not configured")
+        LOCAL_BASELINE -> localBaseline?.let { Route(it.indexDir, it.embedderFor, it.generatorFor, it.defaultModel, it.promptProfile) }
+            ?: throw ApiException(400, "The baseline provider is not configured")
         HYBRID -> local?.let { Route(it.indexDir, it.embedderFor, generatorFor, GeminiTextGenerator.DEFAULT_MODEL) }
             ?: throw ApiException(400, "The local provider is not configured")
         "gemini" -> Route(indexDir, embedderFor, generatorFor, GeminiTextGenerator.DEFAULT_MODEL)
@@ -127,6 +139,7 @@ class ChatApi(
                 localStrategies = local?.let { l -> ChunkStrategy.entries.map { it.id }.filter { File(l.indexDir, "$it.json").isFile } }.orEmpty(),
                 localDefaultModel = local?.defaultModel.orEmpty(),
                 localModels = local?.models?.invoke().orEmpty(),
+                optimization = optimization,
             ),
         )
     }
@@ -200,6 +213,9 @@ class ChatApi(
 
         private const val MAX_QUESTION = 2000
         const val LOCAL = "ollama"
+
+        /** Day 29: the local model as it was before the optimization (original prompts, default parameters). */
+        const val LOCAL_BASELINE = "ollama-baseline"
 
         /** Local retrieval (Ollama embeddings over the local index) + cloud answer (Gemini): separates retrieval quality from answer quality. */
         const val HYBRID = "hybrid"

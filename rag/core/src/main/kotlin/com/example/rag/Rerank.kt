@@ -1,6 +1,7 @@
 package com.example.rag
 
 import kotlin.math.max
+import com.example.core.llm.CallPurpose
 import com.example.core.llm.GenerationOptions
 import com.example.core.llm.TextGenerator
 
@@ -147,7 +148,7 @@ class LlmReranker(private val generator: TextGenerator, private val maxChunkChar
             appendLine()
             hits.forEachIndexed { i, h -> appendLine("[${i + 1}] ${RagPromptBuilder.sourceLabel(h.chunk)}\n${h.chunk.text.trim().take(maxChunkChars)}\n") }
         }
-        val reply = generator.generate(SYSTEM, prompt, GenerationOptions(temperature = 0.0)).getOrNull()
+        val reply = generator.generate(SYSTEM, prompt, GenerationOptions(temperature = 0.0, purpose = CallPurpose.RERANK)).getOrNull()
             ?: return KeepOrderReranker.rerank(query, hits, topK)
         val scores = parse(reply, hits.size)
         if (scores.isEmpty()) return KeepOrderReranker.rerank(query, hits, topK)
@@ -173,7 +174,7 @@ class LlmReranker(private val generator: TextGenerator, private val maxChunkChar
  * The final answer is still generated from the original question. Falls back to the original on any
  * failure, an empty/multi-line/over-long reply, or drift (a Latin-script question and a query sharing none of its terms).
  */
-class LlmQueryRewriter(private val generator: TextGenerator) : QueryRewriter {
+class LlmQueryRewriter(private val generator: TextGenerator, private val profile: PromptProfile = PromptProfile.DEFAULT) : QueryRewriter {
     override suspend fun rewrite(question: String, history: List<HistoryMessage>): RewriteOutcome {
         val prompt = buildString {
             if (history.isNotEmpty()) {
@@ -183,7 +184,7 @@ class LlmQueryRewriter(private val generator: TextGenerator) : QueryRewriter {
             }
             append("Question: $question")
         }
-        val reply = generator.generate(SYSTEM, prompt, GenerationOptions(temperature = 0.0)).getOrElse {
+        val reply = generator.generate(systemFor(profile), prompt, GenerationOptions(temperature = 0.0, purpose = CallPurpose.REWRITE)).getOrElse {
             return RewriteOutcome(question, "rewrite call failed: ${it.message?.take(80)}")
         }
         return validate(question, reply)
@@ -194,6 +195,21 @@ class LlmQueryRewriter(private val generator: TextGenerator) : QueryRewriter {
             "articles about strength training, nutrition and recovery. Resolve references using the conversation if given, " +
             "translate to English if needed, and use the specific keywords and synonyms that the articles would contain. " +
             "Reply with the query only: one line, at most 25 words, no quotes, no explanation."
+
+        /**
+         * Day 29 wording for small local models: the question's own nouns, numbers and units are kept and no technique or protocol name that the question
+         * does not contain is invented (a cloud rewriter once added "RAMP protocol" to a warm-up question and lost the right chunk). Examples use topics
+         * that are in none of the evaluation sets.
+         */
+        const val LOCAL_SYSTEM = "You turn a user question into a search query for a knowledge base of English articles about strength training, " +
+            "nutrition and recovery. Rules: translate to English if needed; KEEP the question's own key nouns, numbers and units; add at most two or three " +
+            "synonyms the articles would use; do not add technique, protocol or product names that the question does not contain. " +
+            "Reply with the query only: one line, at most 20 words, no quotes, no explanation.\n" +
+            "Question: Is it okay to train the same muscle every day?\nQuery: training the same muscle group every day frequency recovery\n" +
+            "Question: Нужно ли пить воду во время тренировки?\nQuery: drinking water hydration during workout\n" +
+            "Question: Which exercises are good if my wrists hurt?\nQuery: wrist pain friendly exercise alternatives pressing"
+
+        fun systemFor(profile: PromptProfile): String = if (profile.rewriteExamples) LOCAL_SYSTEM else SYSTEM
 
         /** [checkDrift] = false for follow-ups: a resolved query legitimately shares no words with "what about my knee?". */
         fun validate(question: String, reply: String, checkDrift: Boolean = true): RewriteOutcome {

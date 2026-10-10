@@ -8,6 +8,7 @@ import java.util.concurrent.atomic.AtomicInteger
 import java.util.concurrent.atomic.AtomicLong
 import com.example.core.llm.EmbeddingClient
 import com.example.core.llm.EmbeddingTaskType
+import com.example.core.llm.CallPurpose
 import com.example.core.llm.GenerationOptions
 import com.example.core.llm.TextGenerator
 
@@ -105,7 +106,7 @@ class Judge(private val generator: TextGenerator) {
         }
         val prompt = "Question: $question\n\n$reference\n\nAnswer to grade:\n$answer\n\n" +
             "Reply with JSON only: {\"verdict\":\"correct|partial|wrong\",\"reason\":\"<one short sentence>\"}"
-        val reply = generator.generate(SYSTEM, prompt, GenerationOptions(temperature = 0.0, json = true)).getOrElse { return Result.failure(it) }
+        val reply = generator.generate(SYSTEM, prompt, GenerationOptions(temperature = 0.0, json = true, purpose = CallPurpose.JUDGE)).getOrElse { return Result.failure(it) }
         return parse(reply)
     }
 

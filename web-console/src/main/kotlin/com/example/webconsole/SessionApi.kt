@@ -115,7 +115,10 @@ class SessionApi(
         val model = o.model ?: if (localAnswer) local!!.defaultModel else GeminiTextGenerator.DEFAULT_MODEL
         val raw = (if (localAnswer) local!!.generatorFor else generatorFor)(model) ?: throw ApiException(400, "GEMINI_API_KEY is not set: cannot generate answers. Set the env var or add it to local.properties and restart the ui.")
         val usage = LlmUsage()
-        val engine = ChatEngine(VectorRetriever(embedder, index, o.topKBefore), CachedTextGenerator(raw, model, usage), usage)
+        val engine = ChatEngine(
+            VectorRetriever(embedder, index, o.topKBefore), CachedTextGenerator(raw, model, usage), usage,
+            if (localAnswer) local!!.promptProfile else com.example.rag.PromptProfile.DEFAULT,
+        )
         val updated = runBlocking { engine.send(s, text, o) }.getOrElse { throw ApiException(502, "Answer failed: ${it.message?.take(300)}") }
         store.save(updated)
         return respond(updated)

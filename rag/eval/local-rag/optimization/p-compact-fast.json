@@ -1,0 +1,2010 @@
+{
+ "config": {
+  "model": "gemma4:26b-a4b-it-qat",
+  "tuning": "",
+  "env": {
+   "RAG_PROMPT_PROFILE": "compact"
+  }
+ },
+ "cold_start_ms": 2885,
+ "cold_error": null,
+ "sets": {
+  "tuning": [
+   {
+    "run": [
+     {
+      "id": "c01",
+      "lang": "en",
+      "cat": "specific",
+      "wall_ms": 12180,
+      "latency_ms": 12044,
+      "llm_calls": 2,
+      "answer": "Day 2 of the 3-day full-body program consists of the following exercises: \n- Trap-bar or kettlebell deadlift: 3 sets of 5 to 8 [1]\n- Dumbbell overhead press: 3 sets of 6 to 10 [1]\n- Lat pulldown: 3 sets of 8 to 12 [1]\n- Reverse lunge: 2 to 3 sets of 8 to 10 each side [1]\n- Dead bug: 2 to 3 sets [1]",
+      "scores": {
+       "idk": false,
+       "idk_correct": true,
+       "facts": 1.0,
+       "source_ok": false,
+       "quotes_ok": true,
+       "lang_ok": true,
+       "first_try": true
+      },
+      "sources": [
+       "13-beginner-program-design.md > Beginner Program Design for Strength and Muscle > A practical 3-day full-body program"
+      ]
+     },
+     {
+      "id": "c02",
+      "lang": "en",
+      "cat": "specific",
+      "wall_ms": 7435,
+      "latency_ms": 7386,
+      "llm_calls": 2,
+      "answer": "If you cannot perform strict bodyweight pull-ups, useful progressions include slow eccentrics, band-assisted pull-ups, machine-assisted pull-ups, isometric holds, and scapular pull-ups [1].",
+      "scores": {
+       "idk": false,
+       "idk_correct": true,
+       "facts": 1.0,
+       "source_ok": true,
+       "quotes_ok": true,
+       "lang_ok": true,
+       "first_try": true
+      },
+      "sources": [
+       "04-pulling-and-back-training.md > Pulling and Back Training > Pull-up progressions"
+      ]
+     },
+     {
+      "id": "c03",
+      "lang": "en",
+      "cat": "specific",
+      "wall_ms": 8114,
+      "latency_ms": 8064,
+      "llm_calls": 2,
+      "answer": "If the bar stalls above the knee and climbs in stages during lockout, it indicates you likely lost position earlier in the lift [1]. To address this, you can use paused deadlifts, RDLs, or block pulls, depending on where the breakdown begins [1].",
+      "scores": {
+       "idk": false,
+       "idk_correct": true,
+       "facts": 1.0,
+       "source_ok": false,
+       "quotes_ok": true,
+       "lang_ok": true,
+       "first_try": true
+      },
+      "sources": [
+       "02-deadlift-technique.md > Deadlift Technique > Romanian deadlift technique"
+      ]
+     },
+     {
+      "id": "c04",
+      "lang": "en",
+      "cat": "specific",
+      "wall_ms": 9215,
+      "latency_ms": 9162,
+      "llm_calls": 2,
+      "answer": "Template A consists of the following exercises: \n- Dead bug: 2 to 3 sets of 5 to 8 reps per side [1]\n- Side plank: 2 to 3 sets of 15 to 30 seconds per side [1]\n- Suitcase carry: 2 to 4 trips per side [1]",
+      "scores": {
+       "idk": false,
+       "idk_correct": true,
+       "facts": 1.0,
+       "source_ok": false,
+       "quotes_ok": true,
+       "lang_ok": true,
+       "first_try": true
+      },
+      "sources": [
+       "15-core-training-and-posture.md > Core Training, Bracing, and Posture Without the Myths > Better advice for desk workers"
+      ]
+     },
+     {
+      "id": "c05",
+      "lang": "en",
+      "cat": "specific",
+      "wall_ms": 8160,
+      "latency_ms": 8109,
+      "llm_calls": 2,
+      "answer": "A 10 to 15 minute warm-up can be split into three phases: 3 to 5 minutes of general movement, 3 to 5 minutes of targeted mobility or activation, and 5 to 10 minutes of progressively specific sets [1].",
+      "scores": {
+       "idk": false,
+       "idk_correct": true,
+       "facts": 1.0,
+       "source_ok": true,
+       "quotes_ok": true,
+       "lang_ok": true,
+       "first_try": true
+      },
+      "sources": [
+       "10-warm-up-and-mobility.md > Warm-Up and Mobility for Safer, Better Training > Making It Efficient"
+      ]
+     },
+     {
+      "id": "c06",
+      "lang": "en",
+      "cat": "specific",
+      "wall_ms": 7470,
+      "latency_ms": 7416,
+      "llm_calls": 2,
+      "answer": "The following rep ranges are assigned to these roles: 1 to 3 reps for high specificity [1], 3 to 6 reps for repeated strength practice [1], and 6 to 12 or more for assistance work [1].",
+      "scores": {
+       "idk": false,
+       "idk_correct": true,
+       "facts": 1.0,
+       "source_ok": true,
+       "quotes_ok": true,
+       "lang_ok": true,
+       "first_try": true
+      },
+      "sources": [
+       "05-strength-programming-basics.md > Strength Programming Basics > Rep ranges for strength development"
+      ]
+     },
+     {
+      "id": "c07",
+      "lang": "en",
+      "cat": "common",
+      "wall_ms": 3330,
+      "latency_ms": 3280,
+      "llm_calls": 2,
+      "answer": "I don't know: the knowledge base has no information that reliably answers this question.\n\nClosest topics in the knowledge base (not an answer to your question): «Protein: The Priority Macronutrient for Lifters», «Nutrition, Protein, and Calories for Fitness Goals», «Protein: The Priority Macronutrient for Lifters > Distributing protein across the day».\n\nDid you mean one of these topics? If not, which exercise, program or nutrition aspect do you have in mind?",
+      "scores": {
+       "idk": true,
+       "idk_correct": false,
+       "facts": 0.0,
+       "source_ok": false,
+       "quotes_ok": false,
+       "lang_ok": true,
+       "first_try": true
+      },
+      "sources": []
+     },
+     {
+      "id": "c08",
+      "lang": "en",
+      "cat": "common",
+      "wall_ms": 10028,
+      "latency_ms": 9978,
+      "llm_calls": 2,
+      "answer": "To fix a bar that drifts forward, you should recheck your starting position, ensure the bar stays over your midfoot, and engage your lats more aggressively [2]. Additionally, you should keep the bar path tight, ensuring it tracks almost vertically and stays very close to your shins and thighs [3].",
+      "scores": {
+       "idk": false,
+       "idk_correct": true,
+       "facts": 1.0,
+       "source_ok": false,
+       "quotes_ok": true,
+       "lang_ok": true,
+       "first_try": true
+      },
+      "sources": [
+       "02-deadlift-technique.md > Deadlift Technique > Romanian deadlift technique",
+       "02-deadlift-technique.md > Deadlift Technique > The hinge and first pull"
+      ]
+     },
+     {
+      "id": "c09",
+      "lang": "en",
+      "cat": "out_of_corpus",
+      "wall_ms": 2011,
+      "latency_ms": 1969,
+      "llm_calls": 2,
+      "answer": "I don't know: the knowledge base has no information that reliably answers this question.\n\nClosest topics in the knowledge base (not an answer to your question): «Deadlift Technique», «Final deadlift checklist», «Conventional deadlift setup».\n\nDid you mean one of these topics? If not, which exercise, program or nutrition aspect do you have in mind?",
+      "scores": {
+       "idk": true,
+       "idk_correct": true,
+       "lang_ok": true,
+       "first_try": true
+      },
+      "sources": []
+     },
+     {
+      "id": "c10",
+      "lang": "en",
+      "cat": "out_of_corpus",
+      "wall_ms": 2723,
+      "latency_ms": 2680,
+      "llm_calls": 2,
+      "answer": "I don't know: the knowledge base has no information that reliably answers this question.\n\nClosest topics in the knowledge base (not an answer to your question): «Protein: The Priority Macronutrient for Lifters», «A practical shortlist», «Exercise selection».\n\nDid you mean one of these topics? If not, which exercise, program or nutrition aspect do you have in mind?",
+      "scores": {
+       "idk": true,
+       "idk_correct": true,
+       "lang_ok": true,
+       "first_try": true
+      },
+      "sources": []
+     },
+     {
+      "id": "ru-c02",
+      "lang": "ru",
+      "cat": "specific",
+      "wall_ms": 8558,
+      "latency_ms": 8506,
+      "llm_calls": 2,
+      "answer": "Если вы пока не можете выполнять строгие подтягивания, полезными прогрессиями являются: медленные эксцентрические движения (slow eccentrics), подтягивания с помощью фитнес-резинок (band-assisted pull-ups), подтягивания на тренажере (machine-assisted pull-ups), изометрические удержания (isometric holds) и подтягивания лопаток (scapular pull-ups) [1].",
+      "scores": {
+       "idk": false,
+       "idk_correct": true,
+       "facts": 1.0,
+       "source_ok": true,
+       "quotes_ok": true,
+       "lang_ok": true,
+       "first_try": true
+      },
+      "sources": [
+       "04-pulling-and-back-training.md > Pulling and Back Training > Pull-up progressions"
+      ]
+     },
+     {
+      "id": "ru-c05",
+      "lang": "ru",
+      "cat": "specific",
+      "wall_ms": 7618,
+      "latency_ms": 7559,
+      "llm_calls": 2,
+      "answer": "A complete warm-up does not need to be long; ten to fifteen focused minutes is often sufficient [1]. A practical formula for this duration is: 3 to 5 minutes of general movement, 3 to 5 minutes of targeted mobility or activation, and 5 to 10 minutes of progressively specific sets [1].",
+      "scores": {
+       "idk": false,
+       "idk_correct": true,
+       "facts": 1.0,
+       "source_ok": true,
+       "quotes_ok": true,
+       "lang_ok": false,
+       "first_try": true
+      },
+      "sources": [
+       "10-warm-up-and-mobility.md > Warm-Up and Mobility for Safer, Better Training > Making It Efficient"
+      ]
+     },
+     {
+      "id": "ru-c07",
+      "lang": "ru",
+      "cat": "common",
+      "wall_ms": 21048,
+      "latency_ms": 21001,
+      "llm_calls": 3,
+      "answer": "Активным взрослым рекомендуется потреблять от 1,6 до 2,2 граммов белка на килограмм массы тела в день [1]. Белок легче усваивается, если распределить его между тремя-пятью приемами пищи, а не употреблять за один раз [2].",
+      "scores": {
+       "idk": false,
+       "idk_correct": true,
+       "facts": 1.0,
+       "source_ok": true,
+       "quotes_ok": true,
+       "lang_ok": true,
+       "first_try": true
+      },
+      "sources": [
+       "08-nutrition-protein-and-calories.md > Nutrition, Protein, and Calories for Fitness Goals > Protein: The Priority Macronutrient for Lifters",
+       "08-nutrition-protein-and-calories.md > Nutrition, Protein, and Calories for Fitness Goals > Protein: The Priority Macronutrient for Lifters > Distributing protein across the day"
+      ]
+     },
+     {
+      "id": "ru-c08",
+      "lang": "ru",
+      "cat": "common",
+      "wall_ms": 13395,
+      "latency_ms": 13352,
+      "llm_calls": 3,
+      "answer": "Чтобы исправить смещение штанги вперед, необходимо перепроверить исходную позицию, держать штангу над серединой стопы и более агрессивно включать широчайшие мышцы спины [2].",
+      "scores": {
+       "idk": false,
+       "idk_correct": true,
+       "facts": 1.0,
+       "source_ok": false,
+       "quotes_ok": true,
+       "lang_ok": true,
+       "first_try": true
+      },
+      "sources": [
+       "02-deadlift-technique.md > Deadlift Technique > Romanian deadlift technique"
+      ]
+     },
+     {
+      "id": "ru01",
+      "lang": "ru",
+      "cat": "specific",
+      "wall_ms": 10102,
+      "latency_ms": 10054,
+      "llm_calls": 2,
+      "answer": "NEAT (non-exercise activity thermogenesis) — это энергия, которую вы сжигаете во время обычной повседневной деятельности вне структурированных упражнений, такой как ходьба, ерзанье, домашние дела, подъем по лестнице, ходьба из стороны в сторону, стояние и общая ежедневная активность [1]. Во время диеты уровень NEAT может снижаться, так как человек может больше сидеть, меньше двигаться или неосознанно избегать усилий из-за снижения уровня энергии [1].",
+      "scores": {
+       "idk": false,
+       "idk_correct": true,
+       "facts": 1.0,
+       "source_ok": true,
+       "quotes_ok": true,
+       "lang_ok": true,
+       "first_try": true
+      },
+      "sources": [
+       "09-fat-loss-and-body-composition.md > Fat Loss and Body Composition Without Losing the Plot > NEAT: The Hidden Lever"
+      ]
+     },
+     {
+      "id": "ru02",
+      "lang": "ru",
+      "cat": "out_of_corpus",
+      "wall_ms": 765,
+      "latency_ms": 720,
+      "llm_calls": 1,
+      "answer": "Не знаю: в базе знаний нет информации, которая надёжно отвечает на этот вопрос.\n\nБлижайшие темы в базе (это не ответ на ваш вопрос): «Breathing and trunk control», «Tempo and execution quality», «Depth and bottom position».\n\nВы имели в виду одну из этих тем? Если нет — уточните, о каком упражнении, программе или аспекте питания идёт речь.",
+      "scores": {
+       "idk": true,
+       "idk_correct": true,
+       "lang_ok": true,
+       "first_try": false
+      },
+      "sources": []
+     }
+    ],
+    "total_s": 132.2,
+    "call_stats": [
+     {
+      "purpose": "cited",
+      "calls": 15,
+      "promptTokensAvg": 1134.8666666666666,
+      "promptTokensP90": 1384,
+      "promptTokensMax": 1447,
+      "completionTokensAvg": 189.46666666666667,
+      "completionTokensP90": 312,
+      "completionTokensMax": 315,
+      "generationTokPerSec": 39.62577208906736,
+      "promptTokPerSec": 604.2095549087811,
+      "totalMillisAvg": 6716.2,
+      "loadMillisTotal": 234
+     },
+     {
+      "purpose": "repair",
+      "calls": 2,
+      "promptTokensAvg": 328.0,
+      "promptTokensP90": 398,
+      "promptTokensMax": 398,
+      "completionTokensAvg": 301.0,
+      "completionTokensP90": 382,
+      "completionTokensMax": 382,
+      "generationTokPerSec": 40.54691183404055,
+      "promptTokPerSec": 514.9136577708007,
+      "totalMillisAvg": 8119.5,
+      "loadMillisTotal": 29
+     },
+     {
+      "purpose": "rewrite",
+      "calls": 16,
+      "promptTokensAvg": 114.8125,
+      "promptTokensP90": 121,
+      "promptTokensMax": 123,
+      "completionTokensAvg": 16.0625,
+      "completionTokensP90": 20,
+      "completionTokensMax": 24,
+      "generationTokPerSec": 42.599038620918286,
+      "promptTokPerSec": 368.8014454928729,
+      "totalMillisAvg": 764.6875,
+      "loadMillisTotal": 356
+     }
+    ]
+   },
+   {
+    "run": [
+     {
+      "id": "c01",
+      "lang": "en",
+      "cat": "specific",
+      "wall_ms": 8926,
+      "latency_ms": 8885,
+      "llm_calls": 2,
+      "answer": "Day 2 of the 3-day full-body program consists of the following exercises: \n- Trap-bar or kettlebell deadlift: 3 sets of 5 to 8 [1]\n- Dumbbell overhead press: 3 sets of 6 to 10 [1]\n- Lat pulldown: 3 sets of 8 to 12 [1]\n- Reverse lunge: 2 to 3 sets of 8 to 10 each side [1]\n- Dead bug: 2 to 3 sets [1]",
+      "scores": {
+       "idk": false,
+       "idk_correct": true,
+       "facts": 1.0,
+       "source_ok": false,
+       "quotes_ok": true,
+       "lang_ok": true,
+       "first_try": true
+      },
+      "sources": [
+       "13-beginner-program-design.md > Beginner Program Design for Strength and Muscle > A practical 3-day full-body program"
+      ]
+     },
+     {
+      "id": "c02",
+      "lang": "en",
+      "cat": "specific",
+      "wall_ms": 7716,
+      "latency_ms": 7671,
+      "llm_calls": 2,
+      "answer": "If you cannot perform strict bodyweight pull-ups, useful progressions include slow eccentrics, band-assisted pull-ups, machine-assisted pull-ups, isometric holds, and scapular pull-ups [1].",
+      "scores": {
+       "idk": false,
+       "idk_correct": true,
+       "facts": 1.0,
+       "source_ok": true,
+       "quotes_ok": true,
+       "lang_ok": true,
+       "first_try": true
+      },
+      "sources": [
+       "04-pulling-and-back-training.md > Pulling and Back Training > Pull-up progressions"
+      ]
+     },
+     {
+      "id": "c03",
+      "lang": "en",
+      "cat": "specific",
+      "wall_ms": 6366,
+      "latency_ms": 6333,
+      "llm_calls": 2,
+      "answer": "If the bar stalls above the knee and climbs in stages during lockout, it indicates you likely lost position earlier in the lift [1]. To address this, you can use paused deadlifts, RDLs, or block pulls, depending on where the breakdown begins [1].",
+      "scores": {
+       "idk": false,
+       "idk_correct": true,
+       "facts": 1.0,
+       "source_ok": false,
+       "quotes_ok": true,
+       "lang_ok": true,
+       "first_try": true
+      },
+      "sources": [
+       "02-deadlift-technique.md > Deadlift Technique > Romanian deadlift technique"
+      ]
+     },
+     {
+      "id": "c04",
+      "lang": "en",
+      "cat": "specific",
+      "wall_ms": 7622,
+      "latency_ms": 7592,
+      "llm_calls": 2,
+      "answer": "Template A consists of the following exercises: \n- Dead bug: 2 to 3 sets of 5 to 8 reps per side [1]\n- Side plank: 2 to 3 sets of 15 to 30 seconds per side [1]\n- Suitcase carry: 2 to 4 trips per side [1]",
+      "scores": {
+       "idk": false,
+       "idk_correct": true,
+       "facts": 1.0,
+       "source_ok": false,
+       "quotes_ok": true,
+       "lang_ok": true,
+       "first_try": true
+      },
+      "sources": [
+       "15-core-training-and-posture.md > Core Training, Bracing, and Posture Without the Myths > Better advice for desk workers"
+      ]
+     },
+     {
+      "id": "c05",
+      "lang": "en",
+      "cat": "specific",
+      "wall_ms": 7912,
+      "latency_ms": 7877,
+      "llm_calls": 2,
+      "answer": "A 10 to 15 minute warm-up can be split into three phases: 3 to 5 minutes of general movement, 3 to 5 minutes of targeted mobility or activation, and 5 to 10 minutes of progressively specific sets [1].",
+      "scores": {
+       "idk": false,
+       "idk_correct": true,
+       "facts": 1.0,
+       "source_ok": true,
+       "quotes_ok": true,
+       "lang_ok": true,
+       "first_try": true
+      },
+      "sources": [
+       "10-warm-up-and-mobility.md > Warm-Up and Mobility for Safer, Better Training > Making It Efficient"
+      ]
+     },
+     {
+      "id": "c06",
+      "lang": "en",
+      "cat": "specific",
+      "wall_ms": 5578,
+      "latency_ms": 5543,
+      "llm_calls": 2,
+      "answer": "The following rep ranges are assigned to these roles: 1 to 3 reps for high specificity [1], 3 to 6 reps for repeated strength practice [1], and 6 to 12 or more for assistance work [1].",
+      "scores": {
+       "idk": false,
+       "idk_correct": true,
+       "facts": 1.0,
+       "source_ok": true,
+       "quotes_ok": true,
+       "lang_ok": true,
+       "first_try": true
+      },
+      "sources": [
+       "05-strength-programming-basics.md > Strength Programming Basics > Rep ranges for strength development"
+      ]
+     },
+     {
+      "id": "c07",
+      "lang": "en",
+      "cat": "common",
+      "wall_ms": 3188,
+      "latency_ms": 3145,
+      "llm_calls": 2,
+      "answer": "I don't know: the knowledge base has no information that reliably answers this question.\n\nClosest topics in the knowledge base (not an answer to your question): «Protein: The Priority Macronutrient for Lifters», «Nutrition, Protein, and Calories for Fitness Goals», «Protein: The Priority Macronutrient for Lifters > Distributing protein across the day».\n\nDid you mean one of these topics? If not, which exercise, program or nutrition aspect do you have in mind?",
+      "scores": {
+       "idk": true,
+       "idk_correct": false,
+       "facts": 0.0,
+       "source_ok": false,
+       "quotes_ok": false,
+       "lang_ok": true,
+       "first_try": true
+      },
+      "sources": []
+     },
+     {
+      "id": "c08",
+      "lang": "en",
+      "cat": "common",
+      "wall_ms": 9571,
+      "latency_ms": 9523,
+      "llm_calls": 2,
+      "answer": "To fix a bar that drifts forward, you should recheck your starting position, ensure the bar stays over your midfoot, and engage your lats more aggressively [2]. Additionally, you should keep the bar path tight, ensuring it tracks almost vertically and stays very close to your shins and thighs [3].",
+      "scores": {
+       "idk": false,
+       "idk_correct": true,
+       "facts": 1.0,
+       "source_ok": false,
+       "quotes_ok": true,
+       "lang_ok": true,
+       "first_try": true
+      },
+      "sources": [
+       "02-deadlift-technique.md > Deadlift Technique > Romanian deadlift technique",
+       "02-deadlift-technique.md > Deadlift Technique > The hinge and first pull"
+      ]
+     },
+     {
+      "id": "c09",
+      "lang": "en",
+      "cat": "out_of_corpus",
+      "wall_ms": 1989,
+      "latency_ms": 1947,
+      "llm_calls": 2,
+      "answer": "I don't know: the knowledge base has no information that reliably answers this question.\n\nClosest topics in the knowledge base (not an answer to your question): «Deadlift Technique», «Final deadlift checklist», «Conventional deadlift setup».\n\nDid you mean one of these topics? If not, which exercise, program or nutrition aspect do you have in mind?",
+      "scores": {
+       "idk": true,
+       "idk_correct": true,
+       "lang_ok": true,
+       "first_try": true
+      },
+      "sources": []
+     },
+     {
+      "id": "c10",
+      "lang": "en",
+      "cat": "out_of_corpus",
+      "wall_ms": 1374,
+      "latency_ms": 1329,
+      "llm_calls": 2,
+      "answer": "I don't know: the knowledge base has no information that reliably answers this question.\n\nClosest topics in the knowledge base (not an answer to your question): «Protein: The Priority Macronutrient for Lifters», «A practical shortlist», «Exercise selection».\n\nDid you mean one of these topics? If not, which exercise, program or nutrition aspect do you have in mind?",
+      "scores": {
+       "idk": true,
+       "idk_correct": true,
+       "lang_ok": true,
+       "first_try": true
+      },
+      "sources": []
+     },
+     {
+      "id": "ru-c02",
+      "lang": "ru",
+      "cat": "specific",
+      "wall_ms": 8506,
+      "latency_ms": 8459,
+      "llm_calls": 2,
+      "answer": "Если вы пока не можете выполнять строгие подтягивания, полезными прогрессиями являются: медленные эксцентрические движения (slow eccentrics), подтягивания с помощью фитнес-резинок (band-assisted pull-ups), подтягивания на тренажере (machine-assisted pull-ups), изометрические удержания (isometric holds) и подтягивания лопаток (scapular pull-ups) [1].",
+      "scores": {
+       "idk": false,
+       "idk_correct": true,
+       "facts": 1.0,
+       "source_ok": true,
+       "quotes_ok": true,
+       "lang_ok": true,
+       "first_try": true
+      },
+      "sources": [
+       "04-pulling-and-back-training.md > Pulling and Back Training > Pull-up progressions"
+      ]
+     },
+     {
+      "id": "ru-c05",
+      "lang": "ru",
+      "cat": "specific",
+      "wall_ms": 7469,
+      "latency_ms": 7424,
+      "llm_calls": 2,
+      "answer": "A complete warm-up does not need to be long; ten to fifteen focused minutes is often sufficient [1]. A practical formula for this duration is: 3 to 5 minutes of general movement, 3 to 5 minutes of targeted mobility or activation, and 5 to 10 minutes of progressively specific sets [1].",
+      "scores": {
+       "idk": false,
+       "idk_correct": true,
+       "facts": 1.0,
+       "source_ok": true,
+       "quotes_ok": true,
+       "lang_ok": false,
+       "first_try": true
+      },
+      "sources": [
+       "10-warm-up-and-mobility.md > Warm-Up and Mobility for Safer, Better Training > Making It Efficient"
+      ]
+     },
+     {
+      "id": "ru-c07",
+      "lang": "ru",
+      "cat": "common",
+      "wall_ms": 11093,
+      "latency_ms": 11043,
+      "llm_calls": 2,
+      "answer": "Активным взрослым рекомендуется потреблять от 1,6 до 2,2 граммов белка на килограмм массы тела в день [1]. Белок легче усваивается, если распределить его между тремя-пятью приемами пищи, а не употреблять за один раз [2].",
+      "scores": {
+       "idk": false,
+       "idk_correct": true,
+       "facts": 1.0,
+       "source_ok": true,
+       "quotes_ok": true,
+       "lang_ok": true,
+       "first_try": true
+      },
+      "sources": [
+       "08-nutrition-protein-and-calories.md > Nutrition, Protein, and Calories for Fitness Goals > Protein: The Priority Macronutrient for Lifters",
+       "08-nutrition-protein-and-calories.md > Nutrition, Protein, and Calories for Fitness Goals > Protein: The Priority Macronutrient for Lifters > Distributing protein across the day"
+      ]
+     },
+     {
+      "id": "ru-c08",
+      "lang": "ru",
+      "cat": "common",
+      "wall_ms": 12560,
+      "latency_ms": 12527,
+      "llm_calls": 3,
+      "answer": "Чтобы исправить смещение штанги вперед, необходимо перепроверить исходную позицию, держать штангу над серединой стопы и более агрессивно включать широчайшие мышцы спины [2].",
+      "scores": {
+       "idk": false,
+       "idk_correct": true,
+       "facts": 1.0,
+       "source_ok": false,
+       "quotes_ok": true,
+       "lang_ok": true,
+       "first_try": true
+      },
+      "sources": [
+       "02-deadlift-technique.md > Deadlift Technique > Romanian deadlift technique"
+      ]
+     },
+     {
+      "id": "ru01",
+      "lang": "ru",
+      "cat": "specific",
+      "wall_ms": 8234,
+      "latency_ms": 8190,
+      "llm_calls": 2,
+      "answer": "NEAT (non-exercise activity thermogenesis) — это энергия, которую вы сжигаете во время обычной повседневной деятельности вне структурированных упражнений, такой как ходьба, ерзанье, домашние дела, подъем по лестнице, ходьба из стороны в сторону, стояние и общая ежедневная активность [1]. Во время диеты уровень NEAT может снижаться, так как человек может больше сидеть, меньше двигаться или неосознанно избегать усилий из-за снижения уровня энергии [1].",
+      "scores": {
+       "idk": false,
+       "idk_correct": true,
+       "facts": 1.0,
+       "source_ok": true,
+       "quotes_ok": true,
+       "lang_ok": true,
+       "first_try": true
+      },
+      "sources": [
+       "09-fat-loss-and-body-composition.md > Fat Loss and Body Composition Without Losing the Plot > NEAT: The Hidden Lever"
+      ]
+     },
+     {
+      "id": "ru02",
+      "lang": "ru",
+      "cat": "out_of_corpus",
+      "wall_ms": 737,
+      "latency_ms": 689,
+      "llm_calls": 1,
+      "answer": "Не знаю: в базе знаний нет информации, которая надёжно отвечает на этот вопрос.\n\nБлижайшие темы в базе (это не ответ на ваш вопрос): «Breathing and trunk control», «Tempo and execution quality», «Depth and bottom position».\n\nВы имели в виду одну из этих тем? Если нет — уточните, о каком упражнении, программе или аспекте питания идёт речь.",
+      "scores": {
+       "idk": true,
+       "idk_correct": true,
+       "lang_ok": true,
+       "first_try": false
+      },
+      "sources": []
+     }
+    ],
+    "total_s": 108.8,
+    "call_stats": [
+     {
+      "purpose": "cited",
+      "calls": 15,
+      "promptTokensAvg": 1134.8666666666666,
+      "promptTokensP90": 1384,
+      "promptTokensMax": 1447,
+      "completionTokensAvg": 189.86666666666667,
+      "completionTokensP90": 312,
+      "completionTokensMax": 321,
+      "generationTokPerSec": 38.65153900439716,
+      "promptTokPerSec": 1151.0582189465142,
+      "totalMillisAvg": 5957.0,
+      "loadMillisTotal": 204
+     },
+     {
+      "purpose": "repair",
+      "calls": 1,
+      "promptTokensAvg": 258.0,
+      "promptTokensP90": 258,
+      "promptTokensMax": 258,
+      "completionTokensAvg": 220.0,
+      "completionTokensP90": 220,
+      "completionTokensMax": 220,
+      "generationTokPerSec": 40.76338706688901,
+      "promptTokPerSec": 2687.5,
+      "totalMillisAvg": 5581.0,
+      "loadMillisTotal": 14
+     },
+     {
+      "purpose": "rewrite",
+      "calls": 16,
+      "promptTokensAvg": 114.8125,
+      "promptTokensP90": 121,
+      "promptTokensMax": 123,
+      "completionTokensAvg": 16.0625,
+      "completionTokensP90": 20,
+      "completionTokensMax": 24,
+      "generationTokPerSec": 42.82619563406099,
+      "promptTokPerSec": 370.1390288132178,
+      "totalMillisAvg": 749.375,
+      "loadMillisTotal": 286
+     }
+    ]
+   }
+  ],
+  "holdout": [
+   {
+    "run": [
+     {
+      "id": "h01",
+      "lang": "en",
+      "cat": "specific",
+      "wall_ms": 6205,
+      "latency_ms": 6167,
+      "llm_calls": 2,
+      "answer": "For heavy strength work, resting two to five minutes between demanding sets is common and useful [1]. Regarding session order, you should place the movement you care about most early in the session [1].",
+      "scores": {
+       "idk": false,
+       "idk_correct": true,
+       "facts": 1.0,
+       "source_ok": true,
+       "quotes_ok": true,
+       "lang_ok": true,
+       "first_try": true
+      },
+      "sources": [
+       "05-strength-programming-basics.md > Strength Programming Basics > Rest periods and session order"
+      ]
+     },
+     {
+      "id": "h02",
+      "lang": "en",
+      "cat": "specific",
+      "wall_ms": 7822,
+      "latency_ms": 7773,
+      "llm_calls": 2,
+      "answer": "Weekly volume is likely appropriate if you experience steady progress in load or reps, soreness that fades between sessions, stable technique on later sets, and the target muscle feels challenged [1]. Conversely, if performance falls and soreness lingers throughout the week, the volume may be too high for your current context [1].",
+      "scores": {
+       "idk": false,
+       "idk_correct": true,
+       "facts": 0.75,
+       "source_ok": true,
+       "quotes_ok": true,
+       "lang_ok": true,
+       "first_try": true
+      },
+      "sources": [
+       "06-hypertrophy-training.md > Hypertrophy Training > Sets per week and dosing volume"
+      ]
+     },
+     {
+      "id": "h03",
+      "lang": "en",
+      "cat": "specific",
+      "wall_ms": 9577,
+      "latency_ms": 9528,
+      "llm_calls": 2,
+      "answer": "Red flags for accumulated fatigue or overtraining include: a persistent drop in performance across multiple sessions [1], unusual fatigue that rest days cannot fix [1], sleep disruption despite exhaustion [1], frequent minor illness or feeling run down [1], low mood, flat motivation, or unusual anxiety regarding training [1], and an elevated resting heart rate or a sense that recovery is lagging week after week [1].",
+      "scores": {
+       "idk": false,
+       "idk_correct": true,
+       "facts": 1.0,
+       "source_ok": true,
+       "quotes_ok": true,
+       "lang_ok": true,
+       "first_try": true
+      },
+      "sources": [
+       "07-sleep-and-recovery.md > Sleep and Recovery for Training Progress > Hard Training, Overreaching, and Overtraining"
+      ]
+     },
+     {
+      "id": "h04",
+      "lang": "en",
+      "cat": "specific",
+      "wall_ms": 12380,
+      "latency_ms": 12329,
+      "llm_calls": 2,
+      "answer": "A practical shortlist for many recreational lifters includes: creatine monohydrate (if strength or muscle gain is a priority and no contraindications exist), caffeine (if tolerated and timed intelligently), protein powder (if it helps meet protein intake goals), and vitamin D [1]. Vitamin D should only be taken when personal context or clinical guidance supports it [1], as it is not a universal supplement that everyone should take automatically [2].",
+      "scores": {
+       "idk": false,
+       "idk_correct": true,
+       "facts": 1.0,
+       "source_ok": true,
+       "quotes_ok": true,
+       "lang_ok": true,
+       "first_try": true
+      },
+      "sources": [
+       "17-supplements-and-ergogenic-aids.md > Supplements and Ergogenic Aids: What Helps, What Does Not, and How to Use Them Safely > A practical shortlist",
+       "17-supplements-and-ergogenic-aids.md > Supplements and Ergogenic Aids: What Helps, What Does Not, and How to Use Them Safely > Vitamin D"
+      ]
+     },
+     {
+      "id": "h05",
+      "lang": "en",
+      "cat": "specific",
+      "wall_ms": 9264,
+      "latency_ms": 9208,
+      "llm_calls": 2,
+      "answer": "A smart return to training follows a five-step logic: [1]\n1. Calm irritated tissue by reducing aggravating load [1]\n2. Maintain what can be trained safely [1]\n3. Rebuild local strength and tolerance [1]\n4. Reintroduce sport- or lift-specific loading gradually [1]\n5. Progress based on symptom response, rather than ego [1]",
+      "scores": {
+       "idk": false,
+       "idk_correct": true,
+       "facts": 1.0,
+       "source_ok": true,
+       "quotes_ok": true,
+       "lang_ok": true,
+       "first_try": true
+      },
+      "sources": [
+       "11-injury-prevention-and-rehab.md > Injury Prevention and Rehab for People Who Train > Return to Training: Modify, Do Not Guess"
+      ]
+     },
+     {
+      "id": "h06",
+      "lang": "en",
+      "cat": "common",
+      "wall_ms": 8621,
+      "latency_ms": 8571,
+      "llm_calls": 2,
+      "answer": "To reduce conflict when strength is your primary goal, you should prioritize the quality of sessions that matter most to that goal [1]. It is recommended to use zone 2 modalities with low eccentric stress, such as incline walking or cycling, rather than frequent hard runs [1]. Additionally, you should keep most cardio easy, separate hard cardio from hard lifting when possible, and ensure you fuel appropriately, particularly with carbohydrates around demanding work [1].",
+      "scores": {
+       "idk": false,
+       "idk_correct": true,
+       "facts": 0.6666666666666666,
+       "source_ok": true,
+       "quotes_ok": true,
+       "lang_ok": true,
+       "first_try": true
+      },
+      "sources": [
+       "12-cardio-and-conditioning.md > Cardio and Conditioning for Strength, Health, and Work Capacity > Concurrent Training: Mixing Cardio and Strength"
+      ]
+     },
+     {
+      "id": "h07",
+      "lang": "en",
+      "cat": "specific",
+      "wall_ms": 11281,
+      "latency_ms": 11245,
+      "llm_calls": 2,
+      "answer": "Workout B consists of the following exercises: \n- Split squat: 3 sets of 8 to 12 each side [4]\n- Standing dumbbell overhead press: 3 sets of 6 to 10 [4]\n- Band row or pulldown: 3 sets of 10 to 15 [4]\n- Hip thrust or glute bridge: 3 sets of 10 to 15 [4]\n- Pallof press or suitcase carry: 2 to 3 sets [4]",
+      "scores": {
+       "idk": false,
+       "idk_correct": true,
+       "facts": 1.0,
+       "source_ok": true,
+       "quotes_ok": true,
+       "lang_ok": true,
+       "first_try": true
+      },
+      "sources": [
+       "14-home-workouts-and-bodyweight.md > Home Workouts with Dumbbells, Bands, and Bodyweight > Workout B"
+      ]
+     },
+     {
+      "id": "h08",
+      "lang": "en",
+      "cat": "common",
+      "wall_ms": 11864,
+      "latency_ms": 11814,
+      "llm_calls": 2,
+      "answer": "Instead of chasing a flawless position, desk workers should aim for support and variability [1]. Rather than trying to hold one \"ideal\" shape forever, you should trade perfectionism for movement variety and capacity [4]. Practical advice includes alternating between upright and relaxed positions, standing up, walking, or changing posture regularly [1]. Additionally, rows, carries, split squats, pressing with good trunk control, and general physical activity often help more than constantly trying to pin the shoulders back [1].",
+      "scores": {
+       "idk": false,
+       "idk_correct": true,
+       "facts": 0.3333333333333333,
+       "source_ok": true,
+       "quotes_ok": true,
+       "lang_ok": true,
+       "first_try": true
+      },
+      "sources": [
+       "15-core-training-and-posture.md > Core Training, Bracing, and Posture Without the Myths > Better advice for desk workers",
+       "15-core-training-and-posture.md > Core Training, Bracing, and Posture Without the Myths > Final perspective"
+      ]
+     },
+     {
+      "id": "h09",
+      "lang": "en",
+      "cat": "common",
+      "wall_ms": 7024,
+      "latency_ms": 6972,
+      "llm_calls": 2,
+      "answer": "A useful rule is to never miss twice when it is avoidable [1]. Instead of self-criticism or trying to make up every missed workout, which can create an exhausting backlog, the best move is to return to your normal schedule and keep momentum [1].",
+      "scores": {
+       "idk": false,
+       "idk_correct": true,
+       "facts": 0.6666666666666666,
+       "source_ok": true,
+       "quotes_ok": true,
+       "lang_ok": true,
+       "first_try": true
+      },
+      "sources": [
+       "16-motivation-habits-and-consistency.md > Motivation, Habits, and Consistency in Fitness > Dealing with missed sessions"
+      ]
+     },
+     {
+      "id": "h10",
+      "lang": "en",
+      "cat": "specific",
+      "wall_ms": 7737,
+      "latency_ms": 7695,
+      "llm_calls": 2,
+      "answer": "A simple bench press setup checklist includes: \n- feet planted and still [1]\n- glutes on the bench [1]\n- upper back tight against the pad [1]\n- shoulder blades set before the unrack [1]\n- hands placed evenly on the bar [1]",
+      "scores": {
+       "idk": false,
+       "idk_correct": true,
+       "facts": 1.0,
+       "source_ok": true,
+       "quotes_ok": true,
+       "lang_ok": true,
+       "first_try": true
+      },
+      "sources": [
+       "03-bench-press-and-pushing.md > Bench Press and Pushing > Bench press setup"
+      ]
+     },
+     {
+      "id": "h11",
+      "lang": "en",
+      "cat": "common",
+      "wall_ms": 7307,
+      "latency_ms": 7260,
+      "llm_calls": 2,
+      "answer": "A balanced weekly plan for back training should include: [1] at least one vertical pull, [1] at least one row, [1] some rear-delt or face-pull work, and [1] enough total volume to progress without causing elbow inflammation.",
+      "scores": {
+       "idk": false,
+       "idk_correct": true,
+       "facts": 1.0,
+       "source_ok": true,
+       "quotes_ok": true,
+       "lang_ok": true,
+       "first_try": true
+      },
+      "sources": [
+       "04-pulling-and-back-training.md > Pulling and Back Training > Organizing back training"
+      ]
+     },
+     {
+      "id": "h12",
+      "lang": "en",
+      "cat": "specific",
+      "wall_ms": 19838,
+      "latency_ms": 19804,
+      "llm_calls": 3,
+      "answer": "High-bar positioning involves the bar resting on the upper traps, which typically allows for a more upright torso and increased knee travel [1]. In contrast, the low-bar position places the bar lower across the rear delts, which often allows for more load but requires a firmer upper-back shelf and generally involves more torso lean [2].",
+      "scores": {
+       "idk": false,
+       "idk_correct": true,
+       "facts": 1.0,
+       "source_ok": true,
+       "quotes_ok": true,
+       "lang_ok": true,
+       "first_try": true
+      },
+      "sources": [
+       "01-squat-technique.md > Barbell Back Squat Technique",
+       "01-squat-technique.md > Barbell Back Squat Technique > Rack setup and bar position > Low-bar"
+      ]
+     },
+     {
+      "id": "h13",
+      "lang": "ru",
+      "cat": "specific",
+      "wall_ms": 8548,
+      "latency_ms": 8500,
+      "llm_calls": 2,
+      "answer": "Если тренировки частые или требовательные, время приема пищи имеет значение [1]. До тренировки рекомендуется съесть порцию, содержащую углеводы и немного белка, за один-три часа до начала [1]. После тренировки не обязательно есть немедленно; разумно употребить белок и немного углеводов в течение нескольких часов после занятия, особенно если следующий прием пищи будет нескоро [1].",
+      "scores": {
+       "idk": false,
+       "idk_correct": true,
+       "facts": 0.75,
+       "source_ok": false,
+       "quotes_ok": true,
+       "lang_ok": true,
+       "first_try": true
+      },
+      "sources": [
+       "08-nutrition-protein-and-calories.md > Nutrition, Protein, and Calories for Fitness Goals > How to Set Macros Without Overcomplicating It"
+      ]
+     },
+     {
+      "id": "h14",
+      "lang": "ru",
+      "cat": "common",
+      "wall_ms": 11298,
+      "latency_ms": 11271,
+      "llm_calls": 2,
+      "answer": "Прежде чем вносить серьезные изменения, проверьте: была ли приверженность плану последовательной [1], действительно ли средний вес тела стоит на месте в течение нескольких недель [1], не снизилась ли активность вне тренировок [1] и нет ли причин для задержки воды [1]. Если плато реально, рекомендуемые правки включают: небольшое снижение калорийности [1], увеличение ежедневной активности [1], повышение точности порций [1] и улучшение стабильности в выходные дни [1]. Резкое сокращение еды требуется редко [1].",
+      "scores": {
+       "idk": false,
+       "idk_correct": true,
+       "facts": 1.0,
+       "source_ok": false,
+       "quotes_ok": true,
+       "lang_ok": true,
+       "first_try": true
+      },
+      "sources": [
+       "09-fat-loss-and-body-composition.md > Fat Loss and Body Composition Without Losing the Plot > Tracking Intake and Progress > Measurements and photos"
+      ]
+     },
+     {
+      "id": "h15",
+      "lang": "ru",
+      "cat": "specific",
+      "wall_ms": 3216,
+      "latency_ms": 3166,
+      "llm_calls": 2,
+      "answer": "Не знаю: в базе знаний нет информации, которая надёжно отвечает на этот вопрос.\n\nБлижайшие темы в базе (это не ответ на ваш вопрос): «Warm-Up and Mobility for Safer, Better Training», «Dynamic Versus Static Stretching > Dynamic stretching», «What a Warm-Up Should Accomplish».\n\nВы имели в виду одну из этих тем? Если нет — уточните, о каком упражнении, программе или аспекте питания идёт речь.",
+      "scores": {
+       "idk": true,
+       "idk_correct": false,
+       "facts": 0.0,
+       "source_ok": false,
+       "quotes_ok": false,
+       "lang_ok": true,
+       "first_try": true
+      },
+      "sources": []
+     },
+     {
+      "id": "h16",
+      "lang": "ru",
+      "cat": "specific",
+      "wall_ms": 24596,
+      "latency_ms": 24559,
+      "llm_calls": 3,
+      "answer": "В программу Lower B 4-дневного сплита для новичков входят следующие упражнения [1]:\n\n*   Вариация становой тяги (Deadlift variation): 3 подхода по 5–6 повторений [1].\n*   Фронтальные, кубковые или хак-приседания (Front squat, goblet squat, or hack squat): 3 подхода по 8–10 повторений [1].\n*   Ягодичный мостик или сгибание ног (Hip thrust or leg curl): 2–3 подхода [1].\n*   Зашагивания или выпады при ходьбе (Step-up or walking lunge): 2 подхода на каждую сторону [1].\n*   Упражнение Паллофа или переноска (Pallof press or carry): 2–3 подхода [1].",
+      "scores": {
+       "idk": false,
+       "idk_correct": true,
+       "facts": 1.0,
+       "source_ok": false,
+       "quotes_ok": true,
+       "lang_ok": true,
+       "first_try": true
+      },
+      "sources": [
+       "13-beginner-program-design.md > Beginner Program Design for Strength and Muscle > A practical 4-day upper/lower split"
+      ]
+     },
+     {
+      "id": "h17",
+      "lang": "ru",
+      "cat": "specific",
+      "wall_ms": 8821,
+      "latency_ms": 8778,
+      "llm_calls": 2,
+      "answer": "В конце руководства перечислены следующие практические подсказки (cues): зафиксируйтесь на штанге (wedge yourself to the bar), прижмите штангу к ногам (squeeze the bar to the legs), отталкивайтесь от пола (push the floor away), держите подмышки плотно (keep the armpits tight) и стойте прямо, не отклоняясь назад (stand tall, do not lean back) [1].",
+      "scores": {
+       "idk": false,
+       "idk_correct": true,
+       "facts": 1.0,
+       "source_ok": false,
+       "quotes_ok": true,
+       "lang_ok": true,
+       "first_try": true
+      },
+      "sources": [
+       "02-deadlift-technique.md > Deadlift Technique > Common deadlift faults and fixes > Bent arms"
+      ]
+     },
+     {
+      "id": "h18",
+      "lang": "ru",
+      "cat": "specific",
+      "wall_ms": 13814,
+      "latency_ms": 13762,
+      "llm_calls": 2,
+      "answer": "Протеиновый порошок наиболее полезен в следующих случаях: [1]\n- когда трудно достичь суточной нормы белка только из обычной еды; [1]\n- когда нужен быстрый вариант во время работы или в поездках; [1]\n- когда аппетит снижен во время интенсивных фаз тренировок; [1]\n- когда жидкий вариант просто практичнее полноценного приема пищи. [1]\nТакже он может быть включен в список рекомендуемых добавок, если помогает достичь целей по потреблению белка. [3]",
+      "scores": {
+       "idk": false,
+       "idk_correct": true,
+       "facts": 1.0,
+       "source_ok": true,
+       "quotes_ok": true,
+       "lang_ok": true,
+       "first_try": true
+      },
+      "sources": [
+       "17-supplements-and-ergogenic-aids.md > Supplements and Ergogenic Aids: What Helps, What Does Not, and How to Use Them Safely > Protein powder > When powder earns its place",
+       "17-supplements-and-ergogenic-aids.md > Supplements and Ergogenic Aids: What Helps, What Does Not, and How to Use Them Safely > A practical shortlist"
+      ]
+     },
+     {
+      "id": "h19",
+      "lang": "ru",
+      "cat": "common",
+      "wall_ms": 14777,
+      "latency_ms": 14740,
+      "llm_calls": 3,
+      "answer": "Для прогресса без травм новичкам рекомендуется придерживаться следующих правил: использовать интервалы бега и ходьбы [1], постепенно увеличивать общий объем [1], держать большинство пробежек в легком темпе [1], выбирать удобную обувь [1] и избегать ошибки превращения каждой пробежки в проверку возможностей [1]. Важно помнить, что ткани нуждаются во времени для адаптации к ударной нагрузке [1].",
+      "scores": {
+       "idk": false,
+       "idk_correct": true,
+       "facts": 0.0,
+       "source_ok": true,
+       "quotes_ok": true,
+       "lang_ok": true,
+       "first_try": true
+      },
+      "sources": [
+       "12-cardio-and-conditioning.md > Cardio and Conditioning for Strength, Health, and Work Capacity > Running Basics for Beginners"
+      ]
+     },
+     {
+      "id": "h20",
+      "lang": "ru",
+      "cat": "common",
+      "wall_ms": 10327,
+      "latency_ms": 10271,
+      "llm_calls": 2,
+      "answer": "Полезными признаками того, что восстановление проходит успешно, являются: [1]\n* стабильные или улучшающиеся показатели при привычной нагрузке; [1]\n* мышечная боль, которая проходит во время разминки; [1]\n* нормальная мотивация к тренировкам; [1]\n* стабильный аппетит и настроение; [1]\n* частота сердечных сокращений в покое остается в пределах вашей обычной нормы; [1]\n* сон, который приносит чувство бодрости, а не просто достаточную продолжительность. [1]",
+      "scores": {
+       "idk": false,
+       "idk_correct": true,
+       "facts": 1.0,
+       "source_ok": true,
+       "quotes_ok": true,
+       "lang_ok": true,
+       "first_try": true
+      },
+      "sources": [
+       "07-sleep-and-recovery.md > Sleep and Recovery for Training Progress > Practical Recovery Signals to Watch"
+      ]
+     },
+     {
+      "id": "h21",
+      "lang": "en",
+      "cat": "partial",
+      "wall_ms": 13171,
+      "latency_ms": 13122,
+      "llm_calls": 2,
+      "answer": "Zone 2 is a relatively easy, sustainable intensity where you can still speak in short sentences and continue for a meaningful duration [2]. It should feel controlled rather than heroic [2]. Example modalities include brisk incline walking, easy jogging, steady cycling, rowing at a controlled pace, or elliptical work that stays conversational [2]. The provided text does not specify an exact heart-rate percentage to target, noting instead that heart-rate zones are estimates and it is better to combine them with perceived effort [1].",
+      "scores": {
+       "idk": false,
+       "idk_correct": true,
+       "facts": 1.0,
+       "source_ok": true,
+       "quotes_ok": false,
+       "lang_ok": true,
+       "first_try": true
+      },
+      "sources": [
+       "12-cardio-and-conditioning.md > Cardio and Conditioning for Strength, Health, and Work Capacity > Heart-Rate Zones: Useful, Not Sacred",
+       "12-cardio-and-conditioning.md > Cardio and Conditioning for Strength, Health, and Work Capacity > Zone 2: The Aerobic Base"
+      ]
+     },
+     {
+      "id": "h22",
+      "lang": "en",
+      "cat": "partial",
+      "wall_ms": 8383,
+      "latency_ms": 8329,
+      "llm_calls": 2,
+      "answer": "The evidence-informed approach to vitamin D is to prioritize context [1]. If deficiency is suspected or known, testing and clinical guidance can help determine if supplementation is appropriate and what the correct dose should be [1]. The guide does not provide a specific dosage in IU [1].",
+      "scores": {
+       "idk": false,
+       "idk_correct": true,
+       "facts": 1.0,
+       "source_ok": true,
+       "quotes_ok": true,
+       "lang_ok": true,
+       "first_try": true
+      },
+      "sources": [
+       "17-supplements-and-ergogenic-aids.md > Supplements and Ergogenic Aids: What Helps, What Does Not, and How to Use Them Safely > Vitamin D"
+      ]
+     },
+     {
+      "id": "h23",
+      "lang": "en",
+      "cat": "partial",
+      "wall_ms": 3441,
+      "latency_ms": 3384,
+      "llm_calls": 2,
+      "answer": "I don't know: the knowledge base has no information that reliably answers this question.\n\nClosest topics in the knowledge base (not an answer to your question): «Grip, wrists, and forearms», «Bench press setup», «Bench press bar path».\n\nDid you mean one of these topics? If not, which exercise, program or nutrition aspect do you have in mind?",
+      "scores": {
+       "idk": true,
+       "idk_correct": false,
+       "facts": 0.0,
+       "source_ok": false,
+       "quotes_ok": false,
+       "lang_ok": true,
+       "first_try": true
+      },
+      "sources": []
+     },
+     {
+      "id": "h24",
+      "lang": "en",
+      "cat": "partial",
+      "wall_ms": 8845,
+      "latency_ms": 8798,
+      "llm_calls": 2,
+      "answer": "A useful rehab approach for knee pain includes finding tolerable squat or lunge variations, temporarily adjusting depth, tempo, or stance, strengthening the quads, hamstrings, calves, and hips, and rebuilding exposure to running or jumping in measured steps [1]. The provided text does not mention an anti-inflammatory dose [].",
+      "scores": {
+       "idk": false,
+       "idk_correct": true,
+       "facts": 1.0,
+       "source_ok": true,
+       "quotes_ok": true,
+       "lang_ok": true,
+       "first_try": true
+      },
+      "sources": [
+       "11-injury-prevention-and-rehab.md > Injury Prevention and Rehab for People Who Train > Knee Pain in Training"
+      ]
+     },
+     {
+      "id": "h25",
+      "lang": "en",
+      "cat": "out_of_corpus",
+      "wall_ms": 2974,
+      "latency_ms": 2922,
+      "llm_calls": 2,
+      "answer": "I don't know: the knowledge base has no information that reliably answers this question.\n\nClosest topics in the knowledge base (not an answer to your question): «Fat Loss and Body Composition Without Losing the Plot», «Fat Loss Versus Weight Loss», «The Real Goal».\n\nDid you mean one of these topics? If not, which exercise, program or nutrition aspect do you have in mind?",
+      "scores": {
+       "idk": true,
+       "idk_correct": true,
+       "lang_ok": true,
+       "first_try": true
+      },
+      "sources": []
+     },
+     {
+      "id": "h26",
+      "lang": "en",
+      "cat": "out_of_corpus",
+      "wall_ms": 983,
+      "latency_ms": 946,
+      "llm_calls": 1,
+      "answer": "I don't know: the knowledge base has no information that reliably answers this question.\n\nClosest topics in the knowledge base (not an answer to your question): «Supplements and Ergogenic Aids: What Helps, What Does Not, and How to Use Them Safely», «Stance, feet, and balance», «Who should be more cautious».\n\nDid you mean one of these topics? If not, which exercise, program or nutrition aspect do you have in mind?",
+      "scores": {
+       "idk": true,
+       "idk_correct": true,
+       "lang_ok": true,
+       "first_try": false
+      },
+      "sources": []
+     },
+     {
+      "id": "h27",
+      "lang": "ru",
+      "cat": "out_of_corpus",
+      "wall_ms": 597,
+      "latency_ms": 570,
+      "llm_calls": 1,
+      "answer": "I don't know: the knowledge base has no information that reliably answers this question.\n\nClosest topics in the knowledge base (not an answer to your question): «Who should be more cautious», «Reward the process carefully», «Motivation, Habits, and Consistency in Fitness».\n\nDid you mean one of these topics? If not, which exercise, program or nutrition aspect do you have in mind?",
+      "scores": {
+       "idk": true,
+       "idk_correct": true,
+       "lang_ok": false,
+       "first_try": false
+      },
+      "sources": []
+     },
+     {
+      "id": "h28",
+      "lang": "ru",
+      "cat": "out_of_corpus",
+      "wall_ms": 827,
+      "latency_ms": 768,
+      "llm_calls": 1,
+      "answer": "Не знаю: в базе знаний нет информации, которая надёжно отвечает на этот вопрос.\n\nБлижайшие темы в базе (это не ответ на ваш вопрос): «Beginner Program Design for Strength and Muscle», «When the Goal Should Change», «Nutrition, Protein, and Calories for Fitness Goals».\n\nВы имели в виду одну из этих тем? Если нет — уточните, о каком упражнении, программе или аспекте питания идёт речь.",
+      "scores": {
+       "idk": true,
+       "idk_correct": true,
+       "lang_ok": true,
+       "first_try": false
+      },
+      "sources": []
+     }
+    ],
+    "total_s": 253.6,
+    "call_stats": [
+     {
+      "purpose": "cited",
+      "calls": 25,
+      "promptTokensAvg": 1113.08,
+      "promptTokensP90": 1240,
+      "promptTokensMax": 1612,
+      "completionTokensAvg": 238.8,
+      "completionTokensP90": 392,
+      "completionTokensMax": 420,
+      "generationTokPerSec": 39.59358544123304,
+      "promptTokPerSec": 593.3135754035095,
+      "totalMillisAvg": 7969.08,
+      "loadMillisTotal": 471
+     },
+     {
+      "purpose": "repair",
+      "calls": 3,
+      "promptTokensAvg": 372.0,
+      "promptTokensP90": 456,
+      "promptTokensMax": 456,
+      "completionTokensAvg": 341.3333333333333,
+      "completionTokensP90": 418,
+      "completionTokensMax": 418,
+      "generationTokPerSec": 40.35627019784031,
+      "promptTokPerSec": 534.4827586206897,
+      "totalMillisAvg": 9253.666666666666,
+      "loadMillisTotal": 36
+     },
+     {
+      "purpose": "rewrite",
+      "calls": 28,
+      "promptTokensAvg": 114.07142857142857,
+      "promptTokensP90": 121,
+      "promptTokensMax": 126,
+      "completionTokensAvg": 14.964285714285714,
+      "completionTokensP90": 19,
+      "completionTokensMax": 19,
+      "generationTokPerSec": 42.921532472853926,
+      "promptTokPerSec": 368.22688494350933,
+      "totalMillisAvg": 782.3214285714286,
+      "loadMillisTotal": 488
+     }
+    ]
+   },
+   {
+    "run": [
+     {
+      "id": "h01",
+      "lang": "en",
+      "cat": "specific",
+      "wall_ms": 5030,
+      "latency_ms": 4987,
+      "llm_calls": 2,
+      "answer": "For heavy strength work, resting two to five minutes between demanding sets is common and useful [1]. Regarding session order, you should place the movement you care about most early in the session [1].",
+      "scores": {
+       "idk": false,
+       "idk_correct": true,
+       "facts": 1.0,
+       "source_ok": true,
+       "quotes_ok": true,
+       "lang_ok": true,
+       "first_try": true
+      },
+      "sources": [
+       "05-strength-programming-basics.md > Strength Programming Basics > Rest periods and session order"
+      ]
+     },
+     {
+      "id": "h02",
+      "lang": "en",
+      "cat": "specific",
+      "wall_ms": 6662,
+      "latency_ms": 6628,
+      "llm_calls": 2,
+      "answer": "Weekly volume is likely appropriate if you experience steady progress in load or reps, soreness that fades between sessions, stable technique on later sets, and the target muscle feels challenged [1]. Conversely, if performance falls and soreness lingers throughout the week, the volume may be too high for your current context [1].",
+      "scores": {
+       "idk": false,
+       "idk_correct": true,
+       "facts": 0.75,
+       "source_ok": true,
+       "quotes_ok": true,
+       "lang_ok": true,
+       "first_try": true
+      },
+      "sources": [
+       "06-hypertrophy-training.md > Hypertrophy Training > Sets per week and dosing volume"
+      ]
+     },
+     {
+      "id": "h03",
+      "lang": "en",
+      "cat": "specific",
+      "wall_ms": 7979,
+      "latency_ms": 7940,
+      "llm_calls": 2,
+      "answer": "Red flags for accumulated fatigue or overtraining include: a persistent drop in performance across multiple sessions [1], unusual fatigue that rest days cannot fix [1], sleep disruption despite exhaustion [1], frequent minor illness or feeling run down [1], low mood, flat motivation, or unusual anxiety regarding training [1], and an elevated resting heart rate or a sense that recovery is lagging week after week [1].",
+      "scores": {
+       "idk": false,
+       "idk_correct": true,
+       "facts": 1.0,
+       "source_ok": true,
+       "quotes_ok": true,
+       "lang_ok": true,
+       "first_try": true
+      },
+      "sources": [
+       "07-sleep-and-recovery.md > Sleep and Recovery for Training Progress > Hard Training, Overreaching, and Overtraining"
+      ]
+     },
+     {
+      "id": "h04",
+      "lang": "en",
+      "cat": "specific",
+      "wall_ms": 14841,
+      "latency_ms": 14787,
+      "llm_calls": 2,
+      "answer": "A practical shortlist for many recreational lifters includes: creatine monohydrate (if strength or muscle gain is a priority and no contraindications exist), caffeine (if tolerated and timed intelligently), protein powder (if it helps meet protein intake goals), and vitamin D [1]. Vitamin D should only be taken when personal context or clinical guidance supports it [1], as it is not a universal supplement that everyone should take automatically [2].",
+      "scores": {
+       "idk": false,
+       "idk_correct": true,
+       "facts": 1.0,
+       "source_ok": true,
+       "quotes_ok": true,
+       "lang_ok": true,
+       "first_try": true
+      },
+      "sources": [
+       "17-supplements-and-ergogenic-aids.md > Supplements and Ergogenic Aids: What Helps, What Does Not, and How to Use Them Safely > A practical shortlist",
+       "17-supplements-and-ergogenic-aids.md > Supplements and Ergogenic Aids: What Helps, What Does Not, and How to Use Them Safely > Vitamin D"
+      ]
+     },
+     {
+      "id": "h05",
+      "lang": "en",
+      "cat": "specific",
+      "wall_ms": 39473,
+      "latency_ms": 39430,
+      "llm_calls": 2,
+      "answer": "A smart return to training follows a five-step logic: [1]\n1. Calm irritated tissue by reducing aggravating load [1]\n2. Maintain what can be trained safely [1]\n3. Rebuild local strength and tolerance [1]\n4. Reintroduce sport- or lift-specific loading gradually [1]\n5. Progress based on symptom response, rather than ego [1]",
+      "scores": {
+       "idk": false,
+       "idk_correct": true,
+       "facts": 1.0,
+       "source_ok": true,
+       "quotes_ok": true,
+       "lang_ok": true,
+       "first_try": true
+      },
+      "sources": [
+       "11-injury-prevention-and-rehab.md > Injury Prevention and Rehab for People Who Train > Return to Training: Modify, Do Not Guess"
+      ]
+     },
+     {
+      "id": "h06",
+      "lang": "en",
+      "cat": "common",
+      "wall_ms": 11506,
+      "latency_ms": 11459,
+      "llm_calls": 2,
+      "answer": "To reduce conflict when strength is your primary goal, you should prioritize the quality of sessions that matter most to that goal [1]. It is recommended to use zone 2 modalities with low eccentric stress, such as incline walking or cycling, rather than frequent hard runs [1]. Additionally, you should keep most cardio easy, separate hard cardio from hard lifting when possible, and ensure you fuel appropriately, particularly with carbohydrates around demanding work [1].",
+      "scores": {
+       "idk": false,
+       "idk_correct": true,
+       "facts": 0.6666666666666666,
+       "source_ok": true,
+       "quotes_ok": true,
+       "lang_ok": true,
+       "first_try": true
+      },
+      "sources": [
+       "12-cardio-and-conditioning.md > Cardio and Conditioning for Strength, Health, and Work Capacity > Concurrent Training: Mixing Cardio and Strength"
+      ]
+     },
+     {
+      "id": "h07",
+      "lang": "en",
+      "cat": "specific",
+      "wall_ms": 15904,
+      "latency_ms": 15825,
+      "llm_calls": 2,
+      "answer": "Workout B consists of the following exercises: \n- Split squat: 3 sets of 8 to 12 each side [4]\n- Standing dumbbell overhead press: 3 sets of 6 to 10 [4]\n- Band row or pulldown: 3 sets of 10 to 15 [4]\n- Hip thrust or glute bridge: 3 sets of 10 to 15 [4]\n- Pallof press or suitcase carry: 2 to 3 sets [4]",
+      "scores": {
+       "idk": false,
+       "idk_correct": true,
+       "facts": 1.0,
+       "source_ok": true,
+       "quotes_ok": true,
+       "lang_ok": true,
+       "first_try": true
+      },
+      "sources": [
+       "14-home-workouts-and-bodyweight.md > Home Workouts with Dumbbells, Bands, and Bodyweight > Workout B"
+      ]
+     },
+     {
+      "id": "h08",
+      "lang": "en",
+      "cat": "common",
+      "wall_ms": 11855,
+      "latency_ms": 11788,
+      "llm_calls": 2,
+      "answer": "Instead of chasing a flawless position, desk workers should aim for support and variability [1]. Rather than trying to hold one \"ideal\" shape forever, you should trade perfectionism for movement variety and capacity [4]. Practical advice includes alternating between upright and relaxed positions, standing up, walking, or changing posture regularly [1]. Additionally, rows, carries, split squats, pressing with good trunk control, and general physical activity often help more than constantly trying to pin the shoulders back [1].",
+      "scores": {
+       "idk": false,
+       "idk_correct": true,
+       "facts": 0.3333333333333333,
+       "source_ok": true,
+       "quotes_ok": true,
+       "lang_ok": true,
+       "first_try": true
+      },
+      "sources": [
+       "15-core-training-and-posture.md > Core Training, Bracing, and Posture Without the Myths > Better advice for desk workers",
+       "15-core-training-and-posture.md > Core Training, Bracing, and Posture Without the Myths > Final perspective"
+      ]
+     },
+     {
+      "id": "h09",
+      "lang": "en",
+      "cat": "common",
+      "wall_ms": 8058,
+      "latency_ms": 8001,
+      "llm_calls": 2,
+      "answer": "A useful rule is to never miss twice when it is avoidable [1]. Instead of self-criticism or trying to make up every missed workout, which can create an exhausting backlog, the best move is to return to your normal schedule and keep momentum [1].",
+      "scores": {
+       "idk": false,
+       "idk_correct": true,
+       "facts": 0.6666666666666666,
+       "source_ok": true,
+       "quotes_ok": true,
+       "lang_ok": true,
+       "first_try": true
+      },
+      "sources": [
+       "16-motivation-habits-and-consistency.md > Motivation, Habits, and Consistency in Fitness > Dealing with missed sessions"
+      ]
+     },
+     {
+      "id": "h10",
+      "lang": "en",
+      "cat": "specific",
+      "wall_ms": 7500,
+      "latency_ms": 7445,
+      "llm_calls": 2,
+      "answer": "A simple bench press setup checklist includes: \n- feet planted and still [1]\n- glutes on the bench [1]\n- upper back tight against the pad [1]\n- shoulder blades set before the unrack [1]\n- hands placed evenly on the bar [1]",
+      "scores": {
+       "idk": false,
+       "idk_correct": true,
+       "facts": 1.0,
+       "source_ok": true,
+       "quotes_ok": true,
+       "lang_ok": true,
+       "first_try": true
+      },
+      "sources": [
+       "03-bench-press-and-pushing.md > Bench Press and Pushing > Bench press setup"
+      ]
+     },
+     {
+      "id": "h11",
+      "lang": "en",
+      "cat": "common",
+      "wall_ms": 7432,
+      "latency_ms": 7364,
+      "llm_calls": 2,
+      "answer": "A balanced weekly plan for back training should include: [1] at least one vertical pull, [1] at least one row, [1] some rear-delt or face-pull work, and [1] enough total volume to progress without causing elbow inflammation.",
+      "scores": {
+       "idk": false,
+       "idk_correct": true,
+       "facts": 1.0,
+       "source_ok": true,
+       "quotes_ok": true,
+       "lang_ok": true,
+       "first_try": true
+      },
+      "sources": [
+       "04-pulling-and-back-training.md > Pulling and Back Training > Organizing back training"
+      ]
+     },
+     {
+      "id": "h12",
+      "lang": "en",
+      "cat": "specific",
+      "wall_ms": 22526,
+      "latency_ms": 22482,
+      "llm_calls": 3,
+      "answer": "High-bar positioning involves the bar resting on the upper traps, which typically allows for a more upright torso and increased knee travel [1]. In contrast, the low-bar position places the bar lower across the rear delts, which often allows for more load but requires a firmer upper-back shelf and generally involves more torso lean [2].",
+      "scores": {
+       "idk": false,
+       "idk_correct": true,
+       "facts": 1.0,
+       "source_ok": true,
+       "quotes_ok": true,
+       "lang_ok": true,
+       "first_try": true
+      },
+      "sources": [
+       "01-squat-technique.md > Barbell Back Squat Technique",
+       "01-squat-technique.md > Barbell Back Squat Technique > Rack setup and bar position > Low-bar"
+      ]
+     },
+     {
+      "id": "h13",
+      "lang": "ru",
+      "cat": "specific",
+      "wall_ms": 9117,
+      "latency_ms": 9081,
+      "llm_calls": 2,
+      "answer": "Если тренировки частые или требовательные, время приема пищи имеет значение [1]. До тренировки рекомендуется съесть порцию, содержащую углеводы и немного белка, за один-три часа до начала [1]. После тренировки не обязательно есть немедленно; разумно употребить белок и немного углеводов в течение нескольких часов после занятия, особенно если следующий прием пищи будет нескоро [1].",
+      "scores": {
+       "idk": false,
+       "idk_correct": true,
+       "facts": 0.75,
+       "source_ok": false,
+       "quotes_ok": true,
+       "lang_ok": true,
+       "first_try": true
+      },
+      "sources": [
+       "08-nutrition-protein-and-calories.md > Nutrition, Protein, and Calories for Fitness Goals > How to Set Macros Without Overcomplicating It"
+      ]
+     },
+     {
+      "id": "h14",
+      "lang": "ru",
+      "cat": "common",
+      "wall_ms": 11477,
+      "latency_ms": 11435,
+      "llm_calls": 2,
+      "answer": "Прежде чем вносить серьезные изменения, проверьте: была ли приверженность плану последовательной [1], действительно ли средний вес тела стоит на месте в течение нескольких недель [1], не снизилась ли активность вне тренировок [1] и нет ли причин для задержки воды [1]. Если плато реально, рекомендуемые правки включают: небольшое снижение калорийности [1], увеличение ежедневной активности [1], повышение точности порций [1] и улучшение стабильности в выходные дни [1]. Резкое сокращение еды требуется редко [1].",
+      "scores": {
+       "idk": false,
+       "idk_correct": true,
+       "facts": 1.0,
+       "source_ok": false,
+       "quotes_ok": true,
+       "lang_ok": true,
+       "first_try": true
+      },
+      "sources": [
+       "09-fat-loss-and-body-composition.md > Fat Loss and Body Composition Without Losing the Plot > Tracking Intake and Progress > Measurements and photos"
+      ]
+     },
+     {
+      "id": "h15",
+      "lang": "ru",
+      "cat": "specific",
+      "wall_ms": 3941,
+      "latency_ms": 3904,
+      "llm_calls": 2,
+      "answer": "Не знаю: в базе знаний нет информации, которая надёжно отвечает на этот вопрос.\n\nБлижайшие темы в базе (это не ответ на ваш вопрос): «Warm-Up and Mobility for Safer, Better Training», «Dynamic Versus Static Stretching > Dynamic stretching», «What a Warm-Up Should Accomplish».\n\nВы имели в виду одну из этих тем? Если нет — уточните, о каком упражнении, программе или аспекте питания идёт речь.",
+      "scores": {
+       "idk": true,
+       "idk_correct": false,
+       "facts": 0.0,
+       "source_ok": false,
+       "quotes_ok": false,
+       "lang_ok": true,
+       "first_try": true
+      },
+      "sources": []
+     },
+     {
+      "id": "h16",
+      "lang": "ru",
+      "cat": "specific",
+      "wall_ms": 23776,
+      "latency_ms": 23731,
+      "llm_calls": 3,
+      "answer": "В программу Lower B 4-дневного сплита для новичков входят следующие упражнения [1]:\n\n*   Вариация становой тяги (Deadlift variation): 3 подхода по 5–6 повторений [1].\n*   Фронтальные, кубковые или хак-приседания (Front squat, goblet squat, or hack squat): 3 подхода по 8–10 повторений [1].\n*   Ягодичный мостик или сгибание ног (Hip thrust or leg curl): 2–3 подхода [1].\n*   Зашагивания или выпады при ходьбе (Step-up or walking lunge): 2 подхода на каждую сторону [1].\n*   Упражнение Паллофа или переноска (Pallof press or carry): 2–3 подхода [1].",
+      "scores": {
+       "idk": false,
+       "idk_correct": true,
+       "facts": 1.0,
+       "source_ok": false,
+       "quotes_ok": true,
+       "lang_ok": true,
+       "first_try": true
+      },
+      "sources": [
+       "13-beginner-program-design.md > Beginner Program Design for Strength and Muscle > A practical 4-day upper/lower split"
+      ]
+     },
+     {
+      "id": "h17",
+      "lang": "ru",
+      "cat": "specific",
+      "wall_ms": 7796,
+      "latency_ms": 7739,
+      "llm_calls": 2,
+      "answer": "В конце руководства перечислены следующие практические подсказки (cues): зафиксируйтесь на штанге (wedge yourself to the bar), прижмите штангу к ногам (squeeze the bar to the legs), отталкивайтесь от пола (push the floor away), держите подмышки плотно (keep the armpits tight) и стойте прямо, не отклоняясь назад (stand tall, do not lean back) [1].",
+      "scores": {
+       "idk": false,
+       "idk_correct": true,
+       "facts": 1.0,
+       "source_ok": false,
+       "quotes_ok": true,
+       "lang_ok": true,
+       "first_try": true
+      },
+      "sources": [
+       "02-deadlift-technique.md > Deadlift Technique > Common deadlift faults and fixes > Bent arms"
+      ]
+     },
+     {
+      "id": "h18",
+      "lang": "ru",
+      "cat": "specific",
+      "wall_ms": 15235,
+      "latency_ms": 15179,
+      "llm_calls": 2,
+      "answer": "Протеиновый порошок наиболее полезен в следующих случаях: [1]\n- когда трудно достичь суточной нормы белка только из обычной еды; [1]\n- когда нужен быстрый вариант во время работы или в поездках; [1]\n- когда аппетит снижен во время интенсивных фаз тренировок; [1]\n- когда жидкий вариант просто практичнее полноценного приема пищи. [1]\nТакже он может быть включен в список рекомендуемых добавок, если помогает достичь целей по потреблению белка. [3]",
+      "scores": {
+       "idk": false,
+       "idk_correct": true,
+       "facts": 1.0,
+       "source_ok": true,
+       "quotes_ok": true,
+       "lang_ok": true,
+       "first_try": true
+      },
+      "sources": [
+       "17-supplements-and-ergogenic-aids.md > Supplements and Ergogenic Aids: What Helps, What Does Not, and How to Use Them Safely > Protein powder > When powder earns its place",
+       "17-supplements-and-ergogenic-aids.md > Supplements and Ergogenic Aids: What Helps, What Does Not, and How to Use Them Safely > A practical shortlist"
+      ]
+     },
+     {
+      "id": "h19",
+      "lang": "ru",
+      "cat": "common",
+      "wall_ms": 14846,
+      "latency_ms": 14794,
+      "llm_calls": 3,
+      "answer": "Для прогресса без травм новичкам рекомендуется придерживаться следующих правил: использовать интервалы бега и ходьбы [1], постепенно увеличивать общий объем [1], держать большинство пробежек в легком темпе [1], выбирать удобную обувь [1] и избегать ошибки превращения каждой пробежки в проверку возможностей [1]. Важно помнить, что ткани нуждаются во времени для адаптации к ударной нагрузке [1].",
+      "scores": {
+       "idk": false,
+       "idk_correct": true,
+       "facts": 0.0,
+       "source_ok": true,
+       "quotes_ok": true,
+       "lang_ok": true,
+       "first_try": true
+      },
+      "sources": [
+       "12-cardio-and-conditioning.md > Cardio and Conditioning for Strength, Health, and Work Capacity > Running Basics for Beginners"
+      ]
+     },
+     {
+      "id": "h20",
+      "lang": "ru",
+      "cat": "common",
+      "wall_ms": 9530,
+      "latency_ms": 9472,
+      "llm_calls": 2,
+      "answer": "Полезными признаками того, что восстановление проходит успешно, являются: [1]\n* стабильные или улучшающиеся показатели при привычной нагрузке; [1]\n* мышечная боль, которая проходит во время разминки; [1]\n* нормальная мотивация к тренировкам; [1]\n* стабильный аппетит и настроение; [1]\n* частота сердечных сокращений в покое остается в пределах вашей обычной нормы; [1]\n* сон, который приносит чувство бодрости, а не просто достаточную продолжительность. [1]",
+      "scores": {
+       "idk": false,
+       "idk_correct": true,
+       "facts": 1.0,
+       "source_ok": true,
+       "quotes_ok": true,
+       "lang_ok": true,
+       "first_try": true
+      },
+      "sources": [
+       "07-sleep-and-recovery.md > Sleep and Recovery for Training Progress > Practical Recovery Signals to Watch"
+      ]
+     },
+     {
+      "id": "h21",
+      "lang": "en",
+      "cat": "partial",
+      "wall_ms": 14243,
+      "latency_ms": 14189,
+      "llm_calls": 2,
+      "answer": "Zone 2 is a relatively easy, sustainable intensity where you can still speak in short sentences and continue for a meaningful duration [2]. It should feel controlled rather than heroic [2]. Example modalities include brisk incline walking, easy jogging, steady cycling, rowing at a controlled pace, or elliptical work that stays conversational [2]. The provided text does not specify an exact heart-rate percentage to target, noting instead that heart-rate zones are estimates and it is better to combine them with perceived effort [1].",
+      "scores": {
+       "idk": false,
+       "idk_correct": true,
+       "facts": 1.0,
+       "source_ok": true,
+       "quotes_ok": false,
+       "lang_ok": true,
+       "first_try": true
+      },
+      "sources": [
+       "12-cardio-and-conditioning.md > Cardio and Conditioning for Strength, Health, and Work Capacity > Heart-Rate Zones: Useful, Not Sacred",
+       "12-cardio-and-conditioning.md > Cardio and Conditioning for Strength, Health, and Work Capacity > Zone 2: The Aerobic Base"
+      ]
+     },
+     {
+      "id": "h22",
+      "lang": "en",
+      "cat": "partial",
+      "wall_ms": 7289,
+      "latency_ms": 7247,
+      "llm_calls": 2,
+      "answer": "The evidence-informed approach to vitamin D is to prioritize context [1]. If deficiency is suspected or known, testing and clinical guidance can help determine if supplementation is appropriate and what the correct dose should be [1]. The guide does not provide a specific dosage in IU [1].",
+      "scores": {
+       "idk": false,
+       "idk_correct": true,
+       "facts": 1.0,
+       "source_ok": true,
+       "quotes_ok": true,
+       "lang_ok": true,
+       "first_try": true
+      },
+      "sources": [
+       "17-supplements-and-ergogenic-aids.md > Supplements and Ergogenic Aids: What Helps, What Does Not, and How to Use Them Safely > Vitamin D"
+      ]
+     },
+     {
+      "id": "h23",
+      "lang": "en",
+      "cat": "partial",
+      "wall_ms": 2758,
+      "latency_ms": 2703,
+      "llm_calls": 2,
+      "answer": "I don't know: the knowledge base has no information that reliably answers this question.\n\nClosest topics in the knowledge base (not an answer to your question): «Grip, wrists, and forearms», «Bench press setup», «Bench press bar path».\n\nDid you mean one of these topics? If not, which exercise, program or nutrition aspect do you have in mind?",
+      "scores": {
+       "idk": true,
+       "idk_correct": false,
+       "facts": 0.0,
+       "source_ok": false,
+       "quotes_ok": false,
+       "lang_ok": true,
+       "first_try": true
+      },
+      "sources": []
+     },
+     {
+      "id": "h24",
+      "lang": "en",
+      "cat": "partial",
+      "wall_ms": 9677,
+      "latency_ms": 9627,
+      "llm_calls": 2,
+      "answer": "A useful rehab approach for knee pain includes finding tolerable squat or lunge variations, temporarily adjusting depth, tempo, or stance, strengthening the quads, hamstrings, calves, and hips, and rebuilding exposure to running or jumping in measured steps [1]. The provided text does not mention an anti-inflammatory dose [].",
+      "scores": {
+       "idk": false,
+       "idk_correct": true,
+       "facts": 1.0,
+       "source_ok": true,
+       "quotes_ok": true,
+       "lang_ok": true,
+       "first_try": true
+      },
+      "sources": [
+       "11-injury-prevention-and-rehab.md > Injury Prevention and Rehab for People Who Train > Knee Pain in Training"
+      ]
+     },
+     {
+      "id": "h25",
+      "lang": "en",
+      "cat": "out_of_corpus",
+      "wall_ms": 3761,
+      "latency_ms": 3700,
+      "llm_calls": 2,
+      "answer": "I don't know: the knowledge base has no information that reliably answers this question.\n\nClosest topics in the knowledge base (not an answer to your question): «Fat Loss and Body Composition Without Losing the Plot», «Fat Loss Versus Weight Loss», «The Real Goal».\n\nDid you mean one of these topics? If not, which exercise, program or nutrition aspect do you have in mind?",
+      "scores": {
+       "idk": true,
+       "idk_correct": true,
+       "lang_ok": true,
+       "first_try": true
+      },
+      "sources": []
+     },
+     {
+      "id": "h26",
+      "lang": "en",
+      "cat": "out_of_corpus",
+      "wall_ms": 1666,
+      "latency_ms": 1624,
+      "llm_calls": 1,
+      "answer": "I don't know: the knowledge base has no information that reliably answers this question.\n\nClosest topics in the knowledge base (not an answer to your question): «Supplements and Ergogenic Aids: What Helps, What Does Not, and How to Use Them Safely», «Stance, feet, and balance», «Who should be more cautious».\n\nDid you mean one of these topics? If not, which exercise, program or nutrition aspect do you have in mind?",
+      "scores": {
+       "idk": true,
+       "idk_correct": true,
+       "lang_ok": true,
+       "first_try": false
+      },
+      "sources": []
+     },
+     {
+      "id": "h27",
+      "lang": "ru",
+      "cat": "out_of_corpus",
+      "wall_ms": 639,
+      "latency_ms": 580,
+      "llm_calls": 1,
+      "answer": "I don't know: the knowledge base has no information that reliably answers this question.\n\nClosest topics in the knowledge base (not an answer to your question): «Who should be more cautious», «Reward the process carefully», «Motivation, Habits, and Consistency in Fitness».\n\nDid you mean one of these topics? If not, which exercise, program or nutrition aspect do you have in mind?",
+      "scores": {
+       "idk": true,
+       "idk_correct": true,
+       "lang_ok": false,
+       "first_try": false
+      },
+      "sources": []
+     },
+     {
+      "id": "h28",
+      "lang": "ru",
+      "cat": "out_of_corpus",
+      "wall_ms": 773,
+      "latency_ms": 724,
+      "llm_calls": 1,
+      "answer": "Не знаю: в базе знаний нет информации, которая надёжно отвечает на этот вопрос.\n\nБлижайшие темы в базе (это не ответ на ваш вопрос): «Beginner Program Design for Strength and Muscle», «When the Goal Should Change», «Nutrition, Protein, and Calories for Fitness Goals».\n\nВы имели в виду одну из этих тем? Если нет — уточните, о каком упражнении, программе или аспекте питания идёт речь.",
+      "scores": {
+       "idk": true,
+       "idk_correct": true,
+       "lang_ok": true,
+       "first_try": false
+      },
+      "sources": []
+     }
+    ],
+    "total_s": 295.3,
+    "call_stats": [
+     {
+      "purpose": "cited",
+      "calls": 25,
+      "promptTokensAvg": 1113.08,
+      "promptTokensP90": 1240,
+      "promptTokensMax": 1612,
+      "completionTokensAvg": 238.64,
+      "completionTokensP90": 392,
+      "completionTokensMax": 420,
+      "generationTokPerSec": 34.07293183700277,
+      "promptTokPerSec": 984.852238541851,
+      "totalMillisAvg": 8762.76,
+      "loadMillisTotal": 416
+     },
+     {
+      "purpose": "repair",
+      "calls": 3,
+      "promptTokensAvg": 372.0,
+      "promptTokensP90": 456,
+      "promptTokensMax": 456,
+      "completionTokensAvg": 341.3333333333333,
+      "completionTokensP90": 418,
+      "completionTokensMax": 418,
+      "generationTokPerSec": 37.75811209439528,
+      "promptTokPerSec": 1138.7755102040817,
+      "totalMillisAvg": 10219.333333333334,
+      "loadMillisTotal": 17
+     },
+     {
+      "purpose": "rewrite",
+      "calls": 28,
+      "promptTokensAvg": 114.07142857142857,
+      "promptTokensP90": 121,
+      "promptTokensMax": 126,
+      "completionTokensAvg": 14.964285714285714,
+      "completionTokensP90": 19,
+      "completionTokensMax": 19,
+      "generationTokPerSec": 41.3255745142519,
+      "promptTokPerSec": 352.22761358623734,
+      "totalMillisAvg": 1365.9642857142858,
+      "loadMillisTotal": 1137
+     }
+    ]
+   }
+  ]
+ },
+ "resources": {
+  "ollama_ps": [
+   {
+    "name": "gemma4:26b-a4b-it-qat",
+    "size_gb": 15.12,
+    "size_vram_gb": 15.12,
+    "context": 16384
+   },
+   {
+    "name": "embeddinggemma-2:270m-bf16-text",
+    "size_gb": 0.54,
+    "size_vram_gb": 0.54,
+    "context": 8192
+   }
+  ],
+  "ollama_rss_gb": 16.73
+ }
+}

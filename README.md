@@ -443,6 +443,13 @@ Everything runs on a local Ollama (no key, no internet): `OllamaTextGenerator` /
 - Web console (single Chat window): *Answer with* Cloud / Local / Hybrid (local retrieval + Gemini) / Compare Local vs Cloud (parallel).
 - Results and how to reproduce: `docs/day28-local-rag.md`, benchmark scripts and raw answers in `rag/eval/local-rag/`.
 
+## Local LLM tuning (Day 29)
+
+The local stack defaults to the tuned setup: prompt profile `local` (`PromptProfile`: rewrite examples, answer-the-supported-part, language hint, compact contract) and `OllamaTuning.RECOMMENDED` (8K context, token limits).
+Override with `--prompt-profile` / `RAG_PROMPT_PROFILE` and `--ollama-tuning` / `OLLAMA_TUNING` (`none` = original behaviour); the cloud model always gets the original prompts.
+`GET /api/llm/stats` of the web console shows tokens and timings per call purpose; `rag/local-model/Modelfile` packs the model for direct Ollama clients.
+Results and reproduction: `docs/day29-local-llm-optimization.md`, scripts and raw answers in `rag/eval/local-rag/`.
+
 ## Setup
 
 1. Get a Gemini API key from [Google AI Studio](https://aistudio.google.com/apikey).

@@ -1,0 +1,160 @@
+{
+ "model": "gemma4:26b-a4b-it-qat",
+ "note": "Бенчмарк: 16 вопросов tuning (подбор) + 28 вопросов hold-out (не использовались при подборе); те же настройки конвейера; fast — 3 повтора, smart — 2 повтора.",
+ "benchmarks": [
+  {
+   "title": "Local-fast: gemma4:26b-a4b-it-qat (MoE, QAT)",
+   "repeats": 3,
+   "memoryGbBefore": 15.7,
+   "memoryGbAfter": 15.6,
+   "sets": {
+    "tuning": {
+     "before": {
+      "facts": 0.8461538461538461,
+      "idkInCorpus": 0.15384615384615385,
+      "partial": null,
+      "outOfCorpusRefused": 1,
+      "quotesVerified": 0.8461538461538461,
+      "languageOk": 0.9375,
+      "medianMs": 7396.5,
+      "p90Ms": 11233,
+      "answers": 48
+     },
+     "after": {
+      "facts": 1.0,
+      "idkInCorpus": 0,
+      "partial": null,
+      "outOfCorpusRefused": 1,
+      "quotesVerified": 0.9230769230769231,
+      "languageOk": 1,
+      "medianMs": 8090.5,
+      "p90Ms": 10913,
+      "answers": 48
+     }
+    },
+    "holdout": {
+     "before": {
+      "facts": 0.78125,
+      "idkInCorpus": 0.1111111111111111,
+      "partial": 0.3333333333333333,
+      "outOfCorpusRefused": 1,
+      "quotesVerified": 0.8472222222222222,
+      "languageOk": 0.9642857142857143,
+      "medianMs": 7522.5,
+      "p90Ms": 13304,
+      "answers": 84
+     },
+     "after": {
+      "facts": 0.8298611111111112,
+      "idkInCorpus": 0.041666666666666664,
+      "partial": 0.875,
+      "outOfCorpusRefused": 1,
+      "quotesVerified": 0.9583333333333334,
+      "languageOk": 0.9285714285714286,
+      "medianMs": 7625.0,
+      "p90Ms": 13399,
+      "answers": 84
+     }
+    }
+   }
+  },
+  {
+   "title": "Local-smart: gemma4:31b-mlx (плотная, MLX)",
+   "repeats": 2,
+   "memoryGbBefore": 28.5,
+   "memoryGbAfter": 28.1,
+   "sets": {
+    "tuning": {
+     "before": {
+      "facts": 1.0,
+      "idkInCorpus": 0,
+      "partial": null,
+      "outOfCorpusRefused": 1,
+      "quotesVerified": 1,
+      "languageOk": 1,
+      "medianMs": 26402.5,
+      "p90Ms": 31553,
+      "answers": 32
+     },
+     "after": {
+      "facts": 1.0,
+      "idkInCorpus": 0,
+      "partial": null,
+      "outOfCorpusRefused": 1,
+      "quotesVerified": 1,
+      "languageOk": 1,
+      "medianMs": 27157.5,
+      "p90Ms": 32380,
+      "answers": 32
+     }
+    },
+    "holdout": {
+     "before": {
+      "facts": 0.7569444444444444,
+      "idkInCorpus": 0.16666666666666666,
+      "partial": 0.0,
+      "outOfCorpusRefused": 1,
+      "quotesVerified": 0.8333333333333334,
+      "languageOk": 0.9642857142857143,
+      "medianMs": 26955.0,
+      "p90Ms": 34307,
+      "answers": 56
+     },
+     "after": {
+      "facts": 0.9097222222222222,
+      "idkInCorpus": 0,
+      "partial": 0.875,
+      "outOfCorpusRefused": 1,
+      "quotesVerified": 1,
+      "languageOk": 0.9285714285714286,
+      "medianMs": 29351.5,
+      "p90Ms": 36948,
+      "answers": 56
+     }
+    }
+   }
+  }
+ ],
+ "demo": [
+  {
+   "id": "c07",
+   "tag": "до: «не знаю» → после: ответ",
+   "question": "How much protein per kilogram of body weight should an active lifter eat per day, and how should it be spread across the day?"
+  },
+  {
+   "id": "freq",
+   "tag": "до: «не знаю» → после: ответ (проверено вживую)",
+   "question": "How many days per week should a beginner lift?"
+  },
+  {
+   "id": "ru-c08",
+   "tag": "RU: до: «не знаю» → после: ответ",
+   "question": "В становой тяге штанга уходит вперёд от тела. Как это исправить?"
+  },
+  {
+   "id": "h22",
+   "tag": "частичный вопрос",
+   "question": "What does the guide say about vitamin D context, and what exact dosage in IU should I take if I am deficient?"
+  },
+  {
+   "id": "h23",
+   "tag": "частичный вопрос",
+   "question": "In the bench press, where should the bar usually touch the chest, and what grip width in centimeters should I use?"
+  },
+  {
+   "id": "h24",
+   "tag": "частичный вопрос",
+   "question": "If my knee is irritated in training, what rehab approach does the KB suggest, and what anti-inflammatory dose should I take?"
+  },
+  {
+   "id": "c09",
+   "tag": "вне корпуса: оба отказываются (без регресса)",
+   "question": "What is the current men's raw deadlift world record?"
+  },
+  {
+   "id": "h07",
+   "tag": "минус: единственная регрессия на hold-out",
+   "question": "What exactly is in Workout B of the sample full-body home training week, including sets and reps?"
+  }
+ ]
+}

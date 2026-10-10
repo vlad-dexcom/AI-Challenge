@@ -62,29 +62,30 @@ def score(q,t):
     att=(st.get("verification") or {}).get("attempts")
     s["first_try"]=(att==1) if att is not None else None
     return s
-res=json.load(open(OUT)) if len(sys.argv)>1 and sys.argv[1]=="--resume" else {}
-REPEATS=3
-for name,prov,model in CONFIGS:
-    if name in res and len(res[name]["runs"])>=REPEATS: continue
-    entry=res.setdefault(name,{"provider":prov,"model":model,"runs":[],"cold_start_ms":None})
-    if prov=="ollama":
-        subprocess.run(["ollama","stop","gemma4:26b-a4b-it-qat"],capture_output=True); subprocess.run(["ollama","stop","gemma4:31b-mlx"],capture_output=True); time.sleep(3)
-        if entry["cold_start_ms"] is None:
-            t,wall,err=call(prov,model,"Say hi in one word.",mode="no_rag")
-            entry["cold_start_ms"]=round(wall*1000); print(name,"cold start",entry["cold_start_ms"],"ms",err or "",flush=True)
-    else:
-        call(prov,model,"Say hi in one word.",mode="no_rag")
-    for rep in range(len(entry["runs"]),REPEATS):
-        run=[]; t0=time.time()
-        for q in Q:
-            t,wall,err=call(prov,model,q["question"])
-            rec={"id":q["id"],"lang":q["lang"],"cat":q["cat"],"wall_ms":round(wall*1000)}
-            if t is None or t.get("error"):
-                rec["error"]=err or t.get("error")
-            else:
-                rec.update(latency_ms=t["latencyMs"],llm_calls=t.get("llmCalls"),answer=t.get("answer"),scores=score(q,t),
-                           sources=[x["label"] for x in t.get("sources") or []],quotes=[x["text"][:120] for x in (t.get("structured") or {}).get("quotes",[])])
-            run.append(rec); print(name,rep,q["id"],rec.get("latency_ms"),rec.get("error") or rec["scores"],flush=True)
-        entry["runs"].append({"run":run,"total_s":round(time.time()-t0,1)})
-        json.dump(res,open(OUT,"w"),ensure_ascii=False,indent=1)
-print("ALLDONE",flush=True)
+if __name__=="__main__":
+    res=json.load(open(OUT)) if len(sys.argv)>1 and sys.argv[1]=="--resume" else {}
+    REPEATS=3
+    for name,prov,model in CONFIGS:
+        if name in res and len(res[name]["runs"])>=REPEATS: continue
+        entry=res.setdefault(name,{"provider":prov,"model":model,"runs":[],"cold_start_ms":None})
+        if prov=="ollama":
+            subprocess.run(["ollama","stop","gemma4:26b-a4b-it-qat"],capture_output=True); subprocess.run(["ollama","stop","gemma4:31b-mlx"],capture_output=True); time.sleep(3)
+            if entry["cold_start_ms"] is None:
+                t,wall,err=call(prov,model,"Say hi in one word.",mode="no_rag")
+                entry["cold_start_ms"]=round(wall*1000); print(name,"cold start",entry["cold_start_ms"],"ms",err or "",flush=True)
+        else:
+            call(prov,model,"Say hi in one word.",mode="no_rag")
+        for rep in range(len(entry["runs"]),REPEATS):
+            run=[]; t0=time.time()
+            for q in Q:
+                t,wall,err=call(prov,model,q["question"])
+                rec={"id":q["id"],"lang":q["lang"],"cat":q["cat"],"wall_ms":round(wall*1000)}
+                if t is None or t.get("error"):
+                    rec["error"]=err or t.get("error")
+                else:
+                    rec.update(latency_ms=t["latencyMs"],llm_calls=t.get("llmCalls"),answer=t.get("answer"),scores=score(q,t),
+                               sources=[x["label"] for x in t.get("sources") or []],quotes=[x["text"][:120] for x in (t.get("structured") or {}).get("quotes",[])])
+                run.append(rec); print(name,rep,q["id"],rec.get("latency_ms"),rec.get("error") or rec["scores"],flush=True)
+            entry["runs"].append({"run":run,"total_s":round(time.time()-t0,1)})
+            json.dump(res,open(OUT,"w"),ensure_ascii=False,indent=1)
+    print("ALLDONE",flush=True)

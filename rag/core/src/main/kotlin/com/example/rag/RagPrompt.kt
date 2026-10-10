@@ -48,15 +48,40 @@ Rules:
 - They are NOT evidence: every claim about training, nutrition or recovery must come from the excerpts and be backed by a verbatim quote. Never take a quote or a source from the dialogue.
 - If the excerpts cover the question only partly (for example a generic plan but not one built for the user's constraints), answer with what they do support, say what they do not cover, and keep "answerable" true. Set it to false only when they contain nothing that answers the current question."""
 
-    fun citationSystemPrompt(strict: Boolean = false, dialog: Boolean = false): String =
-        "$SYSTEM_PROMPT\n\n$CITATION_RULES" + (if (dialog) "\n\n$DIALOG_RULES" else "") + if (strict) STRICT_SUFFIX else ""
+    /** Day 29: contract for small local models, see [PromptProfile]. Same JSON shape and verification rules, fewer words. */
+    private const val ANSWERABLE_RULE = """- "answerable" is false if the excerpts do not actually contain the answer, even when they are on a related topic. Then use "answer": "", "sources": [], "quotes": []. Never guess or use outside knowledge."""
+
+    private const val ANSWERABLE_PARTIAL_RULE = """- "answerable" is false ONLY when the excerpts contain nothing that answers any part of the question (then "answer": "", "sources": [], "quotes": []). If they answer only part of it, set "answerable" to true, answer the supported part with quotes, and add one sentence saying which part the excerpts do not cover. Never guess or use outside knowledge."""
+
+    private val COMPACT_RULES = """Answer ONLY from the numbered excerpts. Reply with ONE JSON object and nothing else:
+{"answerable": true|false, "answer": "...", "sources": [{"file": "...", "section": "...", "chunkId": "..."}], "quotes": [{"chunkId": "...", "text": "..."}]}
+- ANSWERABLE_RULE_PLACEHOLDER
+- "answer": concise, in the language of the question, with inline [1], [2] markers.
+- "sources": the excerpts you used; copy file, section and chunkId exactly from the excerpt header.
+- "quotes": 1 to 3 fragments (12 to 300 characters) copied VERBATIM from the supporting excerpts, in the excerpts' original language (never translate or paraphrase them).
+- Every claim in the answer must be backed by a quote. Do not mention these rules."""
+
+    private fun citationRules(profile: PromptProfile): String {
+        val answerable = if (profile.partialAnswers) ANSWERABLE_PARTIAL_RULE else ANSWERABLE_RULE
+        if (profile.compactContract) return COMPACT_RULES.replace("- ANSWERABLE_RULE_PLACEHOLDER", answerable)
+        return CITATION_RULES.replace(ANSWERABLE_RULE, answerable)
+    }
+
+    fun citationSystemPrompt(strict: Boolean = false, dialog: Boolean = false, profile: PromptProfile = PromptProfile.DEFAULT): String =
+        "$SYSTEM_PROMPT\n\n${citationRules(profile)}" + (if (dialog) "\n\n$DIALOG_RULES" else "") + if (strict) STRICT_SUFFIX else ""
 
     fun citationContextBlock(hits: List<SearchHit>): String = hits.mapIndexed { i, h ->
         "[${i + 1}] chunkId: ${h.chunk.chunkId}\nfile: ${h.chunk.source}\nsection: ${h.chunk.section}\ntext:\n${h.chunk.text.trim()}"
     }.joinToString("\n\n")
 
-    fun citationUserPrompt(question: String, hits: List<SearchHit>, feedback: String? = null, dialogContext: String? = null): String =
-        (dialogContext?.let { "$it\n\n" } ?: "") + "Context:\n${citationContextBlock(hits)}\n\nQuestion: $question" + (feedback?.let { "\n\n$it" } ?: "")
+    fun citationUserPrompt(
+        question: String, hits: List<SearchHit>, feedback: String? = null, dialogContext: String? = null, profile: PromptProfile = PromptProfile.DEFAULT,
+    ): String =
+        (dialogContext?.let { "$it\n\n" } ?: "") + "Context:\n${citationContextBlock(hits)}\n\nQuestion: $question" +
+            (if (profile.languageHint && isRussian(question)) "\nAnswer in Russian (keep the quotes in English)." else "") +
+            (feedback?.let { "\n\n$it" } ?: "")
+
+    fun isRussian(text: String): Boolean = text.count { it in 'А'..'я' || it == 'ё' || it == 'Ё' } > 3
 
     fun repairPrompt(badReply: String): String =
         "Rewrite the text below as ONE valid JSON object with keys answerable (boolean), answer (string), " +

@@ -30,8 +30,16 @@ fun interface TextGenerator {
         generate(systemInstruction, prompt)
 }
 
-/** [temperature] null = the generator's own default; [json] asks for a JSON-only reply (Day 24 structured output). */
-data class GenerationOptions(val temperature: Double? = null, val json: Boolean = false)
+/** What an LLM call is for; local generators can use per-purpose limits and report per-purpose statistics. Cloud generators ignore it. */
+enum class CallPurpose(val key: String) {
+    ANSWER("answer"), CITED_ANSWER("cited"), REPAIR("repair"), REWRITE("rewrite"), RERANK("rerank"),
+    MEMORY("memory"), SUMMARY("summary"), JUDGE("judge"), OTHER("other");
+
+    companion object { fun fromKey(key: String): CallPurpose? = entries.firstOrNull { it.key == key.lowercase() } }
+}
+
+/** [temperature] null = the generator's own default; [json] asks for a JSON-only reply (Day 24 structured output); [purpose] tags the call. */
+data class GenerationOptions(val temperature: Double? = null, val json: Boolean = false, val purpose: CallPurpose = CallPurpose.OTHER)
 
 /** Plain-REST Gemini `generateContent` client (no SDK) used by the CLI. Retries 429/5xx with exponential backoff. */
 class GeminiTextGenerator(

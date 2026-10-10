@@ -42,6 +42,8 @@ ui       moved: ./gradlew :web-console:run --args="--port 8080" (Chat tab + chun
 --embedder gemini  (default if GEMINI_API_KEY is set) calls the Gemini embeddings REST API.
 --embedder offline deterministic hashing embedder, no network (lexical only, for tests/demos).
 --embedder ollama:<model> local embeddings via Ollama /api/embed (e.g. ollama:embeddinggemma-2:270m), index in rag/index-local-<model>; --embed-prompts off disables task prompts, --ollama-url overrides the server.
+--prompt-profile default|local|rewrite,partial,lang,compact (or RAG_PROMPT_PROFILE) selects the wording of the local prompts (default local); the cloud always uses the original.
+--ollama-tuning "numCtx=8192,keepAlive=30m,rewrite.maxTokens=96,cited.temperature=0" (or OLLAMA_TUNING) sets sampling/limits for local calls, optionally per call purpose (answer, cited, repair, rewrite, rerank, memory, summary, judge); default = the recommended tuning, `none` = no overrides.
 The Gemini key is read from the GEMINI_API_KEY env var or from local.properties (never committed).
 """
 
@@ -183,7 +185,7 @@ private fun buildPipeline(opts: Map<String, String>, dir: File, embedder: Embedd
     val index = IndexStore().load(file.toKxPath())
     val retriever = VectorRetriever(embedder, index, (opts["k"] ?: VectorRetriever.DEFAULT_TOP_K.toString()).toInt())
     val generator = llm.generator(opts["model"])
-    return stagedPipeline(retriever, generator, if (staged(opts)) ragConfigFrom(opts) else RagConfig.PLAIN, opts["rerank"] == "llm", citations = opts["citations"] != "off")
+    return stagedPipeline(retriever, generator, if (staged(opts)) ragConfigFrom(opts) else RagConfig.PLAIN, opts["rerank"] == "llm", citations = opts["citations"] != "off", profile = llm.promptProfile)
 }
 
 private fun staged(opts: Map<String, String>) = flag(opts, "filter") || flag(opts, "rerank") || flag(opts, "rewrite")

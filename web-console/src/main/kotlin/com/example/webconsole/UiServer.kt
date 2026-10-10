@@ -58,6 +58,15 @@ data class ChunkResponse(val fixed: StrategyResult, val structure: StrategyResul
 @Serializable
 data class SearchRequest(val strategy: String, val query: String, val k: Int = 5)
 
+/** Per call purpose (rewrite, cited, ...) token and timing statistics of the local model. */
+@Serializable
+data class PurposeStatsView(
+    val purpose: String, val calls: Int,
+    val promptTokensAvg: Double, val promptTokensP90: Int, val promptTokensMax: Int,
+    val completionTokensAvg: Double, val completionTokensP90: Int, val completionTokensMax: Int,
+    val generationTokPerSec: Double, val promptTokPerSec: Double, val totalMillisAvg: Double, val loadMillisTotal: Long,
+)
+
 @Serializable
 data class SearchHitView(val score: Float, val chunk: Chunk)
 
@@ -92,12 +101,18 @@ class UiApi(
     localGeneratorFactory: ((String) -> TextGenerator?)? = null,
     localEmbedderFactory: ((IndexMeta) -> EmbeddingClient?)? = null,
     localModels: (() -> List<String>)? = null,
+    localBaselineGeneratorFactory: ((String) -> TextGenerator?)? = null,
+    ollamaTuning: com.example.core.llm.OllamaTuning = com.example.core.llm.OllamaTuning.DEFAULT,
+    ollamaPrompts: com.example.rag.PromptProfile = com.example.rag.PromptProfile.DEFAULT,
 ) {
+    /** Token counts and timings of every local call since the last reset (sizing data for context windows and limits). */
+    private val llmStats = com.example.core.llm.LlmCallStats()
+
     private val json = Json { ignoreUnknownKeys = true; encodeDefaults = true }
 
     private val generators = java.util.concurrent.ConcurrentHashMap<String, TextGenerator>()
 
-    private val localProvider = LlmProvider(LlmProvider.OLLAMA, apiKey, ollamaUrl, ollamaModel, ollamaEmbedModel)
+    private val localProvider = LlmProvider(LlmProvider.OLLAMA, apiKey, ollamaUrl, ollamaModel, ollamaEmbedModel, ollamaTuning, llmStats, ollamaPrompts)
     private val localGenerators = java.util.concurrent.ConcurrentHashMap<String, TextGenerator>()
 
     private val localRag = LocalRag(
@@ -106,6 +121,20 @@ class UiApi(
         generatorFor = { model -> localGeneratorFactory?.invoke(model) ?: localGenerators.getOrPut(model) { localProvider.generator(model) } },
         defaultModel = ollamaModel,
         models = localModels ?: { installedChatModels(com.example.core.llm.OllamaChatClient(ollamaUrl, ollamaModel)) },
+        promptProfile = localProvider.promptProfile,
+    )
+
+    /** The same local stack as it was before Day 29: original prompts, no tuning (generator defaults). */
+    private val baselineProvider = LlmProvider(LlmProvider.OLLAMA, apiKey, ollamaUrl, ollamaModel, ollamaEmbedModel, com.example.core.llm.OllamaTuning.DEFAULT, llmStats, com.example.rag.PromptProfile.DEFAULT)
+    private val baselineGenerators = java.util.concurrent.ConcurrentHashMap<String, TextGenerator>()
+
+    private val localBaselineRag = LocalRag(
+        localIndexDir,
+        embedderFor = localRag.embedderFor,
+        generatorFor = { model -> localBaselineGeneratorFactory?.invoke(model) ?: baselineGenerators.getOrPut(model) { baselineProvider.generator(model) } },
+        defaultModel = ollamaModel,
+        models = localRag.models,
+        promptProfile = baselineProvider.promptProfile,
     )
 
     private val chatApi = ChatApi(
@@ -113,6 +142,8 @@ class UiApi(
         embedderFor = { embedderFactory(it) ?: defaultEmbedder(it) },
         generatorFor = { model -> generatorFactory(model) ?: apiKey.takeIf { it.isNotBlank() }?.let { generators.getOrPut(model) { GeminiTextGenerator(it, model) } } },
         local = localRag,
+        localBaseline = localBaselineRag,
+        optimization = OptimizationInfo.describe(ollamaModel, baselineProvider.tuning, baselineProvider.promptProfile, localProvider.tuning, localProvider.promptProfile),
     )
 
     private val sessionApi = com.example.webconsole.SessionApi(
@@ -123,6 +154,16 @@ class UiApi(
     )
 
     fun chatConfig(): String = chatApi.config()
+
+    fun llmStats(): String = json.encodeToString(
+        kotlinx.serialization.builtins.ListSerializer(PurposeStatsView.serializer()),
+        runBlocking { llmStats.summary() }.map {
+            PurposeStatsView(it.purpose.key, it.calls, it.promptTokensAvg, it.promptTokensP90, it.promptTokensMax, it.completionTokensAvg, it.completionTokensP90, it.completionTokensMax,
+                it.generationTokPerSec, it.promptTokPerSec, it.totalMillisAvg, it.loadMillisTotal)
+        },
+    )
+
+    fun resetLlmStats(): String { runBlocking { llmStats.reset() }; return "{}" }
 
     /** Sessions are read-modify-write JSON files: serialise them even though other requests now run in parallel. */
     private val sessionLock = Any()
@@ -272,12 +313,17 @@ class UiServer(private val api: UiApi, port: Int) {
             get && path == "/ui/markdown.js" -> "application/javascript; charset=utf-8" to
                 (UiServer::class.java.getResourceAsStream("/ui/markdown.js")?.readBytes()?.decodeToString()
                     ?: throw ApiException(500, "UI resource missing"))
+            get && path == "/ui/optimization-summary.json" -> JSON to
+                (UiServer::class.java.getResourceAsStream("/ui/optimization-summary.json")?.readBytes()?.decodeToString()
+                    ?: throw ApiException(404, "optimization-summary.json missing: run rag/eval/local-rag/make_summary.py"))
             get && path == "/api/files" -> JSON to api.files()
             get && path == "/api/file" -> JSON to api.file(queryParam(ex, "name") ?: throw ApiException(400, "name required"))
             get && path == "/api/index/inspect" -> JSON to api.inspect(queryParam(ex, "strategy") ?: throw ApiException(400, "strategy required"))
             get && path == "/api/embedder/ping" -> JSON to api.ping(queryParam(ex, "strategy") ?: throw ApiException(400, "strategy required"))
             get && path == "/api/eval" -> JSON to api.eval(queryParam(ex, "strategy") ?: throw ApiException(400, "strategy required"))
             get && path == "/api/chat/config" -> JSON to api.chatConfig()
+            get && path == "/api/llm/stats" -> JSON to api.llmStats()
+            post && path == "/api/llm/stats/reset" -> JSON to api.resetLlmStats()
             post && path == "/api/chat" -> JSON to api.chat(ex.requestBody.readBytes().decodeToString())
  path.startsWith("/api/sessions") && ex.requestMethod in setOf("GET", "POST", "PUT", "DELETE") ->
                 JSON to api.sessions(ex.requestMethod, path, ex.requestBody.readBytes().decodeToString())

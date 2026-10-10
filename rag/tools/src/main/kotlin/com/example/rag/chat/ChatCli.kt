@@ -36,7 +36,7 @@ private fun wire(opts: Map<String, String>, dir: File, embedder: EmbeddingClient
         keepLastTurns = opts["keep"]?.toInt() ?: 4,
         summaryBatch = opts["batch"]?.toInt() ?: 2,
     )
-    val engine = ChatEngine(VectorRetriever(cachedEmbedder(embedder), index, options.topKBefore), CachedTextGenerator(raw, "$model@chat", usage, cache), usage)
+    val engine = ChatEngine(VectorRetriever(cachedEmbedder(embedder), index, options.topKBefore), CachedTextGenerator(raw, "$model@chat", usage, cache), usage, llm.promptProfile)
     return Wiring(engine, GoalJudge(CachedTextGenerator(raw, "$model@goal-judge", LlmUsage(), cache)), usage, options)
 }
 

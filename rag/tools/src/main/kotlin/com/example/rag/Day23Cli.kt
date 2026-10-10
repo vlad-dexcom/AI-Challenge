@@ -83,5 +83,5 @@ internal suspend fun runModesEval(opts: Map<String, String>, dir: File, embedder
 }
 
 /** Builds the pipeline used by `ask` / the UI with the stages selected in [cfg]. */
-fun stagedPipeline(retriever: Retriever, generator: TextGenerator, cfg: RagConfig, llmRerank: Boolean, citations: Boolean = false): RagPipeline =
-    RagPipeline(retriever, generator, LlmQueryRewriter(generator), if (llmRerank) LlmReranker(generator) else HeuristicReranker(), config = cfg, citations = citations)
+fun stagedPipeline(retriever: Retriever, generator: TextGenerator, cfg: RagConfig, llmRerank: Boolean, citations: Boolean = false, profile: PromptProfile = PromptProfile.DEFAULT): RagPipeline =
+    RagPipeline(retriever, generator, LlmQueryRewriter(generator, profile), if (llmRerank) LlmReranker(generator) else HeuristicReranker(), config = cfg, citations = citations, profile = profile)
