@@ -450,6 +450,14 @@ Override with `--prompt-profile` / `RAG_PROMPT_PROFILE` and `--ollama-tuning` / 
 `GET /api/llm/stats` of the web console shows tokens and timings per call purpose; `rag/local-model/Modelfile` packs the model for direct Ollama clients.
 Results and reproduction: `docs/day29-local-llm-optimization.md`, scripts and raw answers in `rag/eval/local-rag/`.
 
+## Private local LLM service (Day 30)
+
+`:ai-gateway` puts an authenticated, rate-limited OpenAI-style API and a mobile chat page in front of a loopback-only Ollama,
+reachable from phones on the home Wi-Fi: `phone → scripts/lan_forward.py (Apple python, 0.0.0.0:8088) → gateway (127.0.0.1:8089) → Ollama (127.0.0.1:11434)` (the forwarder is needed where the macOS firewall blocks `java`; direct mode: `GATEWAY_HOST=0.0.0.0`).
+- `scripts/private-ai.sh keygen <device>` then `scripts/private-ai.sh start` (prints URL + QR). Config: `ai-gateway/gateway.example.json`.
+- No-model checks: `python3 scripts/fake_ollama.py` (port 11435) + `scripts/loadtest.py`.
+- Design, threat model, limits and results: `docs/day30-private-ai-service.md`, manual steps: `docs/day30-private-ai-service-test-scenario.md`.
+
 ## Setup
 
 1. Get a Gemini API key from [Google AI Studio](https://aistudio.google.com/apikey).
@@ -501,10 +509,11 @@ graph TD
 
 - `core/common` — `io/Files.kt` (kotlinx-io `Path` helpers), `time/Time.kt` (`nowMillis`, `newId`),
   `platform/` (the only place allowed to touch JVM APIs: HTTP engine, Unicode normalization, `File` bridge).
-- `core/llm` — `LlmClient`, `GeminiApiClient`, `GeminiModels`, `EmbeddingClient`/`GeminiEmbeddingClient`, `TextGenerator`, Ollama clients (`OllamaChatClient`, `OllamaTextGenerator`, `OllamaEmbeddingClient`).
+- `core/llm` — `LlmClient`, `GeminiApiClient`, `GeminiModels`, `EmbeddingClient`/`GeminiEmbeddingClient`, `TextGenerator`, Ollama clients (`OllamaChatClient`, `OllamaTextGenerator`, `OllamaEmbeddingClient`, `OllamaStreamingClient`).
 - `rag/core` — Day 21–25 RAG: `Chunker`s, `VectorIndex`/`IndexStore`, `Retriever`, `RagPipeline`,
   `Citations`, `chat/` (`ChatEngine`, `SessionStore`, `TaskMemory`); shared test fixtures in `testFixtures`.
 - `rag/tools` — CLI (`./gradlew :rag:tools:run --args="index|eval|compare|ask|chat|..."`), evals, sweeps.
+- `ai-gateway` — `scripts/private-ai.sh start` (Day 30): LAN gateway for a local Ollama, see `docs/day30-private-ai-service.md`.
 - `web-console` — `./gradlew :web-console:run [--args="--port 8080"]`, the former `ui` command.
 - `rag/corpus`, `rag/eval`, `rag/index`, `rag/index-local`, `rag/index-offline`, `rag/sessions` — data (not a Gradle module).
 - `agent` — `agent/` (`Agent`, `AgentConfig`/`AgentCatalog`, `LlmAgent`, `TokenEstimator`), `agent/memory/`

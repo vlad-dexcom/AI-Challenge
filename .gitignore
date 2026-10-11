@@ -49,7 +49,12 @@ rag/cache/
 
 ### Chat sessions (Day 25) ###
 rag/sessions/
+rag/sessions-gateway/
 
 # Day 29 experiment artifacts
 __pycache__/
 rag/eval/local-rag/optimization/server.log
+
+### AI gateway (real config holds key hashes - keep outside the repo)
+ai-gateway/gateway.json
+gateway.json
