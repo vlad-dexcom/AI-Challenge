@@ -3,8 +3,7 @@
 Goal: a local model reachable over HTTP and from a phone chat page, safe enough for a home LAN, stable under several
 parallel requests, with basic limits (rate limit, max context). Public access, VPS, Docker, TLS proxy are out of scope.
 
-> Status: gateway, scripts and tests are done and verified against a fake Ollama. Sections marked **TBD после дня 29**
-> need the final model/settings from day 29 and real measurements.
+> Status: gateway, scripts and tests are done and verified against a fake Ollama and on the real model (results below).
 
 ## Architecture
 
@@ -116,13 +115,36 @@ runtime switch via `POST /_control`). Real Ollama (11434) was not touched.
 - Earlier loopback runs: fake `500`/`drop` modes surface as 502 / SSE `error`; 503 when the queue is full (c=6, queue 2).
 - `GFQQTXJXNG.local` does not resolve here (mDNS); use the IP.
 
-## Results with the real model — TBD после дня 29
+## Results with the real model
 
-- Final model / quantization / `num_ctx` / `OLLAMA_NUM_PARALLEL`: TBD
-- Load test 1/2/4/8 clients, p50/p90/p99, TTFT, tok/s, error rate, `NUM_PARALLEL` 1/2/4 comparison: TBD
-- Soak 15–30 min (memory via `ollama ps`, throttling): TBD
-- Restart Ollama under load → 503/502 and recovery: TBD
-- Phone test (streaming, background, Wi-Fi loss): TBD
+Model `trainer-rag-fast` (gemma4:26b-a4b-it-qat, `num_ctx` 8192, temperature 0.3) on an M3 Pro 36 GB, requests over the LAN address
+(phone path: client -> forwarder :8088 -> gateway -> Ollama). Raw numbers: `docs/day30-results.json`, harness: `scripts/realrun.py`.
+
+**NUM_PARALLEL** (24 requests per cell, streaming, 120 tokens, 0 errors):
+
+| NUM_PARALLEL | total tok/s | p50 at 4 clients | p50 at 8 clients | model memory |
+|---|---|---|---|---|
+| 1 | 37 | 7.1 s | 14.0 s | 15.1 GB |
+| 2 | 57 | 4.6 s | 9.2 s | 15.3 GB |
+| 4 | 67 | 4.0 s | 7.8 s | 15.9 GB |
+
+One client: ~37 tok/s, first token ~0.17 s, ~1.8 s per 120-token reply. **Chosen: NUM_PARALLEL=4** (+80% throughput for +0.8 GB).
+
+**Soak, 15 min** (NP=4, 3 clients with think time): 543/543 ok, latency p50/p90/p99 3.0/3.1/3.3 s, first token p50 0.25 s, ~22 tok/s per stream,
+model memory constant 15.87 GB, Ollama RSS 16.76 -> 16.99 GB, no thermal throttling (CPU_Speed_Limit 100), `active` back to 0.
+
+**Faults:** Ollama killed ~9 s under 4-client load: 12/48 requests ok, 36 failed with an SSE `upstream_error` event (no hangs), first success 2.3 s after the
+restart. 4 client disconnects were counted, `active` returned to 0, the next request took 0.4 s.
+
+**Limits, 12/12 checks:** 401/403, `context_length_exceeded` (~10k tokens vs 8192), 413 for a body over 64 KB, 400 for more than 40 messages,
+`max_tokens` clamp, 404 unknown model, 429 + `Retry-After` after a burst and recovery, 503 `queue_full` (4 served / 3 rejected), stats counters.
+
+**Findings from real runs**
+- Gemma 4 "thinks" by default: `max_tokens` was spent on thinking and the answer was empty. The gateway now sends `think:false` (config `think`).
+- Phone test: chat works over Wi-Fi with streaming. It exposed two issues, both fixed: Markdown was not rendered (the page now renders it, same renderer as the web console)
+  and a long answer (NEAT) was cut at 512 tokens (default raised to 1024, cap 2048; the page shows a notice and a "Продолжить" button on `finish_reason=length`;
+  the same answer now finishes with `stop` at 528 tokens).
+- `scripts/realrun.py serve` runs its own Ollama instance on 127.0.0.1:11436 (with `OLLAMA_NUM_PARALLEL`), so the brew service on 11434 is untouched.
 
 ## Limitations
 

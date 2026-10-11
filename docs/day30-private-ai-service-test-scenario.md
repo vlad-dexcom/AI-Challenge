@@ -32,7 +32,7 @@ Start with `scripts/private-ai.sh start` (forwarder on Apple python, see the day
 
 ## 5. Phone
 Open the URL/QR, enter the key, chat (streaming visible), lock screen / switch Wi-Fi mid-answer → `/stats` shows a disconnect and
-no stuck `active`. Result: TBD после дня 29.
+no stuck `active`. Result: passed on a real phone (see the results section of the main doc); Markdown and truncation issues found and fixed.
 
 ### Phone questions
 
