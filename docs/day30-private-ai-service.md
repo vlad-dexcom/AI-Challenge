@@ -130,3 +130,13 @@ runtime switch via `POST /_control`). Real Ollama (11434) was not touched.
 - Token estimate is heuristic; the real count comes from Ollama after the fact (`usage`).
 - State is in memory (rate buckets, stats reset on restart); the chat page keeps history only in the open tab.
 - No TLS, no per-key quotas over time, no persistence of conversations.
+
+## Чат на телефоне использует RAG и наработки дней 25-29
+
+Включается блоком `"rag": {"enabled": true, "indexDir": "rag/index-local", "sessionsDir": "rag/sessions-gateway"}` в `gateway.json` (выключен по умолчанию). Кнопка **Docs** на странице чата переключает режим «база знаний» / «просто модель».
+
+- `POST /v1/rag/chat` `{"text": "...", "session": "s-..."}` -> `answer`, `idk`, `sources`, `quotes` (с флагом `verified`), `goal`, `searchQuery`, `llmCalls`, `wallMs`; `POST /v1/rag/reset` `{"session": "..."}`.
+- Внутри тот же стек, что в web-консоли: локальный индекс `embeddinggemma-2`, переписывание запроса с учётом памяти, фильтр + rerank, ответ с проверенными цитатами, «не знаю» вместо выдумки, память задачи и скользящее резюме (Day 25), `PromptProfile local` и `OllamaTuning.RECOMMENDED` (Day 29).
+- Сессии хранятся на сервере отдельно для каждого ключа устройства; ключ, лимиты, очередь и таймауты те же, что у обычного чата (один ход RAG занимает один слот на все свои вызовы модели). Ответ приходит целиком (3 вызова модели, ~4-12 с), без стриминга.
+- Проверено на реальной модели: вопрос про белок -> ответ с источником, «А если я вегетарианец?» -> запрос переписан с учётом цели «Build muscle mass», вопрос вне базы -> «Не знаю» с напоминанием цели.
+- Для двух моделей одновременно (ответы + эмбеддинги) тестовый Ollama запускается с `OLLAMA_MAX_LOADED_MODELS=2`.

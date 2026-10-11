@@ -20,6 +20,19 @@
   #log { flex: 1; overflow-y: auto; padding: 12px; display: flex; flex-direction: column; gap: 8px; }
   .m { max-width: 88%; padding: 8px 12px; border-radius: 14px; white-space: pre-wrap; word-wrap: break-word; background: var(--bot); border: 1px solid var(--bd); }
   .m.me { align-self: flex-end; background: var(--me); color: #fff; border-color: var(--me); }
+  .m.md { white-space: normal; overflow-wrap: anywhere; }
+  .m.md > :first-child { margin-top: 0; } .m.md > :last-child { margin-bottom: 0; }
+  .m.md p { margin: .45em 0; } .m.md ul, .m.md ol { margin: .4em 0; padding-left: 1.4em; } .m.md li { margin: .15em 0; }
+  .m.md h1, .m.md h2, .m.md h3, .m.md h4 { font-size: 1em; margin: .7em 0 .3em; } .m.md h1, .m.md h2 { font-size: 1.1em; }
+  .m.md code { background: rgba(127,127,127,.2); padding: 0 4px; border-radius: 4px; font: .9em ui-monospace, monospace; }
+  .m.md pre { background: rgba(127,127,127,.18); padding: 8px 10px; border-radius: 8px; overflow-x: auto; } .m.md pre code { background: none; padding: 0; }
+  .m.md table { display: block; overflow-x: auto; border-collapse: collapse; font-size: .9em; } .m.md th, .m.md td { border: 1px solid var(--bd); padding: 3px 6px; }
+  .m.md blockquote { margin: .4em 0; padding-left: 10px; border-left: 3px solid var(--bd); opacity: .85; }
+  .m.md a { color: #2563eb; }
+  .src { align-self: flex-start; max-width: 88%; font-size: .8rem; opacity: .9; } .src summary { cursor: pointer; } .src ul { margin: .3em 0; padding-left: 1.2em; } .src q { font-style: italic; }
+  button.on { background: var(--me); color: #fff; border-color: var(--me); }
+  .cut { align-self: flex-start; font-size: .8rem; opacity: .85; display: flex; gap: 8px; align-items: center; }
+  .cut button { padding: 4px 10px; }
   .m.err { border-color: #dc2626; color: #dc2626; }
   form { display: flex; gap: 8px; padding: 8px 12px; padding-bottom: max(8px, env(safe-area-inset-bottom)); border-top: 1px solid var(--bd); }
   textarea { flex: 1; resize: none; max-height: 40vh; border: 1px solid var(--bd); border-radius: 12px; padding: 8px 12px; background: var(--bot); }
@@ -32,6 +45,7 @@
 <header>
   <h1>Private AI <span id="status"></span></h1>
   <select id="model" hidden></select>
+  <button id="rag" type="button" hidden title="Answer from the knowledge base (RAG, sources, memory)">Docs</button>
   <button id="key" type="button">Key</button>
   <button id="new" type="button">New chat</button>
 </header>
@@ -41,6 +55,7 @@
   <button id="saveKey" type="button">Save</button>
 </div>
 <div id="log"></div>
+<script src="/markdown.js"></script>
 <form id="form">
   <textarea id="input" rows="1" placeholder="Message" enterkeyhint="send"></textarea>
   <button id="send" type="submit">Send</button>
@@ -48,7 +63,9 @@
 <script>
 const $ = id => document.getElementById(id);
 const log = $('log'), input = $('input'), sendBtn = $('send'), status = $('status'), modelSel = $('model');
-let history = [], busy = false, abort = null;
+let history = [], busy = false, abort = null, ragAvailable = false, ragSession = localStorage.getItem('ragSession') || null;
+const ragOn = () => ragAvailable && localStorage.getItem('ragOn') !== '0';
+function paintRagButton() { $('rag').hidden = !ragAvailable; $('rag').className = ragOn() ? 'on' : ''; }
 const getKey = () => localStorage.getItem('gatewayKey') || '';
 
 function add(cls, text) {
@@ -67,14 +84,58 @@ async function loadModels() {
     const j = await r.json();
     modelSel.innerHTML = '';
     j.data.forEach(m => { const o = document.createElement('option'); o.value = o.textContent = m.id; modelSel.appendChild(o); });
-    modelSel.hidden = j.data.length < 2; needKey(false); setStatus('');
+    modelSel.hidden = j.data.length < 2; ragAvailable = !!j.rag; paintRagButton(); needKey(false); setStatus('');
   } catch (e) { setStatus('offline'); }
 }
 
+const esc = t => String(t).replace(/[&<>"]/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
+
+// One knowledge-base turn: the server retrieves, reranks, answers with verified citations and keeps the dialogue memory per session.
+async function sendRag(text) {
+  add('me', text);
+  const bubble = add('', 'Ищу в базе знаний…');
+  busy = true; sendBtn.disabled = true; abort = new AbortController();
+  const t0 = Date.now(), timer = setInterval(() => setStatus(Math.round((Date.now() - t0) / 1000) + ' s'), 500);
+  try {
+    const r = await fetch('/v1/rag/chat', {
+      method: 'POST', signal: abort.signal,
+      headers: { 'Content-Type': 'application/json', Authorization: 'Bearer ' + getKey() },
+      body: JSON.stringify({ text, session: ragSession }),
+    });
+    const j = await r.json().catch(() => ({}));
+    if (!r.ok) {
+      if (r.status === 401 || r.status === 403) needKey(true);
+      const ra = r.headers.get('Retry-After');
+      bubble.className = 'm err'; bubble.textContent = ((j.error && j.error.message) || 'HTTP ' + r.status) + (ra ? ' (retry in ' + ra + ' s)' : '');
+      return;
+    }
+    ragSession = j.session; localStorage.setItem('ragSession', ragSession);
+    bubble.className = 'm md'; bubble.innerHTML = window.renderMarkdown ? window.renderMarkdown(j.answer) : esc(j.answer);
+    const d = document.createElement('details'); d.className = 'src';
+    const quotes = j.quotes.filter(q => q.verified);
+    const head = j.idk ? 'Не нашёл в базе знаний' : 'Источники: ' + j.sources.length + (quotes.length ? ', проверенные цитаты: ' + quotes.length : '');
+    d.innerHTML = '<summary>' + head + ' · ' + j.llmCalls + ' вызовов, ' + (j.wallMs / 1000).toFixed(1) + ' s' + (j.goal ? ' · цель: ' + esc(j.goal) : '') + '</summary>' +
+      (j.sources.length ? '<ul>' + j.sources.map(x => '<li>' + esc(x.label) + ' (' + x.score.toFixed(2) + ')</li>').join('') + '</ul>' : '') +
+      (quotes.length ? '<ul>' + quotes.map(q => '<li><q>' + esc(q.text) + '</q></li>').join('') + '</ul>' : '') +
+      (j.searchQuery ? '<div>Запрос поиска: ' + esc(j.searchQuery) + '</div>' : '');
+    log.appendChild(d); log.scrollTop = log.scrollHeight;
+    setStatus('');
+  } catch (e) {
+    if (e.name !== 'AbortError') { bubble.className = 'm err'; bubble.textContent = 'Connection lost.'; }
+  } finally {
+    clearInterval(timer); busy = false; sendBtn.disabled = false; abort = null;
+  }
+}
+
 async function send(text) {
+  if (ragOn()) return sendRag(text);
   history.push({ role: 'user', content: text });
   add('me', text);
   const bubble = add('', '…');
+  let truncated = false;
+  const paint = () => { bubble.className = 'm md'; bubble.innerHTML = window.renderMarkdown ? window.renderMarkdown(answer) : ''; if (!window.renderMarkdown) bubble.textContent = answer; log.scrollTop = log.scrollHeight; };
+  let pending = false;
+  const schedule = () => { if (!pending) { pending = true; requestAnimationFrame(() => { pending = false; paint(); }); } };
   busy = true; sendBtn.disabled = true; abort = new AbortController();
   let answer = '';
   try {
@@ -106,17 +167,27 @@ async function send(text) {
         const j = JSON.parse(data);
         if (j.error) { bubble.className = 'm err'; bubble.textContent = answer + '\n' + j.error.message; continue; }
         const delta = j.choices && j.choices[0].delta.content;
-        if (delta) { answer += delta; bubble.textContent = answer; log.scrollTop = log.scrollHeight; }
+        if (delta) { answer += delta; schedule(); }
+        if (j.choices && j.choices[0].finish_reason === 'length') truncated = true;
         if (j.usage) setStatus(j.usage.completion_tokens + ' tokens');
       }
     }
-    if (answer) history.push({ role: 'assistant', content: answer }); else history.pop();
+    if (answer) { paint(); history.push({ role: 'assistant', content: answer }); } else history.pop();
+    if (truncated) showCut();
   } catch (e) {
     if (e.name !== 'AbortError') { bubble.className = 'm err'; bubble.textContent = (answer ? answer + '\n' : '') + 'Connection lost.'; }
     if (answer) history.push({ role: 'assistant', content: answer }); else history.pop();
   } finally {
     busy = false; sendBtn.disabled = false; abort = null;
   }
+}
+
+// The server stops an answer at its max_tokens limit (finish_reason "length"): say so and let the user ask for the rest.
+function showCut() {
+  const d = document.createElement('div'); d.className = 'cut';
+  const b = document.createElement('button'); b.type = 'button'; b.textContent = 'Продолжить';
+  d.append('Ответ обрезан лимитом токенов. ', b); log.appendChild(d); log.scrollTop = log.scrollHeight;
+  b.onclick = () => { d.remove(); if (!busy) send('Продолжи с того места, где остановился.'); };
 }
 
 $('form').addEventListener('submit', e => {
@@ -127,7 +198,11 @@ $('form').addEventListener('submit', e => {
   input.value = ''; input.style.height = 'auto'; send(t);
 });
 input.addEventListener('input', () => { input.style.height = 'auto'; input.style.height = Math.min(input.scrollHeight, window.innerHeight * .4) + 'px'; });
-$('new').onclick = () => { if (abort) abort.abort(); history = []; log.innerHTML = ''; setStatus(''); };
+$('rag').onclick = () => { localStorage.setItem('ragOn', ragOn() ? '0' : '1'); paintRagButton(); };
+$('new').onclick = () => {
+  if (abort) abort.abort();
+  if (ragSession) fetch('/v1/rag/reset', { method: 'POST', headers: { 'Content-Type': 'application/json', Authorization: 'Bearer ' + getKey() }, body: JSON.stringify({ session: ragSession }) }).catch(() => {});
+  ragSession = null; localStorage.removeItem('ragSession'); history = []; log.innerHTML = ''; setStatus(''); };
 $('key').onclick = () => needKey($('setup').style.display === 'none');
 $('saveKey').onclick = () => { localStorage.setItem('gatewayKey', $('keyInput').value.trim()); $('keyInput').value = ''; loadModels(); };
 loadModels();

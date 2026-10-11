@@ -66,12 +66,14 @@ fun testConfig(upstream: String, limits: Limits = Limits(), numCtx: Int = 4096) 
     limits = limits,
 )
 
-class RunningGateway(val config: GatewayConfig) {
-    private val server = embeddedServer(CIO, host = "127.0.0.1", port = 0) { Gateway(config, log = {}).install(this) }.also { it.start() }
+class RunningGateway(val config: GatewayConfig, rag: RagService? = null) {
+    private val server = embeddedServer(CIO, host = "127.0.0.1", port = 0) { Gateway(config, log = {}, rag = rag).install(this) }.also { it.start() }
     val base: String = "http://127.0.0.1:${runBlocking { server.engine.resolvedConnectors().first().port }}"
     private val http = HttpClient.newBuilder().connectTimeout(Duration.ofSeconds(5)).build()
 
     fun stop() = server.stop(0, 0)
+
+    fun http() = http
 
     fun request(method: String, path: String, key: String? = KEY_A, body: String? = null): HttpResponse<String> =
         http.send(build(method, path, key, body), HttpResponse.BodyHandlers.ofString())

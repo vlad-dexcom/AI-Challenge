@@ -57,7 +57,9 @@ class Gateway(
     private val config: GatewayConfig,
     engine: HttpClientEngine = defaultHttpEngine(),
     private val log: (String) -> Unit = { System.err.println(it) },
+    rag: RagService? = null,
 ) {
+    private val ragService: RagService? = rag ?: if (config.rag.enabled) LocalRagService(config.rag, config.upstreamUrl, config.models.first()) else null
     private val limits = config.limits
     private val keys = KeyStore(config.keys)
     private val rate = RateLimiter(limits.rateBurst, limits.rateLimitPerMinute)
@@ -69,15 +71,20 @@ class Gateway(
     private val json = Json { ignoreUnknownKeys = true }
     private val page: String by lazy { Gateway::class.java.getResource("/chat.html")!!.readText() }
 
+    /** Same dependency-free, escaping Markdown renderer as the web console (copy of web-console/src/main/resources/ui/markdown.js). */
+    private val markdownJs: String by lazy { Gateway::class.java.getResource("/markdown.js")!!.readText() }
+
     @Volatile private var health: Pair<Long, JsonObject>? = null
 
     fun install(app: Application) = app.routing {
         get("/") { call.respondText(page, ContentType.Text.Html) }
+        get("/markdown.js") { call.respondText(markdownJs, ContentType.parse("application/javascript; charset=utf-8")) }
         get("/healthz") { handleHealth(call) }
         get("/v1/models") {
             val k = authenticate(call) ?: return@get
             call.respondJson(HttpStatusCode.OK, buildJsonObject {
                 put("object", "list")
+                put("rag", ragService != null)
                 put("data", buildJsonArray {
                     config.models.forEach { add(buildJsonObject { put("id", it); put("object", "model"); put("owned_by", "local") }) }
                 })
@@ -89,6 +96,68 @@ class Gateway(
             call.respondJson(HttpStatusCode.OK, toJson(stats.snapshot(gate.active, gate.queued)))
         }
         post("/v1/chat/completions") { handleChat(call) }
+        post("/v1/rag/chat") { handleRag(call, reset = false) }
+        post("/v1/rag/reset") { handleRag(call, reset = true) }
+    }
+
+    /** RAG turn through the same auth, rate limit, per-key cap and generation queue as plain chat; one turn holds one slot for all of its LLM calls. */
+    private suspend fun handleRag(call: ApplicationCall, reset: Boolean) {
+        val started = System.currentTimeMillis()
+        stats.requests.incrementAndGet()
+        val key = authenticate(call) ?: return
+        var status = 0
+        try {
+            val svc = ragService ?: return reject(call, key, HttpStatusCode.NotFound, "invalid_request_error", "rag_disabled", "RAG is not enabled on this server.")
+            val wait = rate.tryTake(key)
+            if (wait > 0) return reject(call, key, HttpStatusCode.TooManyRequests, "rate_limit_exceeded", "rate_limit_exceeded", "Too many requests, retry in $wait s.", wait)
+            val declared = call.request.contentLength()
+            if (declared != null && declared > limits.maxBodyBytes) return reject(call, key, HttpStatusCode.PayloadTooLarge, "invalid_request_error", "request_too_large", "Body exceeds ${limits.maxBodyBytes} bytes.")
+            val raw = call.receiveChannel().readRemaining(limits.maxBodyBytes + 1L).readByteArray()
+            if (raw.size > limits.maxBodyBytes) return reject(call, key, HttpStatusCode.PayloadTooLarge, "invalid_request_error", "request_too_large", "Body exceeds ${limits.maxBodyBytes} bytes.")
+            val obj = try { json.parseToJsonElement(raw.decodeToString()).jsonObject } catch (e: Exception) { return reject(call, key, HttpStatusCode.BadRequest, "invalid_request_error", "invalid_json", "Body must be a JSON object.") }
+            val session = obj["session"]?.takeIf { it !is JsonNull }?.jsonPrimitive?.contentOrNull
+            if (reset) {
+                val had = session != null && svc.reset(key, session)
+                call.respondJson(HttpStatusCode.OK, buildJsonObject { put("reset", had) })
+                status = 200
+                return
+            }
+            val text = obj["text"]?.takeIf { it !is JsonNull }?.jsonPrimitive?.contentOrNull?.trim().orEmpty()
+            if (text.isEmpty()) return reject(call, key, HttpStatusCode.BadRequest, "invalid_request_error", "empty_text", "'text' must not be empty.")
+            if (text.length > config.rag.maxQuestionChars) return reject(call, key, HttpStatusCode.BadRequest, "invalid_request_error", "text_too_long", "'text' is limited to ${config.rag.maxQuestionChars} characters.")
+            svc.status()?.let { return reject(call, key, HttpStatusCode.ServiceUnavailable, "server_error", "rag_index_missing", "The RAG index is not built on the server.") }
+            if (!perKey.tryEnter(key)) return reject(call, key, HttpStatusCode.TooManyRequests, "rate_limit_exceeded", "too_many_concurrent_requests", "At most ${limits.maxRequestsPerKey} requests per key can run at once.", limits.retryAfterSeconds.toLong())
+            try {
+                when (gate.enter()) {
+                    Admission.QUEUE_FULL -> return reject(call, key, HttpStatusCode.ServiceUnavailable, "server_busy", "queue_full", "Server is busy, try again shortly.", limits.retryAfterSeconds.toLong())
+                    Admission.QUEUE_TIMEOUT -> return reject(call, key, HttpStatusCode.ServiceUnavailable, "server_busy", "queue_timeout", "Waited too long for a free slot.", limits.retryAfterSeconds.toLong())
+                    Admission.ADMITTED -> {}
+                }
+                try {
+                    val result = withTimeoutOrNull(limits.requestTimeoutMs) { svc.ask(key, session, text) }
+                    if (result == null) {
+                        stats.upstreamErrors.incrementAndGet()
+                        call.respondJson(HttpStatusCode.GatewayTimeout, errorJson("upstream_timeout", "The answer took too long."))
+                        status = 504
+                    } else result.fold({ r ->
+                        stats.completed.incrementAndGet()
+                        call.respondJson(HttpStatusCode.OK, json.encodeToJsonElement(RagReply.serializer(), r))
+                        status = 200
+                    }, { e ->
+                        if (e is CancellationException) throw e
+                        stats.upstreamErrors.incrementAndGet()
+                        call.respondJson(HttpStatusCode.BadGateway, errorJson("upstream_error", "Answer failed: ${(e.message ?: e::class.simpleName).orEmpty().take(200)}"))
+                        status = 502
+                    })
+                } finally {
+                    gate.leave()
+                }
+            } finally {
+                perKey.leave(key)
+            }
+        } finally {
+            log("POST /v1/rag/${if (reset) "reset" else "chat"} ${if (status == 0) "rejected" else status} key=$key ${System.currentTimeMillis() - started}ms")
+        }
     }
 
     private suspend fun handleHealth(call: ApplicationCall) {

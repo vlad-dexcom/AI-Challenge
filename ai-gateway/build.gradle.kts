@@ -14,6 +14,7 @@ application {
 
 dependencies {
     implementation(project(":core:llm"))
+    implementation(project(":rag:tools"))
     implementation(libs.ktor.server.core)
     implementation(libs.ktor.server.cio)
 

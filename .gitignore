@@ -49,6 +49,7 @@ rag/cache/
 
 ### Chat sessions (Day 25) ###
 rag/sessions/
+rag/sessions-gateway/
 
 # Day 29 experiment artifacts
 __pycache__/

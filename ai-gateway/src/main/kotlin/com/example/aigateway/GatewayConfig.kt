@@ -35,9 +35,12 @@ data class GatewayConfig(
     /** Allow-list; the first entry is the default when a request names no model. */
     val models: List<String> = listOf("gemma4:26b-a4b-it-qat"),
     val numCtx: Int = 8192,
-    val think: Boolean? = null,
+    /** Reasoning models (Gemma 4) "think" by default: the thinking tokens eat `max_tokens` and a chat client sees an empty answer. Off unless configured. */
+    val think: Boolean? = false,
     val keys: List<KeyEntry> = emptyList(),
     val limits: Limits = Limits(),
+    /** Retrieval-augmented chat (`POST /v1/rag/chat`); off unless enabled. */
+    val rag: RagSettings = RagSettings(),
 ) {
     companion object {
         val json = Json { ignoreUnknownKeys = true; prettyPrint = true; encodeDefaults = true }

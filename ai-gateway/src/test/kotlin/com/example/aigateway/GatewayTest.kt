@@ -16,6 +16,14 @@ class GatewayTest {
 
     @After fun tearDown() { gateways.forEach { it.stop() }; upstream.stop() }
 
+    @Test fun chatPageAndMarkdownRendererAreServedWithoutAKey() {
+        val g = gateway(Limits())
+        val page = g.request("GET", "/", null).body()
+        val md = g.request("GET", "/markdown.js", null).body()
+        assertTrue(page.contains("/markdown.js") && page.contains("finish_reason") && page.contains("Продолжить"))
+        assertTrue(md.contains("renderMarkdown"))
+    }
+
     @Test fun missingKeyIs401AndUnknownKeyIs403() {
         val g = gateway()
         val none = g.chat(key = null)
@@ -55,6 +63,13 @@ class GatewayTest {
         g.chat()
         assertTrue(upstream.lastBody.get().contains("\"num_predict\":50"))
         assertTrue(upstream.lastBody.get().contains("\"num_ctx\":4096"))
+    }
+
+    @Test fun thinkingIsOffByDefaultSoMaxTokensGoToTheAnswer() {
+        val g = gateway(Limits())
+        g.chat()
+        assertTrue(upstream.lastBody.get(), upstream.lastBody.get().contains("\"think\":false"))
+        assertTrue(GatewayConfig().think == false)
     }
 
     @Test fun oversizedBodyIs413() {
