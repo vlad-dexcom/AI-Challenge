@@ -41,7 +41,8 @@ case "${1:-}" in
     git rev-parse --verify -q "refs/heads/$branch" >/dev/null && { echo "Branch $branch already exists: run cleanup first."; exit 1; }
     git branch --show-current > "$state"
     git fetch -q origin "$base"
-    git checkout -q -b "$branch" "origin/$base"
+    # --no-track: otherwise the branch would track origin/$base and a plain `git push` would update the base branch itself.
+    git checkout -q --no-track -b "$branch" "origin/$base"
     [ -f .github/workflows/ai-review.yml ] || echo "Warning: $base has no .github/workflows/ai-review.yml yet: merge the Day 32 pull request first."
     place bad
     git add -A agent app
