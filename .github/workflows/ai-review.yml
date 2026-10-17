@@ -1,0 +1,72 @@
+name: AI review
+
+# Day 32: reviews every pull request with `:reviewer` (RAG over the project docs and code + Gemini) and keeps
+# one comment up to date. Read-only for the repository; the only write is the pull request comment.
+#
+# Needs the repository secret GEMINI_API_KEY. Pull requests from forks (and runs without the secret) are skipped:
+# GitHub does not pass secrets to them, and `pull_request_target` is deliberately not used because it would run
+# untrusted code with secrets.
+on:
+  pull_request:
+    types: [opened, synchronize, reopened, ready_for_review]
+
+permissions:
+  contents: read
+  pull-requests: write
+
+concurrency:
+  group: ai-review-${{ github.event.pull_request.number }}
+  cancel-in-progress: true
+
+jobs:
+  review:
+    if: github.event.pull_request.draft == false
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    env:
+      GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
+      BASE_REF: ${{ github.base_ref }}
+    steps:
+      - name: Skip without a key
+        if: env.GEMINI_API_KEY == ''
+        run: |
+          echo "::notice::GEMINI_API_KEY is not available (pull request from a fork, or the secret is not set), so the AI review is skipped."
+
+      - uses: actions/checkout@v4
+        if: env.GEMINI_API_KEY != ''
+        with:
+          fetch-depth: 0 # the reviewer diffs against the merge base with origin/<base branch>
+
+      - uses: actions/setup-java@v4
+        if: env.GEMINI_API_KEY != ''
+        with:
+          distribution: temurin
+          java-version: 17
+
+      - uses: gradle/actions/setup-gradle@v4
+        if: env.GEMINI_API_KEY != ''
+
+      # The indexes validate themselves (corpus fingerprint); the embedding cache inside makes a rebuild after a
+      # small change cheap, so the newest cache is always restored and a new one is saved on every run.
+      - uses: actions/cache@v4
+        if: env.GEMINI_API_KEY != ''
+        with:
+          path: |
+            rag/index-docs
+            rag/index-code
+          key: ai-review-index-${{ github.run_id }}
+          restore-keys: ai-review-index-
+
+      - name: Review the pull request
+        if: env.GEMINI_API_KEY != ''
+        run: ./gradlew :reviewer:run --console=plain -q --args="--base origin/$BASE_REF --out $RUNNER_TEMP/review.md --verbose"
+
+      - name: Publish the review
+        if: env.GEMINI_API_KEY != ''
+        env:
+          GH_TOKEN: ${{ github.token }}
+          REPO: ${{ github.repository }}
+          PR_NUMBER: ${{ github.event.pull_request.number }}
+        run: |
+          cat "$RUNNER_TEMP/review.md" >> "$GITHUB_STEP_SUMMARY"
+          bash scripts/post-review-comment.sh "$RUNNER_TEMP/review.md"

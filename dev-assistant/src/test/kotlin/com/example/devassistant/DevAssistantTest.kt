@@ -37,9 +37,9 @@ class GitMcpGatewayTest {
     )
     private val gateway = GitMcpGateway(git)
 
-    @Test fun `lists four read-only tools with schemas`() = runTest {
+    @Test fun `lists six read-only tools with schemas`() = runTest {
         val tools = gateway.listTools()
-        assertEquals(listOf("git_branch", "git_status", "git_diff_stat", "list_files"), tools.map(McpToolInfo::name))
+        assertEquals(listOf("git_branch", "git_status", "git_diff_stat", "list_files", "git_changed_files", "git_diff"), tools.map(McpToolInfo::name))
         assertTrue(tools.all { it.rawInputSchema != null })
     }
 
@@ -62,6 +62,35 @@ class GitMcpGatewayTest {
         assertTrue(bad.isError)
         assertTrue(gateway.callTool("list_files", mapOf("path" to "../secrets")).isError)
         assertTrue(git.calls.isEmpty())
+    }
+
+    @Test fun `pull request tools diff against the merge base`() = runTest {
+        val pr = FakeGit(
+            mapOf(
+                "diff --name-status --no-renames origin/main...HEAD --" to "M\ta.kt\nA\tb.md\n",
+                "diff --no-renames --unified=3 origin/main...feature/x -- docs/b.md" to "@@ -0,0 +1 @@\n+hi\n",
+            ),
+        )
+        val g = GitMcpGateway(pr)
+        assertEquals("M\ta.kt\nA\tb.md", g.callTool("git_changed_files", mapOf("base" to "origin/main")).text)
+        assertEquals("@@ -0,0 +1 @@\n+hi", g.callTool("git_diff", mapOf("base" to "origin/main", "head" to "feature/x", "path" to "docs/b.md")).text)
+    }
+
+    @Test fun `pull request tools validate base, head and path`() = runTest {
+        val pr = FakeGit(emptyMap())
+        val g = GitMcpGateway(pr)
+        assertTrue(g.callTool("git_changed_files", emptyMap()).isError)
+        assertTrue(g.callTool("git_changed_files", mapOf("base" to "--output=x")).isError)
+        assertTrue(g.callTool("git_changed_files", mapOf("base" to "a..b")).isError)
+        assertTrue(g.callTool("git_diff", mapOf("base" to "main")).isError)
+        assertTrue(g.callTool("git_diff", mapOf("base" to "main", "path" to "../etc/passwd")).isError)
+        assertTrue(pr.calls.isEmpty())
+    }
+
+    @Test fun `git diff has its own larger line cap`() = runTest {
+        val long = (1..500).joinToString("\n") { "+line $it" }
+        val g = GitMcpGateway(GitRunner { long }, maxLines = 10, maxDiffLines = 400)
+        assertTrue(g.callTool("git_diff", mapOf("base" to "main", "path" to "a.kt")).text.endsWith("… (100 more lines)"))
     }
 
     @Test fun `git failure becomes an error result`() = runTest {

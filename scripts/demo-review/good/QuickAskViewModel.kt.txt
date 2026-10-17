@@ -1,0 +1,11 @@
+package com.example.geminichat.ui.quick
+
+import androidx.lifecycle.ViewModel
+import com.example.geminichat.agent.Agent
+import com.example.geminichat.agent.AgentRequest
+
+class QuickAskViewModel(private val agent: Agent) : ViewModel() {
+
+    suspend fun ask(question: String): String =
+        agent.handle(AgentRequest(userMessage = question)).fold({ it.text }, { "Error: ${it.message}" })
+}

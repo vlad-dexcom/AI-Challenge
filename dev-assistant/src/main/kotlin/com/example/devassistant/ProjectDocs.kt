@@ -4,6 +4,7 @@ import com.example.core.llm.EmbeddingClient
 import com.example.core.llm.GeminiEmbeddingClient
 import com.example.core.llm.HashingEmbeddingClient
 import com.example.core.platform.toKxPath
+import com.example.rag.CachedEmbeddingClient
 import com.example.rag.DiskCache
 import com.example.rag.Document
 import com.example.rag.IndexStore
@@ -36,18 +37,29 @@ object ProjectDocs {
     private val HISTORY = Regex("day\\d+.*\\.md")
 }
 
-/** Builds and caches the vector index of [ProjectDocs] in `<dir>/structure.json`. */
-class DocsIndex(private val dir: File, private val embedder: EmbeddingClient, private val store: IndexStore = IndexStore()) {
+/**
+ * Builds and caches a vector index of [Document]s in `<dir>/structure.json`. [label] names the corpus in the index metadata.
+ * With [cacheEmbeddings], chunk vectors are also cached per text in `<dir>/embed-cache`, so rebuilding after a small change
+ * (typical for a code index) only embeds the chunks that are new.
+ */
+class DocsIndex(
+    private val dir: File,
+    private val embedder: EmbeddingClient,
+    private val store: IndexStore = IndexStore(),
+    private val label: String = "project-docs",
+    private val cacheEmbeddings: Boolean = false,
+) {
     /** Loads the cached index if it matches the current documents and embedder, otherwise (re)builds it. */
     suspend fun ensure(docs: List<Document>, force: Boolean = false, log: (String) -> Unit = {}): VectorIndex {
         val file = File(dir, "structure.json")
-        val corpus = "project-docs:${ProjectDocs.fingerprint(docs)}"
+        val corpus = "$label:${ProjectDocs.fingerprint(docs)}"
         if (!force && file.isFile) {
             val cached = runCatching { store.load(file.toKxPath()) }.getOrNull()
             if (cached != null && cached.meta.sourceCorpus == corpus && cached.meta.embeddingModel == embedder.modelName) return cached
         }
-        log("Indexing ${docs.size} project documents with ${embedder.modelName}…")
-        val index = Indexer(embedder).build(docs, StructureChunker(1500, 300), "max=1500, min=300", corpus)
+        log("Indexing ${docs.size} $label documents with ${embedder.modelName}…")
+        val indexEmbedder = if (cacheEmbeddings) CachedEmbeddingClient(embedder, DiskCache(File(dir, "embed-cache"))) else embedder
+        val index = Indexer(indexEmbedder).build(docs, StructureChunker(1500, 300), "max=1500, min=300", corpus)
         dir.mkdirs()
         store.save(index, file.toKxPath())
         log("Index: ${index.meta.chunkCount} chunks -> ${file.path}")

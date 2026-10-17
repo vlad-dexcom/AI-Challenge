@@ -466,6 +466,15 @@ live git state read through an in-process, read-only **git MCP server** (`git_br
 - Web: `./gradlew :web-console:run` → *Dev assistant (Day 31)* tab. The docs index (`rag/index-docs/`, git-ignored) is built on first use and rebuilt when the docs change; needs `GEMINI_API_KEY`.
 - Design: `docs/day31-dev-assistant.md`, manual steps: `docs/day31-dev-assistant-test-scenario.md`.
 
+## AI code review of pull requests (Day 32)
+
+`:reviewer` reviews the changes of a branch: the git MCP server provides the changed files and the diff (`git_changed_files`, `git_diff`),
+RAG over the docs and the code provides conventions and related code, Gemini writes the review (potential bugs, architecture/convention problems,
+recommendations). Findings are validated in code (the line must be in the diff, an architecture finding needs a verbatim quote of a documented rule).
+- Local: commit, then `./gradlew :reviewer:run --args="--base main [--lang ru] [--out review.md] [--verbose]"`.
+- CI: `.github/workflows/ai-review.yml` runs it on every pull request and keeps **one** comment up to date; needs the repository secret `GEMINI_API_KEY` (skipped for forks and drafts). `rag/index-code/` is git-ignored and cached by the workflow.
+- Design and results: `docs/day32-ai-review.md`, manual steps (sample PR with seeded problems): `docs/day32-ai-review-test-scenario.md`.
+
 ## Setup
 
 1. Get a Gemini API key from [Google AI Studio](https://aistudio.google.com/apikey).
@@ -516,6 +525,7 @@ graph TD
   web --> devassistant
   devassistant[":dev-assistant — /help over project docs + git MCP"] --> agent
   devassistant --> ragtools
+  reviewer[":reviewer — AI review of a PR: git MCP diff + docs/code RAG"] --> devassistant
 ```
 
 - `core/common` — `io/Files.kt` (kotlinx-io `Path` helpers), `time/Time.kt` (`nowMillis`, `newId`),
@@ -527,7 +537,8 @@ graph TD
 - `ai-gateway` — `scripts/private-ai.sh start` (Day 30): LAN gateway for a local Ollama, see `docs/day30-private-ai-service.md`.
 - `web-console` — `./gradlew :web-console:run [--args="--port 8080"]`, the former `ui` command.
 - `dev-assistant` — `./gradlew :dev-assistant:run` (Day 31): `/help` over README/AGENTS.md/docs + git MCP (`GitMcpGateway`), see `docs/day31-dev-assistant.md` (scenario: `docs/day31-dev-assistant-test-scenario.md`).
-- `rag/corpus`, `rag/eval`, `rag/index`, `rag/index-local`, `rag/index-offline`, `rag/index-docs` (git-ignored, built on demand), `rag/sessions` — data (not a Gradle module).
+- `reviewer` — `./gradlew :reviewer:run --args="--base main"` (Day 32): `Reviewer` (MCP diff + docs/code RAG + validated findings), `ReviewReport` markdown, CI in `.github/workflows/ai-review.yml`, see `docs/day32-ai-review.md`.
+- `rag/corpus`, `rag/eval`, `rag/index`, `rag/index-local`, `rag/index-offline`, `rag/index-docs`, `rag/index-code` (the last two git-ignored, built on demand), `rag/sessions` — data (not a Gradle module).
 - `agent` — `agent/` (`Agent`, `AgentConfig`/`AgentCatalog`, `LlmAgent`, `TokenEstimator`), `agent/memory/`
   (Day 11), `agent/profile/` (Day 12), `agent/task/` (Day 13/15), `agent/invariant/` (Day 14), `agent/planner/`
   (Day 19), `agent/mcp/` (Day 17 `McpToolCallingAgent`), `agent/rag/` (Day 22 `RagAgent`), `agent/workout/`
