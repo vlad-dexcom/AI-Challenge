@@ -8,6 +8,7 @@ historical notes; don't update them.
 - All tests + KMP guard: `./gradlew check`; Android build: `./gradlew :app:assembleDebug`
 - RAG CLI: `./gradlew :rag:tools:run --args="…"`; web UI: `./gradlew :web-console:run`
 - Project Q&A (docs + git MCP): `./gradlew :dev-assistant:run` → `/help <question>`
+- AI review of a branch (commit first): `./gradlew :reviewer:run --args="--base main"`; runs on PRs via `.github/workflows/ai-review.yml`
 - Gemini key: `GEMINI_API_KEY` in `local.properties` or env. Never print/commit it.
 
 ## Rules

@@ -1,0 +1,14 @@
+package com.example.geminichat.agent.workout
+
+/** Builds a CSV of the last workouts of a user, newest first. */
+class WorkoutExport(private val store: WorkoutLogStore) {
+
+    fun exportLast(count: Int): String =
+        store.loadAll().takeLast(count.coerceAtLeast(0)).reversed()
+            .joinToString("\n") { "${it.id},${it.goal},${it.minutes}" }
+
+    fun averageMinutes(): Int {
+        val all = store.loadAll()
+        return if (all.isEmpty()) 0 else all.sumOf { it.minutes } / all.size
+    }
+}

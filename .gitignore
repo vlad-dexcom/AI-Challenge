@@ -59,5 +59,6 @@ rag/eval/local-rag/optimization/server.log
 ai-gateway/gateway.json
 gateway.json
 
-### Project docs index (Day 31) ###
+### Project docs and code indexes (Day 31-32) ###
 rag/index-docs/
+rag/index-code/
