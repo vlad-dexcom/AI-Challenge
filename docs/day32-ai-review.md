@@ -62,6 +62,7 @@ Dropped findings are counted in the report footer and listed with the reason by 
 
 - **Own module `:reviewer`** on top of `:dev-assistant`: it reuses the git MCP server and the docs index, and keeps the JVM-only CLI out of the KMP-ready modules.
 - **MCP, not `git` calls in the reviewer.** The reviewer only knows the `McpGateway` interface, so the same code reviews a PR through any server that offers the two tools.
+- **Model**: `gemini-3.8-flash` by default (`--model` overrides); the app and `/help` keep the general default. The seeded-PR results below were produced with `gemini-3.5-flash` before the switch.
 - **One model call per PR**, not one per file: the model sees the whole change, so it can notice cross-file problems, and the cost and latency stay predictable.
 - **Code index with an embedding cache** (`rag/index-code/embed-cache`, per chunk text): after a PR changes a few files only the new chunks are embedded. The Action caches the indexes between runs.
 - **Committed changes only.** The review compares `base...HEAD`; commit before running it locally.

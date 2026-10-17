@@ -18,7 +18,7 @@ data class DiffFile(
 }
 
 object DiffParser {
-    private val HUNK = Regex("""^@@ -\d+(?:,\d+)? \+(\d+)(?:,\d+)? @@""")
+    private val HUNK = Regex("""^@@ -\d+(?:,(\d+))? \+(\d+)(?:,(\d+))? @@""")
 
     /** Parses the output of `git diff` for one file; stops after about [maxChars] characters of annotated text. */
     fun parse(path: String, status: Char, patch: String, maxChars: Int = Int.MAX_VALUE): DiffFile {
@@ -29,28 +29,40 @@ object DiffParser {
         var newLine = 0
         var inHunk = false
         var truncated = false
+        // Lines the current hunk still has on each side (from its header). They tell where a hunk ends and let a context
+        // line that lost its single leading space (an empty line, after whitespace stripping) be counted instead of skipped.
+        var oldLeft = 0
+        var newLeft = 0
 
-        for (line in patch.lines()) {
-            if (line.startsWith("@@")) {
+        for (line in patch.removeSuffix("\n").lines()) {
+            if (inHunk && oldLeft <= 0 && newLeft <= 0 && !line.startsWith("\\")) inHunk = false
+            if (line.startsWith("@@")) { // content lines start with +, - or a space, never with @
                 val m = HUNK.find(line)
-                if (m != null) { newLine = m.groupValues[1].toInt(); inHunk = true }
+                if (m != null) {
+                    oldLeft = m.groupValues[1].ifEmpty { "1" }.toInt()
+                    newLine = m.groupValues[2].toInt()
+                    newLeft = m.groupValues[3].ifEmpty { "1" }.toInt()
+                    inHunk = true
+                }
                 val header = "@@ new line $newLine @@"
                 if (out.length + header.length > maxChars) { truncated = true; break }
                 out.append(header).append('\n')
                 continue
             }
-            if (!inHunk || line.isEmpty() || line.startsWith("\\")) continue
-            val text = when (line[0]) {
-                '+' -> "L$newLine+ ${line.drop(1)}"
-                '-' -> "    - ${line.drop(1)}"
-                else -> "L$newLine  ${line.drop(1)}"
+            if (!inHunk || line.startsWith("\\")) continue
+            val kind = if (line.isEmpty()) ' ' else line[0]
+            val body = line.drop(1)
+            val text = when (kind) {
+                '+' -> "L$newLine+ $body"
+                '-' -> "    - $body"
+                else -> "L$newLine  $body"
             }
             if (out.length + text.length > maxChars) { truncated = true; break }
             out.append(text).append('\n')
-            when (line[0]) {
-                '+' -> { addedSet += newLine; visible += newLine; newLine++ }
-                '-' -> removed++
-                else -> { visible += newLine; newLine++ }
+            when (kind) {
+                '+' -> { addedSet += newLine; visible += newLine; newLine++; newLeft-- }
+                '-' -> { removed++; oldLeft-- }
+                else -> { visible += newLine; newLine++; oldLeft--; newLeft-- }
             }
         }
         if (truncated) out.append("… (diff truncated)\n")
