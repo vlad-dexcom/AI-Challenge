@@ -104,6 +104,8 @@ class UiApi(
     localBaselineGeneratorFactory: ((String) -> TextGenerator?)? = null,
     ollamaTuning: com.example.core.llm.OllamaTuning = com.example.core.llm.OllamaTuning.DEFAULT,
     ollamaPrompts: com.example.rag.PromptProfile = com.example.rag.PromptProfile.DEFAULT,
+    /** Day 31: the developer assistant behind the "Dev assistant" tab; null = the endpoint answers 404. */
+    private val helpApi: HelpApi? = null,
 ) {
     /** Token counts and timings of every local call since the last reset (sizing data for context windows and limits). */
     private val llmStats = com.example.core.llm.LlmCallStats()
@@ -171,6 +173,8 @@ class UiApi(
     fun sessions(method: String, path: String, body: String): String = synchronized(sessionLock) { sessionApi.handle(method, path, body) }
 
     fun chat(body: String): String = chatApi.chat(body)
+
+    fun help(body: String): String = (helpApi ?: throw ApiException(404, "Developer assistant is not enabled")).help(body)
 
     fun files(): String = json.encodeToString(FileList.serializer(),
         FileList(if (corpusDir.isDirectory) CorpusLoader.load(corpusDir.toKxPath()).map { it.source } else emptyList()))
@@ -325,6 +329,7 @@ class UiServer(private val api: UiApi, port: Int) {
             get && path == "/api/llm/stats" -> JSON to api.llmStats()
             post && path == "/api/llm/stats/reset" -> JSON to api.resetLlmStats()
             post && path == "/api/chat" -> JSON to api.chat(ex.requestBody.readBytes().decodeToString())
+            post && path == "/api/help" -> JSON to api.help(ex.requestBody.readBytes().decodeToString())
  path.startsWith("/api/sessions") && ex.requestMethod in setOf("GET", "POST", "PUT", "DELETE") ->
                 JSON to api.sessions(ex.requestMethod, path, ex.requestBody.readBytes().decodeToString())
             post && path == "/api/chunk" -> JSON to api.chunk(ex.requestBody.readBytes().decodeToString())

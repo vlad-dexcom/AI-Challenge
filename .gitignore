@@ -58,3 +58,6 @@ rag/eval/local-rag/optimization/server.log
 ### AI gateway (real config holds key hashes - keep outside the repo)
 ai-gateway/gateway.json
 gateway.json
+
+### Project docs index (Day 31) ###
+rag/index-docs/

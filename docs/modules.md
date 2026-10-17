@@ -7,7 +7,8 @@
 | `:rag:core` | kotlin-jvm + testFixtures | llm, common | `Chunker`s, `VectorIndex`/`IndexStore`/`Indexer`, `Retriever`, `RagPipeline`, rerank/filter/rewrite, `Citations`, `chat/` (`ChatEngine`, `SessionStore`, `TaskMemory`, `MemoryExtractor`), `PromptProfile` (prompt wording variants). Fixtures: `ChatFixture`, `ScriptedGenerator` |
 | `:rag:tools` | application | rag:core | `LlmProvider` (`--provider gemini|ollama`), CLI `./gradlew :rag:tools:run --args="index|eval|compare|ask|chat|rag-eval|sweep|modes-eval"`, evals, scenarios |
 | `:ai-gateway` | application | core:llm | `scripts/private-ai.sh start`: loopback Ktor CIO gateway behind `scripts/lan_forward.py` (Day 30) — OpenAI-style `/v1/chat/completions` (SSE), `/v1/models`, `/healthz`, `/stats`, mobile chat page; Bearer keys (SHA-256), rate limit, context/size limits, queue, upstream cancel. Uses `OllamaStreamingClient` |
-| `:web-console` | application | rag:tools | `./gradlew :web-console:run [--args="--port 8080"]`: single Chat tab (RAG, task memory; "Answer with" Cloud / Local / Compare via `LocalRag`) + chunk visualiser (`resources/ui`, JS tests in `src/test/js`) |
+| `:web-console` | application | rag:tools, dev-assistant | `./gradlew :web-console:run [--args="--port 8080"]`: single Chat tab (RAG, task memory; "Answer with" Cloud / Local / Compare via `LocalRag`) + chunk visualiser (`resources/ui`, JS tests in `src/test/js`) + "Dev assistant" tab (`HelpApi`, `POST /api/help`) |
+| `:dev-assistant` | application | agent, rag:tools | Day 31 `/help`: `GitMcpGateway` (read-only git MCP tools over `GitRunner`), `ProjectDocs`/`DocsIndex` (README + AGENTS.md + docs → `rag/index-docs`), `HelpAssistant` (docs RAG + MCP excerpts, verified quotes), CLI `./gradlew :dev-assistant:run` |
 | `:agent` | kotlin-jvm | rag:core, llm, common | Everything agent-related (see below) |
 | `:app` | android-application | agent | Android shell and UI |
 

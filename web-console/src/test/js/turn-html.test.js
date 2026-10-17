@@ -35,3 +35,13 @@ for (const i of [info, { ...info, structured: turns[1].structured, sources: [], 
   if (typeof out !== 'string' || !out.includes('msg bot') || !out.endsWith('</div>') || !out.includes('Task memory this turn')) throw new Error('session turn');
 }
 console.log('turn-html ok');
+
+// Day 31: the Dev assistant tab renders answers, IDK answers and MCP calls; model/tool output is escaped.
+const hFrom = script.indexOf('function helpHtml');
+const hTo = script.indexOf('const helpExamples');
+if (hFrom < 0 || hTo < 0) throw new Error('cannot locate helpHtml');
+const helpHtml = new Function('window', esc + '\n' + script.slice(script.indexOf('const md='), script.indexOf('function stageTable')) + script.slice(hFrom, hTo) + '\nreturn helpHtml;')(window);
+const ok = helpHtml({ answer: 'A <b>x</b>', idk: false, sources: [{ file: 'docs/modules.md', section: 'Modules' }], mcpCalls: [{ tool: 'git_branch', text: 'Current branch: <x>', isError: false }] });
+if (!ok.includes('docs/modules.md') || !ok.includes('MCP calls (1)') || ok.includes('<x>') || !ok.includes('&lt;x&gt;')) throw new Error('help html');
+if (!helpHtml({ answer: 'I don\'t know', idk: true, sources: [], mcpCalls: [] }).includes('class="idk"')) throw new Error('help idk');
+console.log('help-html ok');
