@@ -18,13 +18,13 @@ class DiffTest {
         index 111..222 100644
         --- a/a.kt
         +++ b/a.kt
-        @@ -10,3 +10,5 @@ class A {
+        @@ -10,3 +10,4 @@ class A {
              val x = 1
         +    val y = x!!
         +    val z = load()
         -    val old = 0
              val w = 2
-        @@ -40,2 +42,2 @@
+        @@ -40,1 +42,2 @@
              tail()
         +    more()
     """.trimIndent().replace("\n        ", "\n")
@@ -39,6 +39,24 @@ class DiffTest {
         assertTrue(d.annotated.contains("    -     val old = 0"))
         assertTrue(d.annotated.contains("L13      val w = 2"))
         assertFalse("headers are dropped", d.annotated.contains("index 111"))
+    }
+
+    @Test fun `blank context lines keep the line numbers right`() {
+        // A blank context line is " " in git's output but arrives as "" after whitespace stripping: both must count.
+        val blank = "@@ -5,5 +5,6 @@\n a\n\n b\n \n+added\n c\n"
+        val d = DiffParser.parse("a.kt", 'M', blank)
+        assertEquals(setOf(9), d.addedLines)
+        assertEquals((5..10).toSet(), d.visibleLines)
+        assertTrue(d.annotated.contains("L9+ added"))
+        assertTrue(d.annotated.contains("L10  c"))
+    }
+
+    @Test fun `hunk counts decide where a hunk ends`() {
+        val twoHunks = "@@ -1,2 +1,2 @@\n a\n-b\n+B\n@@ -20,1 +20,2 @@\n x\n+y\n"
+        val d = DiffParser.parse("a.kt", 'M', twoHunks)
+        assertEquals(setOf(2, 21), d.addedLines)
+        assertEquals(setOf(1, 2, 20, 21), d.visibleLines)
+        assertEquals(1, d.removed)
     }
 
     @Test fun `truncation keeps only the lines that are shown`() {
@@ -71,7 +89,7 @@ class DiffTest {
 
 class ReviewerTest {
     private val patchA = """
-        @@ -10,3 +10,5 @@ class A {
+        @@ -10,2 +10,4 @@ class A {
              val x = 1
         +    val y = x!!
         +    val z = load()

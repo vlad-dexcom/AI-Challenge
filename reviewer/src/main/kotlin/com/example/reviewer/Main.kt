@@ -1,6 +1,5 @@
 package com.example.reviewer
 
-import com.example.core.llm.GeminiTextGenerator
 import com.example.rag.resolveGeminiApiKey
 import kotlinx.coroutines.runBlocking
 import java.io.File
@@ -10,7 +9,7 @@ private const val USAGE = """
 AI code review (Day 32): reviews the changes of a branch against its base with RAG (project docs + code) and a Gemini model.
 
   ./gradlew :reviewer:run --args="--base main"
-  options: [--head HEAD] [--out review.md] [--lang en|ru] [--model gemini-3.5-flash] [--min-confidence 6]
+  options: [--head HEAD] [--out review.md] [--lang en|ru] [--model gemini-3.8-flash] [--min-confidence 6]
            [--no-code] [--reindex] [--verbose] [--repo <path>]
     --base        ref the change is compared with (the merge base is used), e.g. main or origin/main   (required)
     --out         write the markdown review to a file instead of stdout
@@ -38,7 +37,7 @@ fun main(args: Array<String>) {
     if (lang !in setOf("en", "ru")) { System.err.println("--lang must be en or ru"); exitProcess(1) }
     val minConfidence = opts["min-confidence"]?.let { it.toIntOrNull() ?: run { System.err.println("--min-confidence must be a number"); exitProcess(1) } }
         ?: ReviewConfig().minConfidence
-    val model = opts["model"] ?: GeminiTextGenerator.DEFAULT_MODEL
+    val model = opts["model"] ?: ReviewerFactory.DEFAULT_MODEL
     val verbose = "verbose" in opts
 
     val report = try {

@@ -30,10 +30,13 @@ object CodeCorpus {
 object ReviewerFactory {
     const val CODE_INDEX_DIR = "rag/index-code"
 
+    /** The reviewer reads whole diffs and long excerpts, so it uses a newer model than the app's default chat model. */
+    const val DEFAULT_MODEL = "gemini-3.8-flash"
+
     suspend fun create(
         repoRoot: File,
         apiKey: String,
-        model: String = GeminiTextGenerator.DEFAULT_MODEL,
+        model: String = DEFAULT_MODEL,
         config: ReviewConfig = ReviewConfig(),
         useCode: Boolean = true,
         reindex: Boolean = false,
