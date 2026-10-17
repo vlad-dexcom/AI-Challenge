@@ -1,0 +1,13 @@
+[
+  {"ticket": "T-101", "question": "Почему не работает авторизация?", "expectArticles": ["02-private-gateway-access.md"], "expectEscalation": false},
+  {"ticket": "T-102", "question": "Почему не работает авторизация?", "expectArticles": ["01-authentication-and-api-keys.md"], "expectEscalation": false},
+  {"ticket": "T-103", "question": "Почему не приходит сводка?", "expectArticles": ["04-workout-digest-notifications.md"], "expectEscalation": false},
+  {"ticket": "T-104", "question": "Why does the app not connect?", "expectArticles": ["05-mcp-tools-connection.md"], "expectEscalation": false},
+  {"ticket": "T-105", "question": "Почему чат иногда не отвечает?", "expectArticles": ["03-rate-limits-and-queue.md"], "expectEscalation": false},
+  {"ticket": "T-106", "question": "Можно ли это восстановить?", "expectArticles": ["06-memory-profile-and-history.md", "10-data-privacy-updates.md"], "expectEscalation": false},
+  {"ticket": "T-107", "question": "Is it broken?", "expectArticles": ["07-answers-and-i-dont-know.md"], "expectEscalation": false},
+  {"ticket": "T-108", "question": "What should we tell the customer?", "expectArticles": ["09-medical-questions-and-safety.md"], "expectEscalation": true},
+  {"ticket": "T-109", "question": "Can we refund this?", "expectArticles": ["10-data-privacy-updates.md"], "expectEscalation": true},
+  {"ticket": "T-110", "question": "Что ответить клиенту?", "expectArticles": ["10-data-privacy-updates.md"], "expectEscalation": true},
+  {"ticket": "T-111", "question": "Что посоветовать?", "expectArticles": ["10-data-privacy-updates.md"], "expectEscalation": false}
+]

@@ -23,6 +23,9 @@ fun main(args: Array<String>) {
         UiApi(
             File(opts["corpus"] ?: "rag/corpus"), File(opts["out"] ?: "rag/index"), geminiKey,
             helpApi = HelpApi { com.example.devassistant.DevAssistant.create(File("."), geminiKey, log = ::println) },
+            supportApi = SupportApi(
+                store = { com.example.supportassistant.SupportStore.load(File(com.example.supportassistant.SupportStore.DEFAULT_DIR)) },
+            ) { com.example.supportassistant.SupportFactory.create(File("."), geminiKey, log = ::println).assistant },
             ollamaUrl = opts["ollama-url"] ?: System.getenv("OLLAMA_URL")?.takeIf { it.isNotBlank() } ?: com.example.core.llm.OllamaChatClient.DEFAULT_URL,
             ollamaTuning = try {
                 (opts["ollama-tuning"] ?: System.getenv("OLLAMA_TUNING")?.takeIf { it.isNotBlank() })?.let { com.example.core.llm.OllamaTuning.parse(it) } ?: com.example.core.llm.OllamaTuning.RECOMMENDED

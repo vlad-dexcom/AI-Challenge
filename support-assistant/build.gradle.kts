@@ -1,0 +1,28 @@
+plugins {
+    alias(libs.plugins.kotlin.jvm)
+    alias(libs.plugins.kotlin.serialization)
+    `java-library`
+    application
+}
+
+kotlin {
+    jvmToolchain(17)
+}
+
+application {
+    mainClass.set("com.example.supportassistant.MainKt")
+}
+
+// Relative paths (support/kb, support/data, rag/index-support) resolve against the repo root.
+tasks.named<JavaExec>("run") {
+    workingDir = rootProject.projectDir
+    standardInput = System.`in` // the REPL reads stdin
+}
+
+dependencies {
+    api(project(":dev-assistant"))
+
+    testImplementation(testFixtures(project(":rag:core")))
+    testImplementation(libs.junit)
+    testImplementation(libs.kotlinx.coroutines.test)
+}

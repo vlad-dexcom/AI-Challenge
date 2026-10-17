@@ -1,0 +1,88 @@
+[
+  {
+    "id": "U-1", "name": "Anna K.", "email": "anna.k@example.com", "locale": "ru",
+    "platform": {"os": "Android 14", "device": "Pixel 8"}, "appVersion": "1.0", "mode": "local",
+    "createdAt": "2026-09-02",
+    "recentEvents": [
+      {"at": "2026-10-14T19:05:00", "type": "gateway_key_rotated", "detail": "device key 'anna-phone' was replaced on the gateway (new key issued)"},
+      {"at": "2026-10-15T08:12:41", "type": "gateway_error", "detail": "POST /v1/chat/completions -> 403 invalid_api_key"},
+      {"at": "2026-10-15T08:12:58", "type": "gateway_error", "detail": "POST /v1/chat/completions -> 403 invalid_api_key"},
+      {"at": "2026-10-16T21:30:02", "type": "gateway_error", "detail": "POST /v1/chat/completions -> 403 invalid_api_key"}
+    ]
+  },
+  {
+    "id": "U-2", "name": "Boris M.", "email": "boris.m@example.com", "locale": "ru",
+    "platform": {"os": "Android 14", "device": "Samsung Galaxy S23"}, "appVersion": "1.0", "mode": "cloud",
+    "createdAt": "2026-08-20",
+    "recentEvents": [
+      {"at": "2026-10-09T07:00:12", "type": "digest_run", "detail": "workout digest ran, 3 workouts summarised"},
+      {"at": "2026-10-10T12:00:00", "type": "battery_optimization", "detail": "app battery usage set to 'Optimized'; background restrictions: on"},
+      {"at": "2026-10-13T18:44:10", "type": "workout_logged", "detail": "legs, 55 min"},
+      {"at": "2026-10-16T18:30:00", "type": "app_start", "detail": "no digest run since 2026-10-09"}
+    ]
+  },
+  {
+    "id": "U-3", "name": "Clara V.", "email": "clara.v@example.com", "locale": "en",
+    "platform": {"os": "Android 13", "device": "Xiaomi 12"}, "appVersion": "1.0", "mode": "cloud",
+    "createdAt": "2026-09-11",
+    "recentEvents": [
+      {"at": "2026-10-16T10:02:00", "type": "network", "detail": "connected to Wi-Fi 'Hotel_Guest' (captive portal not completed)"},
+      {"at": "2026-10-16T10:03:15", "type": "mcp_error", "detail": "connect(https://us-central1-ai-challenge-mcp.cloudfunctions.net/mcp) -> timeout after 30s"},
+      {"at": "2026-10-16T10:05:40", "type": "mcp_error", "detail": "connect(https://us-central1-ai-challenge-mcp.cloudfunctions.net/mcp) -> timeout after 30s"}
+    ]
+  },
+  {
+    "id": "U-4", "name": "David R.", "email": "david.r@example.com", "locale": "en",
+    "platform": {"os": "Android 12", "device": "Pixel 6"}, "appVersion": "1.0", "mode": "cloud",
+    "createdAt": "2026-10-12",
+    "recentEvents": [
+      {"at": "2026-10-12T20:10:00", "type": "build", "detail": "self-built app, key source: local.properties (GEMINI_API_KEY value contains quotes)"},
+      {"at": "2026-10-12T20:15:31", "type": "api_error", "detail": "Gemini API -> 400 API_KEY_INVALID: API key not valid. Please pass a valid API key."},
+      {"at": "2026-10-13T09:01:02", "type": "api_error", "detail": "Gemini API -> 400 API_KEY_INVALID: API key not valid. Please pass a valid API key."}
+    ]
+  },
+  {
+    "id": "U-5", "name": "Elena P.", "email": "elena.p@example.com", "locale": "ru",
+    "platform": {"os": "Android 15", "device": "OnePlus 12"}, "appVersion": "1.0", "mode": "local",
+    "createdAt": "2026-09-25",
+    "recentEvents": [
+      {"at": "2026-10-16T19:20:11", "type": "gateway_error", "detail": "POST /v1/chat/completions -> 429 rate_limit_exceeded (Retry-After: 12)"},
+      {"at": "2026-10-16T19:20:19", "type": "gateway_error", "detail": "POST /v1/chat/completions -> 429 too_many_concurrent_requests"},
+      {"at": "2026-10-16T19:21:00", "type": "gateway_info", "detail": "device key 'elena-phone' used from 2 clients at once (phone page + laptop browser tab)"}
+    ]
+  },
+  {
+    "id": "U-6", "name": "Felix S.", "email": "felix.s@example.com", "locale": "en",
+    "platform": {"os": "Android 11", "device": "Motorola G Power"}, "appVersion": "1.0", "mode": "cloud",
+    "createdAt": "2026-08-30",
+    "recentEvents": [
+      {"at": "2026-10-15T22:05:00", "type": "storage", "detail": "phone storage almost full; user cleared app data via system settings"},
+      {"at": "2026-10-15T22:06:12", "type": "app_start", "detail": "first start after data clear: profile empty, no chat history"}
+    ]
+  },
+  {
+    "id": "U-7", "name": "Grace L.", "email": "grace.l@example.com", "locale": "en",
+    "platform": {"os": "Android 14", "device": "Pixel 7a"}, "appVersion": "1.0", "mode": "cloud",
+    "createdAt": "2026-09-18",
+    "recentEvents": [
+      {"at": "2026-10-16T17:40:00", "type": "workout_logged", "detail": "legs, 70 min, comment: 'sharp pain in the right knee during squats'"}
+    ]
+  },
+  {
+    "id": "U-8", "name": "Hector T.", "email": "hector.t@example.com", "locale": "en",
+    "platform": {"os": "Android 13", "device": "Samsung Galaxy A54"}, "appVersion": "1.0", "mode": "cloud",
+    "createdAt": "2026-10-01",
+    "recentEvents": [
+      {"at": "2026-10-16T09:00:00", "type": "app_start", "detail": "normal start"}
+    ]
+  },
+  {
+    "id": "U-9", "name": "Irina B.", "email": "irina.b@example.com", "locale": "ru",
+    "platform": {"os": "Android 7.1", "device": "Samsung Galaxy J5"}, "appVersion": "1.0", "mode": "cloud",
+    "createdAt": "2026-10-16",
+    "recentEvents": [
+      {"at": "2026-10-16T14:00:00", "type": "install", "detail": "sideloaded APK on a device below the minimum supported Android version"},
+      {"at": "2026-10-16T14:00:20", "type": "crash", "detail": "app crashes immediately after launch (before the first screen)"}
+    ]
+  }
+]

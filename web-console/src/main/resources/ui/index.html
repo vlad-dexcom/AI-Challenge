@@ -50,7 +50,7 @@
  .src{font-size:12px;margin:4px 0 0 0;padding-left:18px} .meta{font-size:11px;color:#666}
  details{font-size:12px;margin-top:4px} details pre{white-space:pre-wrap;margin:2px 0 6px;background:#fff;padding:4px;border:1px solid #eee}
 </style></head><body>
-<nav><button id="tab-chat" class="on">Chat (RAG, memory, local &amp; cloud: Days 22–28)</button><button id="tab-viz">Chunk visualiser (Day 21)</button><button id="tab-help">Dev assistant (Day 31)</button></nav>
+<nav><button id="tab-chat" class="on">Chat (RAG, memory, local &amp; cloud: Days 22–28)</button><button id="tab-viz">Chunk visualiser (Day 21)</button><button id="tab-help">Dev assistant (Day 31)</button><button id="tab-support">Support (Day 33)</button></nav>
 <div id="page-chat"><div id="chat-wrap">
 <fieldset><legend>Settings</legend>
  <label>Mode <select id="cmode"><option value="session">Chat with task memory</option><option value="rag">With RAG</option><option value="no_rag">Without RAG</option><option value="compare">RAG vs no RAG (side by side)</option></select></label>
@@ -102,6 +102,16 @@
  <div id="hexamples"></div>
  <div><textarea id="hq" style="height:60px;font:14px system-ui;width:100%;box-sizing:border-box" placeholder="/help which module owns the RAG pipeline? (Enter = send, Shift+Enter = newline)"></textarea>
  <button id="hsend">Send</button> <button id="hclear">Clear chat</button> <span id="herr" class="err"></span></div>
+</div></div>
+<div id="page-support" style="display:none"><div style="display:flex;flex-direction:column;gap:8px;max-width:900px">
+ <div class="meta"><b>Support assistant</b>: answers a customer's question about Personal Trainer from the FAQ (RAG) <b>and the data of the ticket</b> (ticket, customer device and recent events, earlier tickets, read through the CRM MCP server, which only serves this ticket; e-mails are masked). Switch the ticket context off to see the plain FAQ answer to the same question. The FAQ index is built on the first question.</div>
+ <div><label>Ticket <select id="spticket" style="max-width:560px"></select></label>
+ <label><input id="spuse" type="checkbox" checked> use ticket context (CRM over MCP)</label></div>
+ <div id="spcard" style="background:#fff;border:1px solid #ccc;padding:6px 10px"></div>
+ <div id="spmsgs" style="background:#fff;border:1px solid #ccc;padding:8px;min-height:160px;max-height:55vh;overflow:auto"></div>
+ <div id="spexamples"></div>
+ <div><textarea id="spq" style="height:56px;font:14px system-ui;width:100%;box-sizing:border-box" placeholder="A customer question, e.g. Почему не работает авторизация? (Enter = send, Shift+Enter = newline)"></textarea>
+ <button id="spsend">Send</button> <button id="spclear">Clear chat</button> <span id="sperr" class="err"></span></div>
 </div></div>
 <div id="page-viz" style="display:none">
 <h1>Chunk visualiser (Day 21)</h1>
@@ -244,8 +254,8 @@ api('/api/files').then(r=>r.files.forEach(n=>{const o=document.createElement('op
 
 // ---- Chat (Day 22+) ----
 const cfg={defaultModel:''};
-function show(tab){['chat','viz','help'].forEach(t=>{$('page-'+t).style.display=t===tab?'':'none';$('tab-'+t).classList.toggle('on',t===tab)})}
-$('tab-chat').onclick=()=>show('chat');$('tab-viz').onclick=()=>show('viz');$('tab-help').onclick=()=>show('help');
+function show(tab){['chat','viz','help','support'].forEach(t=>{$('page-'+t).style.display=t===tab?'':'none';$('tab-'+t).classList.toggle('on',t===tab)})}
+$('tab-chat').onclick=()=>show('chat');$('tab-viz').onclick=()=>show('viz');$('tab-help').onclick=()=>show('help');$('tab-support').onclick=()=>show('support');
 const md=s=>window.renderMarkdown?window.renderMarkdown(s):`<p style="white-space:pre-wrap">${esc(s)}</p>`;
 function stageTable(title,hits,kept,showRerank){
   if(!hits.length)return `<div class="meta"><b>${title}</b>: none</div>`;
@@ -589,4 +599,42 @@ async function helpSend(){
 }
 $('hsend').onclick=helpSend;
 $('hq').addEventListener('keydown',e=>{if(e.key==='Enter'&&!e.shiftKey){e.preventDefault();helpSend()}});
+
+// ---- Support assistant (Day 33) ----
+let supportTickets=[];
+function ticketHtml(t){
+  return `<div class="meta"><b>${esc(t.id)}</b> · ${esc(t.customer)} · ${esc(t.status)}/${esc(t.priority)}</div><div><b>${esc(t.subject)}</b></div>`+
+    (t.messages||[]).map(m=>`<div class="quote">${esc(m.from)}: ${esc(m.text)}</div>`).join('');
+}
+function supportHtml(r){
+  const calls=(r.crmCalls||[]).map(c=>`<div class="quote ${c.isError?'bad':'ok'}"><b>${esc(c.tool)}</b>${c.isError?' (error)':''}<pre style="margin:2px 0;white-space:pre-wrap">${esc(c.text)}</pre></div>`).join('');
+  const src=(r.sources||[]).map(s=>`<li>${esc(s.file)}${s.section?' &gt; '+esc(s.section):''}</li>`).join('');
+  const escBox=r.needsEscalation?`<div class="warn"><b>Escalate to a human.</b> ${esc(r.escalationReason||'')}</div>`:'<div class="meta">No escalation needed.</div>';
+  return `<div class="meta">${r.usedTicket?'Ticket '+esc(r.ticketId):'No ticket context (plain FAQ answer)'}</div>`+
+    (r.idk?`<div class="idk">${md(r.answer)}</div>`:`<div class="md">${md(r.answer)}</div>`)+
+    (r.reply?`<div class="meta" style="margin-top:6px">Draft reply to the customer</div><div class="md chunk">${md(r.reply)}</div>`:'')+
+    escBox+
+    (src?`<div class="meta">Sources</div><ul class="src">${src}</ul>`:'')+
+    `<details><summary>Search query used</summary><pre>${esc(r.searchQuery)}</pre></details>`+
+    (calls?`<details><summary>CRM calls over MCP (${r.crmCalls.length})</summary>${calls}</details>`:'');
+}
+const supportExamples=[['T-101','Почему не работает авторизация?'],['T-102','Почему не работает авторизация?'],['T-103','Почему не приходит сводка?'],['T-105','Почему чат иногда не отвечает?'],['T-106','Можно ли это восстановить?'],['T-108','What should we tell the customer?'],['T-110','Что ответить клиенту?']];
+$('spexamples').innerHTML=supportExamples.map(([t,q],i)=>`<span class="chip" data-i="${i}">${esc(t)} · ${esc(q)}</span>`).join('');
+function showTicketCard(){const t=supportTickets.find(x=>x.id===$('spticket').value);$('spcard').innerHTML=t?ticketHtml(t):'<span class="meta">No tickets loaded.</span>'}
+$('spticket').onchange=showTicketCard;
+$('spexamples').onclick=e=>{const i=e.target.dataset&&e.target.dataset.i; if(i==null)return; const [t,q]=supportExamples[+i]; $('spticket').value=t; $('spuse').checked=true; showTicketCard(); $('spq').value=q; $('spq').focus()};
+$('spclear').onclick=()=>{$('spmsgs').innerHTML='';$('sperr').textContent='';$('spq').focus()};
+async function supportSend(){
+  const q=$('spq').value.trim(); if(!q)return; $('sperr').textContent='';
+  const use=$('spuse').checked, ticketId=$('spticket').value||null, box=$('spmsgs');
+  box.insertAdjacentHTML('beforeend',`<div class="msg user">${use?esc(ticketId)+': ':'(no ticket) '}${esc(q)}</div>`);
+  const wait=document.createElement('div'); wait.className='msg bot'; wait.textContent='Thinking…'; box.appendChild(wait);
+  $('spq').value=''; $('spsend').disabled=true; box.scrollTop=box.scrollHeight;
+  try{ wait.innerHTML=supportHtml(await api('/api/support/ask',{ticketId,question:q,useTicket:use})); }
+  catch(e){ wait.remove(); $('sperr').textContent=e.message; }
+  finally{ $('spsend').disabled=false; box.scrollTop=box.scrollHeight; }
+}
+$('spsend').onclick=supportSend;
+$('spq').addEventListener('keydown',e=>{if(e.key==='Enter'&&!e.shiftKey){e.preventDefault();supportSend()}});
+api('/api/support/tickets').then(ts=>{supportTickets=ts;$('spticket').innerHTML=ts.map(t=>`<option value="${esc(t.id)}">${esc(t.id)} · ${esc(t.customer)} · ${esc(t.subject)}</option>`).join('');showTicketCard()}).catch(e=>{$('sperr').textContent=e.message});
 </script></body></html>

@@ -9,6 +9,7 @@ historical notes; don't update them.
 - RAG CLI: `./gradlew :rag:tools:run --args="…"`; web UI: `./gradlew :web-console:run`
 - Project Q&A (docs + git MCP): `./gradlew :dev-assistant:run` → `/help <question>`
 - AI review of a branch (commit first): `./gradlew :reviewer:run --args="--base main"`; runs on PRs via `.github/workflows/ai-review.yml`
+- Support assistant (FAQ + ticket context over MCP): `./gradlew :support-assistant:run` (`/ticket T-101`, then a question); eval: `--args="--eval"`
 - Gemini key: `GEMINI_API_KEY` in `local.properties` or env. Never print/commit it.
 
 ## Rules
