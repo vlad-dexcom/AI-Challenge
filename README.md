@@ -475,6 +475,17 @@ recommendations). Findings are validated in code (the line must be in the diff, 
 - CI: `.github/workflows/ai-review.yml` runs it on every pull request and keeps **one** comment up to date; needs the repository secret `GEMINI_API_KEY` (skipped for forks and drafts). `rag/index-code/` is git-ignored and cached by the workflow.
 - Design and results: `docs/day32-ai-review.md`, manual steps (sample PR with seeded problems): `docs/day32-ai-review-test-scenario.md`.
 
+## Support assistant (Day 33)
+
+`:support-assistant` answers customers of Personal Trainer from an FAQ (`support/kb/`, RAG) **and the data of their ticket**: the CRM (JSON users and tickets in `support/data/`)
+is a read-only MCP server scoped to one ticket (`get_ticket`, `get_user`, `search_tickets`; e-mails masked). The FAQ search query is the question enriched with the ticket facts
+(error codes, app version, recent events), so "why does authorization not work?" finds a different article for different customers. The answer has a cause and steps with verified citations,
+a draft reply to the customer in their locale and an escalation flag (health, payments, other people's data, no verifiable answer).
+- CLI: `./gradlew :support-assistant:run` (`/tickets`, `/ticket T-101`, `/context on|off`; `--once`, `--list`).
+- Web: `./gradlew :web-console:run` → *Support (Day 33)* tab; service endpoints `GET /api/support/tickets`, `POST /api/support/ask`. Needs `GEMINI_API_KEY`; the FAQ index `rag/index-support/` is git-ignored and built on first use.
+- Eval: `./gradlew :support-assistant:run --args="--eval"` compares FAQ-only with ticket-aware answers (`support/eval/results.md`).
+- Design and results: `docs/day33-support-assistant.md`, manual steps: `docs/day33-support-assistant-test-scenario.md`.
+
 ## Setup
 
 1. Get a Gemini API key from [Google AI Studio](https://aistudio.google.com/apikey).
@@ -526,6 +537,8 @@ graph TD
   devassistant[":dev-assistant — /help over project docs + git MCP"] --> agent
   devassistant --> ragtools
   reviewer[":reviewer — AI review of a PR: git MCP diff + docs/code RAG"] --> devassistant
+  support[":support-assistant — FAQ RAG + ticket context from a CRM over MCP"] --> devassistant
+  web --> support
 ```
 
 - `core/common` — `io/Files.kt` (kotlinx-io `Path` helpers), `time/Time.kt` (`nowMillis`, `newId`),
@@ -538,7 +551,8 @@ graph TD
 - `web-console` — `./gradlew :web-console:run [--args="--port 8080"]`, the former `ui` command.
 - `dev-assistant` — `./gradlew :dev-assistant:run` (Day 31): `/help` over README/AGENTS.md/docs + git MCP (`GitMcpGateway`), see `docs/day31-dev-assistant.md` (scenario: `docs/day31-dev-assistant-test-scenario.md`).
 - `reviewer` — `./gradlew :reviewer:run --args="--base main"` (Day 32): `Reviewer` (MCP diff + docs/code RAG + validated findings), `ReviewReport` markdown, CI in `.github/workflows/ai-review.yml`, see `docs/day32-ai-review.md`.
-- `rag/corpus`, `rag/eval`, `rag/index`, `rag/index-local`, `rag/index-offline`, `rag/index-docs`, `rag/index-code` (the last two git-ignored, built on demand), `rag/sessions` — data (not a Gradle module).
+- `support-assistant` — `./gradlew :support-assistant:run` (Day 33): `SupportAssistant` (ticket-aware FAQ RAG), `SupportMcpGateway` (CRM over MCP, scoped to one ticket, PII masked), `SupportEval`; data in `support/` (`kb/` FAQ, `data/` users and tickets, `eval/`), see `docs/day33-support-assistant.md`.
+- `rag/corpus`, `rag/eval`, `rag/index`, `rag/index-local`, `rag/index-offline`, `rag/index-docs`, `rag/index-code`, `rag/index-support` (the last three git-ignored, built on demand), `rag/sessions` — data (not a Gradle module).
 - `agent` — `agent/` (`Agent`, `AgentConfig`/`AgentCatalog`, `LlmAgent`, `TokenEstimator`), `agent/memory/`
   (Day 11), `agent/profile/` (Day 12), `agent/task/` (Day 13/15), `agent/invariant/` (Day 14), `agent/planner/`
   (Day 19), `agent/mcp/` (Day 17 `McpToolCallingAgent`), `agent/rag/` (Day 22 `RagAgent`), `agent/workout/`

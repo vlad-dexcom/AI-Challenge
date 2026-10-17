@@ -45,3 +45,17 @@ const ok = helpHtml({ answer: 'A <b>x</b>', idk: false, sources: [{ file: 'docs/
 if (!ok.includes('docs/modules.md') || !ok.includes('MCP calls (1)') || ok.includes('<x>') || !ok.includes('&lt;x&gt;')) throw new Error('help html');
 if (!helpHtml({ answer: 'I don\'t know', idk: true, sources: [], mcpCalls: [] }).includes('class="idk"')) throw new Error('help idk');
 console.log('help-html ok');
+
+// Day 33: the Support tab renders tickets, answers, escalation and CRM calls; customer and model text is escaped.
+const sFrom = script.indexOf('function ticketHtml');
+const sTo = script.indexOf('const supportExamples');
+if (sFrom < 0 || sTo < 0) throw new Error('cannot locate supportHtml');
+const support = new Function('window', esc + '\n' + script.slice(script.indexOf('const md='), script.indexOf('function stageTable')) + script.slice(sFrom, sTo) + '\nreturn {ticketHtml, supportHtml};')(window);
+const tk = support.ticketHtml({ id: 'T-1', customer: 'A <i>', status: 'open', priority: 'high', subject: 'S', messages: [{ from: 'customer', at: 'x', text: 'hi <script>' }] });
+if (!tk.includes('T-1') || tk.includes('<script>') || tk.includes('<i>')) throw new Error('ticket html');
+const sr = support.supportHtml({ ticketId: 'T-1', usedTicket: true, answer: 'Cause [1]', idk: false, reply: 'Hello <b>', needsEscalation: true, escalationReason: 'refund <x>',
+  sources: [{ file: '02.md', section: 'Error codes' }], searchQuery: 'q <y>', crmCalls: [{ tool: 'get_user', text: 'U <z>', isError: false }] });
+if (!sr.includes('Escalate to a human') || !sr.includes('Draft reply') || !sr.includes('CRM calls over MCP (1)') || !sr.includes('02.md') || sr.includes('<x>') || sr.includes('<y>') || sr.includes('<z>')) throw new Error('support html');
+const sn = support.supportHtml({ ticketId: null, usedTicket: false, answer: 'I don\'t know', idk: true, reply: '', needsEscalation: false, escalationReason: '', sources: [], searchQuery: 'q', crmCalls: [] });
+if (!sn.includes('class="idk"') || !sn.includes('No ticket context') || !sn.includes('No escalation needed') || sn.includes('Draft reply')) throw new Error('support idk');
+console.log('support-html ok');

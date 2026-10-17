@@ -106,6 +106,8 @@ class UiApi(
     ollamaPrompts: com.example.rag.PromptProfile = com.example.rag.PromptProfile.DEFAULT,
     /** Day 31: the developer assistant behind the "Dev assistant" tab; null = the endpoint answers 404. */
     private val helpApi: HelpApi? = null,
+    /** Day 33: the support service behind the "Support" tab; null = its endpoints answer 404. */
+    private val supportApi: SupportApi? = null,
 ) {
     /** Token counts and timings of every local call since the last reset (sizing data for context windows and limits). */
     private val llmStats = com.example.core.llm.LlmCallStats()
@@ -175,6 +177,12 @@ class UiApi(
     fun chat(body: String): String = chatApi.chat(body)
 
     fun help(body: String): String = (helpApi ?: throw ApiException(404, "Developer assistant is not enabled")).help(body)
+
+    private fun support() = supportApi ?: throw ApiException(404, "Support assistant is not enabled")
+
+    fun supportTickets(): String = support().tickets()
+
+    fun supportAsk(body: String): String = support().ask(body)
 
     fun files(): String = json.encodeToString(FileList.serializer(),
         FileList(if (corpusDir.isDirectory) CorpusLoader.load(corpusDir.toKxPath()).map { it.source } else emptyList()))
@@ -330,6 +338,8 @@ class UiServer(private val api: UiApi, port: Int) {
             post && path == "/api/llm/stats/reset" -> JSON to api.resetLlmStats()
             post && path == "/api/chat" -> JSON to api.chat(ex.requestBody.readBytes().decodeToString())
             post && path == "/api/help" -> JSON to api.help(ex.requestBody.readBytes().decodeToString())
+            get && path == "/api/support/tickets" -> JSON to api.supportTickets()
+            post && path == "/api/support/ask" -> JSON to api.supportAsk(ex.requestBody.readBytes().decodeToString())
  path.startsWith("/api/sessions") && ex.requestMethod in setOf("GET", "POST", "PUT", "DELETE") ->
                 JSON to api.sessions(ex.requestMethod, path, ex.requestBody.readBytes().decodeToString())
             post && path == "/api/chunk" -> JSON to api.chunk(ex.requestBody.readBytes().decodeToString())
