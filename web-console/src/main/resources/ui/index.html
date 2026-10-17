@@ -50,7 +50,7 @@
  .src{font-size:12px;margin:4px 0 0 0;padding-left:18px} .meta{font-size:11px;color:#666}
  details{font-size:12px;margin-top:4px} details pre{white-space:pre-wrap;margin:2px 0 6px;background:#fff;padding:4px;border:1px solid #eee}
 </style></head><body>
-<nav><button id="tab-chat" class="on">Chat (RAG, memory, local &amp; cloud: Days 22–28)</button><button id="tab-viz">Chunk visualiser (Day 21)</button></nav>
+<nav><button id="tab-chat" class="on">Chat (RAG, memory, local &amp; cloud: Days 22–28)</button><button id="tab-viz">Chunk visualiser (Day 21)</button><button id="tab-help">Dev assistant (Day 31)</button></nav>
 <div id="page-chat"><div id="chat-wrap">
 <fieldset><legend>Settings</legend>
  <label>Mode <select id="cmode"><option value="session">Chat with task memory</option><option value="rag">With RAG</option><option value="no_rag">Without RAG</option><option value="compare">RAG vs no RAG (side by side)</option></select></label>
@@ -95,6 +95,13 @@
 <div id="msgs"></div>
 <div><textarea id="cq" style="height:60px;font:14px system-ui" placeholder="Ask about training, nutrition, recovery… (Enter = send, Shift+Enter = newline)"></textarea>
  <button id="csend">Send</button> <span id="cerr" class="err"></span></div>
+</div></div>
+<div id="page-help" style="display:none"><div id="help-wrap" style="display:flex;flex-direction:column;gap:8px;max-width:900px">
+ <div class="meta"><b>/help</b>: asks about this project. Answers come from README, AGENTS.md and docs/ (RAG, verified quotes) plus the live repository state read through the git MCP tools (current branch, working tree). The docs index is built on the first question.</div>
+ <div id="hmsgs" style="background:#fff;border:1px solid #ccc;padding:8px;min-height:200px;max-height:60vh;overflow:auto"></div>
+ <div id="hexamples"></div>
+ <div><textarea id="hq" style="height:60px;font:14px system-ui;width:100%;box-sizing:border-box" placeholder="/help which module owns the RAG pipeline? (Enter = send, Shift+Enter = newline)"></textarea>
+ <button id="hsend">Send</button> <button id="hclear">Clear chat</button> <span id="herr" class="err"></span></div>
 </div></div>
 <div id="page-viz" style="display:none">
 <h1>Chunk visualiser (Day 21)</h1>
@@ -237,8 +244,8 @@ api('/api/files').then(r=>r.files.forEach(n=>{const o=document.createElement('op
 
 // ---- Chat (Day 22+) ----
 const cfg={defaultModel:''};
-function show(tab){['chat','viz'].forEach(t=>{$('page-'+t).style.display=t===tab?'':'none';$('tab-'+t).classList.toggle('on',t===tab)})}
-$('tab-chat').onclick=()=>show('chat');$('tab-viz').onclick=()=>show('viz');
+function show(tab){['chat','viz','help'].forEach(t=>{$('page-'+t).style.display=t===tab?'':'none';$('tab-'+t).classList.toggle('on',t===tab)})}
+$('tab-chat').onclick=()=>show('chat');$('tab-viz').onclick=()=>show('viz');$('tab-help').onclick=()=>show('help');
 const md=s=>window.renderMarkdown?window.renderMarkdown(s):`<p style="white-space:pre-wrap">${esc(s)}</p>`;
 function stageTable(title,hits,kept,showRerank){
   if(!hits.length)return `<div class="meta"><b>${title}</b>: none</div>`;
@@ -557,4 +564,29 @@ fetch('/api/chat/config').then(r=>r.json()).then(c=>{
 });
 updateMode();
 
+
+// ---- Dev assistant /help (Day 31) ----
+function helpHtml(r){
+  const calls=(r.mcpCalls||[]).map(c=>`<div class="quote ${c.isError?'bad':'ok'}"><b>${esc(c.tool)}</b>${c.isError?' (error)':''}<pre style="margin:2px 0;white-space:pre-wrap">${esc(c.text)}</pre></div>`).join('');
+  const src=(r.sources||[]).map(s=>`<li>${esc(s.file)}${s.section?' &gt; '+esc(s.section):''}</li>`).join('');
+  return (r.idk?`<div class="idk">${md(r.answer)}</div>`:`<div class="md">${md(r.answer)}</div>`)+
+    (src?`<div class="meta">Sources</div><ul class="src">${src}</ul>`:'')+
+    (calls?`<details><summary>MCP calls (${r.mcpCalls.length})</summary>${calls}</details>`:'');
+}
+const helpExamples=['/help какой модуль отвечает за RAG и от каких модулей он зависит?','/help где должна жить логика агента, а где ViewModel?','/help как добавить новую MCP-тулзу и что написать в тестах?','/help какие зависимости разрешены между модулями?','/help какие правила проверяет checkKmpReadiness?','/help на какой я ветке?','/help что у меня изменено?','/help как приготовить борщ?'];
+$('hexamples').innerHTML=helpExamples.map(q=>`<span class="chip">${esc(q)}</span>`).join('');
+$('hexamples').onclick=e=>{if(e.target.classList.contains('chip')){$('hq').value=e.target.textContent;$('hq').focus()}};
+$('hclear').onclick=()=>{$('hmsgs').innerHTML='';$('herr').textContent='';$('hq').focus()};
+async function helpSend(){
+  const q=$('hq').value.trim(); if(!q)return; $('herr').textContent='';
+  const box=$('hmsgs');
+  box.insertAdjacentHTML('beforeend',`<div class="msg user">${esc(q)}</div>`);
+  const wait=document.createElement('div'); wait.className='msg bot'; wait.textContent='Thinking…'; box.appendChild(wait);
+  $('hq').value=''; $('hsend').disabled=true; box.scrollTop=box.scrollHeight;
+  try{ wait.innerHTML=helpHtml(await api('/api/help',{question:q})); }
+  catch(e){ wait.remove(); $('herr').textContent=e.message; }
+  finally{ $('hsend').disabled=false; box.scrollTop=box.scrollHeight; }
+}
+$('hsend').onclick=helpSend;
+$('hq').addEventListener('keydown',e=>{if(e.key==='Enter'&&!e.shiftKey){e.preventDefault();helpSend()}});
 </script></body></html>

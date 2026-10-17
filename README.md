@@ -458,6 +458,14 @@ reachable from phones on the home Wi-Fi: `phone → scripts/lan_forward.py (Appl
 - No-model checks: `python3 scripts/fake_ollama.py` (port 11435) + `scripts/loadtest.py`.
 - Design, threat model, limits and results: `docs/day30-private-ai-service.md`, manual steps: `docs/day30-private-ai-service-test-scenario.md`.
 
+## Developer assistant `/help` (Day 31)
+
+`:dev-assistant` answers questions about *this repository* from README, `AGENTS.md` and `docs/` (RAG, verified quotes) plus the
+live git state read through an in-process, read-only **git MCP server** (`git_branch`, `git_status`, `git_diff_stat`, `list_files`).
+- CLI: `./gradlew :dev-assistant:run` → `/help which module owns the RAG pipeline?` (or `--args="--once '<question>'"`).
+- Web: `./gradlew :web-console:run` → *Dev assistant (Day 31)* tab. The docs index (`rag/index-docs/`, git-ignored) is built on first use and rebuilt when the docs change; needs `GEMINI_API_KEY`.
+- Design: `docs/day31-dev-assistant.md`, manual steps: `docs/day31-dev-assistant-test-scenario.md`.
+
 ## Setup
 
 1. Get a Gemini API key from [Google AI Studio](https://aistudio.google.com/apikey).
@@ -504,7 +512,10 @@ graph TD
   ragcore --> common
   common[":core:common — kotlinx-io file helpers, time/uuid, platform seams"]
   ragtools[":rag:tools — CLI, evals, comparison"] --> ragcore
-  web[":web-console — local web UI (chat + chunk visualiser)"] --> ragtools
+  web[":web-console — local web UI (chat + chunk visualiser + dev assistant)"] --> ragtools
+  web --> devassistant
+  devassistant[":dev-assistant — /help over project docs + git MCP"] --> agent
+  devassistant --> ragtools
 ```
 
 - `core/common` — `io/Files.kt` (kotlinx-io `Path` helpers), `time/Time.kt` (`nowMillis`, `newId`),
@@ -515,7 +526,8 @@ graph TD
 - `rag/tools` — CLI (`./gradlew :rag:tools:run --args="index|eval|compare|ask|chat|..."`), evals, sweeps.
 - `ai-gateway` — `scripts/private-ai.sh start` (Day 30): LAN gateway for a local Ollama, see `docs/day30-private-ai-service.md`.
 - `web-console` — `./gradlew :web-console:run [--args="--port 8080"]`, the former `ui` command.
-- `rag/corpus`, `rag/eval`, `rag/index`, `rag/index-local`, `rag/index-offline`, `rag/sessions` — data (not a Gradle module).
+- `dev-assistant` — `./gradlew :dev-assistant:run` (Day 31): `/help` over README/AGENTS.md/docs + git MCP (`GitMcpGateway`), see `docs/day31-dev-assistant.md` (scenario: `docs/day31-dev-assistant-test-scenario.md`).
+- `rag/corpus`, `rag/eval`, `rag/index`, `rag/index-local`, `rag/index-offline`, `rag/index-docs` (git-ignored, built on demand), `rag/sessions` — data (not a Gradle module).
 - `agent` — `agent/` (`Agent`, `AgentConfig`/`AgentCatalog`, `LlmAgent`, `TokenEstimator`), `agent/memory/`
   (Day 11), `agent/profile/` (Day 12), `agent/task/` (Day 13/15), `agent/invariant/` (Day 14), `agent/planner/`
   (Day 19), `agent/mcp/` (Day 17 `McpToolCallingAgent`), `agent/rag/` (Day 22 `RagAgent`), `agent/workout/`

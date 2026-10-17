@@ -19,6 +19,7 @@ tasks.named<JavaExec>("run") {
 
 dependencies {
     implementation(project(":rag:tools"))
+    implementation(project(":dev-assistant"))
 
     testImplementation(testFixtures(project(":rag:core")))
     testImplementation(libs.junit)
